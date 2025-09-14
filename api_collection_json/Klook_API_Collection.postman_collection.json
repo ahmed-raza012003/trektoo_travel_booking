@@ -1,0 +1,543 @@
+{
+	"info": {
+		"_postman_id": "0cd63d5d-7e1d-4577-ba6f-06386aa0e02e",
+		"name": "Klook All APIs",
+		"description": "Collection for testing Klook API integration endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "37962966",
+		"_collection_link": "https://interstellar-space-142851.postman.co/workspace/My-Workspace~0610ecea-76a0-4b96-88aa-9dbc8f5a8d9a/collection/37962966-0cd63d5d-7e1d-4577-ba6f-06386aa0e02e?action=share&source=collection_link&creator=37962966"
+	},
+	"item": [
+		{
+			"name": "Test Endpoints",
+			"item": [
+				{
+					"name": "Test All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/klook/test",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"klook",
+								"test"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Test Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/klook/test/categories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"klook",
+								"test",
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Test Activities",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/klook/test/activities",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"klook",
+								"test",
+								"activities"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Categories",
+			"item": [
+				{
+					"name": "Get Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/klook/categories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"klook",
+								"categories"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Activities",
+			"item": [
+				{
+					"name": "Get Activities",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/klook/activities?limit=10&page=1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"klook",
+								"activities"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Activity Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/klook/activities/19",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"klook",
+								"activities",
+								"19"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Schedules & Pricing",
+			"item": [
+				{
+					"name": "Get Schedules",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/klook/schedules?sku_ids=822428018419,822428018421&start_time=2025-07-11 00:00:00&end_time=2025-07-11 20:00:00",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"klook",
+								"schedules"
+							],
+							"query": [
+								{
+									"key": "sku_ids",
+									"value": "822428018419,822428018421"
+								},
+								{
+									"key": "start_time",
+									"value": "2025-07-11 00:00:00"
+								},
+								{
+									"key": "end_time",
+									"value": "2025-07-11 20:00:00"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Minimum Selling Price",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/klook/msp/8000190401",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"klook",
+								"msp",
+								"8000190401"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Other Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/klook/otherinfo/78175",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"klook",
+								"otherinfo",
+								"78175"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "Validate Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agent_order_id\": \"klook_country_test_001\",\n  \"contact_info\": {\n    \"country\": \"CN\",\n    \"email\": \"test@trektoo.com\",\n    \"first_name\": \"Ahmed\",\n    \"family_name\": \"Raza\",\n    \"mobile\": \"13800000000\"\n  },\n  \"items\": [\n    {\n      \"package_id\": 91248,\n      \"start_time\": \"2025-09-10 00:00:00\",\n      \"sku_list\": [\n        {\n          \"sku_id\": 822428069528,\n          \"count\": 1,\n          \"price\": \"\"\n        }\n      ],\n      \"booking_extra_info\": [\n        {\n          \"key\": \"country\",\n          \"content\": \"CN\",\n          \"selected\": null,\n          \"input_type\": \"single_select\"\n        }\n      ],\n      \"unit_extra_info\": []\n    }\n  ]\n}\n"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/klook/orders/validate",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"klook",
+								"orders",
+								"validate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check Availability",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept-Language",
+								"value": "en_US",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"package_id\": 91249,\n    \"start_time\": \"2025-09-01 00:00:00\",\n    \"sku_list\": [\n        {\n            \"count\": 2,\n            \"sku_id\": 822428069529,\n            \"price\": \"\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/klook/availability/check",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"klook",
+								"availability",
+								"check"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agent_order_id\": \"klook_test_122\",\n  \"contact_info\": {\n    \"country\": \"CN\",\n    \"email\": \"tech@klook.com\",\n    \"first_name\": \"Test\",\n    \"family_name\": \"User\",\n    \"mobile\": \"86-13800000000\"\n  },\n  \"items\": [\n    {\n      \"package_id\": 91249,\n      \"start_time\": \"2025-12-08 00:00:00\",\n      \"sku_list\": [\n        {\n          \"sku_id\": 822428069529,\n          \"count\": 1\n        }\n      ],\n      \"booking_extra_info\": [\n        {\n          \"key\": \"mobile\",\n          \"content\": \"13800000000\"\n        }\n      ],\n      \"unit_extra_info\": []\n    }\n  ]\n}\n"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/klook/orders",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"klook",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/klook/orders/3040895212",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"klook",
+								"orders",
+								"3040895212"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/klook/orders/3040895212/cancel",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"klook",
+								"orders",
+								"3040895212",
+								"cancel"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Balance Pay",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "x-api-key",
+						"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/klook/pay/balance/3040895212",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"klook",
+						"pay",
+						"balance",
+						"3040895212"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Bookings",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/klook/bookings?order=created:desc&create_start=2025-08-15%2000:00:00&create_end=2025-08-30%2023:59:59",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"klook",
+						"bookings"
+					],
+					"query": [
+						{
+							"key": "order",
+							"value": "created:desc"
+						},
+						{
+							"key": "create_start",
+							"value": "2025-08-15%2000:00:00"
+						},
+						{
+							"key": "create_end",
+							"value": "2025-08-30%2023:59:59"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Resend Voucher",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/klook/orders/3040895212/resend-voucher",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"klook",
+						"orders",
+						"3040895212",
+						"resend-voucher"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query Balance",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/klook/balance",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"klook",
+						"balance"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Order Cancellation",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"refund_reason_id\": 1}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/klook/orders/3040895212/cancel/apply",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"klook",
+						"orders",
+						"3040895212",
+						"cancel",
+						"apply"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Order Cancelation Status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/klook/orders/3040895212/cancel/status",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"klook",
+						"orders",
+						"3040895212",
+						"cancel",
+						"status"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:8000"
+		}
+	]
+}

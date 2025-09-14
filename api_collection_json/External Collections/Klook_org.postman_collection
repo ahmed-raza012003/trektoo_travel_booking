@@ -1,0 +1,865 @@
+{
+	"info": {
+		"_postman_id": "3e702ffb-5822-455f-b583-875a86134c96",
+		"name": "Klook",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "46097770"
+	},
+	"item": [
+		{
+			"name": "Categories",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://sandbox-api.klktech.com/v3/products/categories",
+					"protocol": "https",
+					"host": [
+						"sandbox-api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v3",
+						"products",
+						"categories"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Activities",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://sandbox-api.klktech.com/v3/activities?limit=10&page=1&city_ids&country_ids&category_ids\t",
+					"protocol": "https",
+					"host": [
+						"sandbox-api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v3",
+						"activities"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "10"
+						},
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "city_ids",
+							"value": null
+						},
+						{
+							"key": "country_ids",
+							"value": null
+						},
+						{
+							"key": "category_ids\t",
+							"value": null
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Activity Detail (specific-id)",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://sandbox-api.klktech.com/v3/activities/19",
+					"protocol": "https",
+					"host": [
+						"sandbox-api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v3",
+						"activities",
+						"19"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Price/Inventory schedules",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://sandbox-api.klktech.com/v3/products/skus/822428018419,822428018421,822428018422,822428018424/schedules?start_time=2025-07-11 00:00:00&end_time=2025-07-11 20:00:00",
+					"protocol": "https",
+					"host": [
+						"sandbox-api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v3",
+						"products",
+						"skus",
+						"822428018419,822428018421,822428018422,822428018424",
+						"schedules"
+					],
+					"query": [
+						{
+							"key": "start_time",
+							"value": "2025-07-11 00:00:00"
+						},
+						{
+							"key": "end_time",
+							"value": "2025-07-11 20:00:00"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Minimum Selling Price",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://sandbox-api.klktech.com/v3/msp/8000190401",
+					"protocol": "https",
+					"host": [
+						"sandbox-api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v3",
+						"msp",
+						"8000190401"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Other Info",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://sandbox-api.klktech.com/v3/otherinfo/78175/products",
+					"protocol": "http",
+					"host": [
+						"sandbox-api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v3",
+						"otherinfo",
+						"78175",
+						"products"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Order validation",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"agent_order_id\": \"klook00001\",\r\n    \"contact_info\": {\r\n        \"country\": \"CN\",\r\n        \"email\": \"tech@klook.com\",\r\n        \"first_name\": \"k\",\r\n        \"family_name\": \"look\",\r\n        \"mobile\": \"13800000000\"\r\n    },\r\n    \"items\": [\r\n        {\r\n            \"package_id\": 91249,\r\n            \"start_time\": \"2025-09-01 00:00:00\",\r\n            \"sku_list\": [\r\n                {\r\n                    \"sku_id\": 822428069529,\r\n                    \"count\": 2,\r\n                    \"price\": \"\"\r\n                }\r\n            ],\r\n            \"booking_extra_info\": [],\r\n            \"unit_extra_info\": []\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://sandbox-api.klktech.com/v3/orders/validation",
+					"protocol": "https",
+					"host": [
+						"sandbox-api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v3",
+						"orders",
+						"validation"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Availability Check",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[\r\n    {\r\n        \"package_id\": 102041,\r\n        \"start_time\": \"2025-09-30 00:00:00\",\r\n        \"sku_list\": [\r\n            {\r\n                \"sku_id\": 822428089867,\r\n                \"count\": 4,\r\n                \"price\": \"\"\r\n            }\r\n        ]\r\n    }\r\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://sandbox-api.klktech.com/v3/availability/check",
+					"protocol": "https",
+					"host": [
+						"sandbox-api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v3",
+						"availability",
+						"check"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Order",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[{\r\n    \"package_id\": 912231,\r\n    \"start_time\": \"2026-12-08 01:01:01\",\r\n    \"sku_list\": [\r\n        {\r\n            \"count\": 2,\r\n            \"sku_id\": 822428069484,\r\n            \"price\": \"\"\r\n        }\r\n    ]\r\n}]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://sandbox-api.klktech.com/v3/avalibility/check",
+					"protocol": "https",
+					"host": [
+						"sandbox-api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v3",
+						"avalibility",
+						"check"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Balance Pay",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[{\r\n    \"package_id\": 912231,\r\n    \"start_time\": \"2026-12-08 01:01:01\",\r\n    \"sku_list\": [\r\n        {\r\n            \"count\": 2,\r\n            \"sku_id\": 822428069484,\r\n            \"price\": \"\"\r\n        }\r\n    ]\r\n}]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://sandbox-api.klktech.com/v3/avalibility/check",
+					"protocol": "https",
+					"host": [
+						"sandbox-api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v3",
+						"avalibility",
+						"check"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Bookings List",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[{\r\n    \"package_id\": 912231,\r\n    \"start_time\": \"2026-12-08 01:01:01\",\r\n    \"sku_list\": [\r\n        {\r\n            \"count\": 2,\r\n            \"sku_id\": 822428069484,\r\n            \"price\": \"\"\r\n        }\r\n    ]\r\n}]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://sandbox-api.klktech.com/v3/avalibility/check",
+					"protocol": "https",
+					"host": [
+						"sandbox-api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v3",
+						"avalibility",
+						"check"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Order Detail",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://api.klktech.com/v2/orders/dummyidx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+					"protocol": "http",
+					"host": [
+						"api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v2",
+						"orders",
+						"dummyidx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Resend Voucher",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://sandbox-api.klktech.com/v2/orders/dummyidx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resend_voucher",
+					"protocol": "http",
+					"host": [
+						"sandbox-api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v2",
+						"orders",
+						"dummyidx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+						"resend_voucher"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Balance check",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://sandbox-api.klktech.com/v2/orders/dummyidx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resend_voucher",
+					"protocol": "http",
+					"host": [
+						"sandbox-api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v2",
+						"orders",
+						"dummyidx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+						"resend_voucher"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Cancel Order",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://sandbox-api.klktech.com/v2/orders/dummyidx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resend_voucher",
+					"protocol": "http",
+					"host": [
+						"sandbox-api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v2",
+						"orders",
+						"dummyidx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+						"resend_voucher"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Cancel Status",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "X-API-KEY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "en_US",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://sandbox-api.klktech.com/v2/orders/dummyidx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resend_voucher",
+					"protocol": "http",
+					"host": [
+						"sandbox-api",
+						"klktech",
+						"com"
+					],
+					"path": [
+						"v2",
+						"orders",
+						"dummyidx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+						"resend_voucher"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
