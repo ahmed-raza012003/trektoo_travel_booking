@@ -81,7 +81,7 @@ export const login = async (credentials) => {
             device_name: credentials.device_name || 'web'
         };
 
-        const response = await secureApiClient.post('/auth/login', sanitizedCredentials);
+        const response = await secureApiClient.post('/login', sanitizedCredentials);
 
         if (!response.data) {
             throw new Error('No response received from server');
@@ -94,12 +94,12 @@ export const login = async (credentials) => {
         }
 
         // Check for API error status
-        if (response.data.status === 0 || response.data.status === false) {
+        if (!response.data.success) {
             throw new Error(response.data.message || 'Login failed');
         }
 
         // Validate response structure
-        if (!response.data.access_token || !response.data.user) {
+        if (!response.data.data || !response.data.data.token || !response.data.data.user) {
             throw new Error('Invalid response format from server');
         }
 
@@ -146,23 +146,22 @@ export const register = async (userData) => {
             throw new Error('You must agree to the terms and conditions');
         }
 
-        // Sanitize user data - API expects 'term' not 'terms'
+        // Sanitize user data - API expects 'name' and 'password_confirmation'
         const sanitizedUserData = {
             email: userData.email.trim().toLowerCase(),
             password: userData.password,
-            first_name: userData.first_name?.trim() || '',
-            last_name: userData.last_name?.trim() || '',
-            term: userData.terms || userData.term
+            password_confirmation: userData.password,
+            name: `${userData.first_name?.trim() || ''} ${userData.last_name?.trim() || ''}`.trim() || 'User'
         };
 
-        const response = await secureApiClient.post('/auth/register', sanitizedUserData);
+        const response = await secureApiClient.post('/register', sanitizedUserData);
 
         if (!response.data) {
             throw new Error('No response received from server');
         }
 
         // Check for API error status first
-        if (response.data.status === 0 || response.data.status === false) {
+        if (!response.data.success) {
             // Handle validation errors in message field
             if (response.data.message && typeof response.data.message === 'object') {
                 const errorMessages = Object.values(response.data.message).flat();
@@ -208,7 +207,7 @@ export const logout = async (email, token) => {
             throw new Error('Valid authentication token is required for logout');
         }
 
-        const response = await secureApiClient.post('/auth/logout', {
+        const response = await secureApiClient.post('/logout', {
             email: email.trim().toLowerCase()
         }, {
             headers: {
@@ -237,7 +236,7 @@ export const getUserProfile = async (token) => {
             throw new Error('Valid authentication token is required');
         }
 
-        const response = await secureApiClient.get('/auth/me', {
+        const response = await secureApiClient.get('/profile', {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -281,7 +280,7 @@ export const updateUserProfile = async (userData, token) => {
             country: userData.country?.trim() || ''
         };
 
-        const response = await secureApiClient.post('/auth/me', sanitizedUserData, {
+        const response = await secureApiClient.post('/profile', sanitizedUserData, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },

@@ -121,25 +121,25 @@ export const AuthProvider = ({ children }) => {
 
       const data = await loginApi(credentials);
 
-      if (data.status === 1 && data.access_token && data.user) {
+      if (data.success && data.data && data.data.token && data.data.user) {
         // Validate response data
         if (
-          typeof data.access_token !== 'string' ||
-          data.access_token.length < 10
+          typeof data.data.token !== 'string' ||
+          data.data.token.length < 10
         ) {
           throw new Error('Invalid authentication token received');
         }
 
-        if (!data.user || typeof data.user !== 'object') {
+        if (!data.data.user || typeof data.data.user !== 'object') {
           throw new Error('Invalid user data received');
         }
 
         // Store auth data
         try {
-          localStorage.setItem('authToken', data.access_token);
-          localStorage.setItem('authUser', JSON.stringify(data.user));
-          setToken(data.access_token);
-          setUser(data.user);
+          localStorage.setItem('authToken', data.data.token);
+          localStorage.setItem('authUser', JSON.stringify(data.data.user));
+          setToken(data.data.token);
+          setUser(data.data.user);
           toast.success("Welcome back! You're logged in.");
 
           // Clear any cached data that might be user-specific
@@ -217,7 +217,7 @@ export const AuthProvider = ({ children }) => {
 
       const data = await registerApi(userData);
 
-      if (data.status === true || data.status === 1) {
+      if (data.success) {
         toast.success(
           data.message || 'Registration successful! Please log in.'
         );
