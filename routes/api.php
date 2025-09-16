@@ -106,3 +106,28 @@ Route::prefix('klook')->group(function () {
     // Activities booking initiate
     Route::post('/activities-booking/initiate', [KlookApiController::class, 'initiateBooking']);
 });
+
+Route::middleware('auth:sanctum')->group(function () {
+    // ... other routes ...
+    
+    // Klook specific payment routes (protected)
+    Route::prefix('klook')->group(function () {
+        Route::post('/payment-intent', [PaymentController::class, 'createKlookPaymentIntent']);
+        Route::post('/confirm-payment', [PaymentController::class, 'confirmKlookPayment']);
+        Route::get('/order-status/{orderId}', [PaymentController::class, 'getKlookOrderStatus']);
+    });
+});
+
+
+
+Route::post('/stripe/webhook', [PaymentController::class, 'stripeWebhook']);
+
+// routes/api.php
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok',
+        'message' => 'Backend is running',
+        'timestamp' => now(),
+        'cors_enabled' => true
+    ]);
+});
