@@ -16,6 +16,7 @@ const ThankYouContent = () => {
   const [isAuthChecked, setIsAuthChecked] = useState(false);
 
   const bookingCode = searchParams.get('booking_code');
+  const sessionId = searchParams.get('session_id');
   const roomTitle = searchParams.get('roomTitle');
   const roomImage = searchParams.get('roomImage');
   const beds = searchParams.get('beds');
@@ -25,6 +26,12 @@ const ThankYouContent = () => {
   const start_date = searchParams.get('start_date');
   const end_date = searchParams.get('end_date');
   const hotelTitle = searchParams.get('hotelTitle');
+  
+  // For activity bookings from Stripe
+  const [activityBookingData, setActivityBookingData] = useState(null);
+  const [isLoadingActivity, setIsLoadingActivity] = useState(false);
+  const [orderInfo, setOrderInfo] = useState(null);
+  const [isLoadingOrderInfo, setIsLoadingOrderInfo] = useState(false);
 
   const {
     data: bookingData,
@@ -50,7 +57,110 @@ const ThankYouContent = () => {
     return () => clearTimeout(timer);
   }, [isAuthenticated, token, router, searchParams]);
 
-  if (!isAuthChecked || isBookingLoading) {
+  // Handle Stripe session ID for activity bookings
+  useEffect(() => {
+    if (sessionId && isAuthChecked && token) {
+      fetchActivityBookingData();
+    }
+  }, [sessionId, isAuthChecked, token]);
+
+  const fetchActivityBookingData = async () => {
+    try {
+      setIsLoadingActivity(true);
+      
+      // Get stored booking data from localStorage
+      const storedPayment = localStorage.getItem('klookPayment');
+      const storedBooking = localStorage.getItem('pendingBooking');
+      
+      if (storedPayment && storedBooking) {
+        const paymentData = JSON.parse(storedPayment);
+        const bookingData = JSON.parse(storedBooking);
+        
+        // Trigger the complete flow to process payment and update database
+        let webhookResult = null;
+        try {
+          console.log('Triggering complete flow for payment:', paymentData.payment_id);
+          
+          const response = await fetch('http://localhost:8000/api/test/simulate-webhook', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              payment_id: paymentData.payment_id
+            })
+          });
+
+          if (response.ok) {
+            webhookResult = await response.json();
+            console.log('Complete flow result:', webhookResult);
+            
+            if (webhookResult.success) {
+              console.log('Payment and booking processed successfully:', webhookResult.data);
+            } else {
+              console.error('Complete flow failed:', webhookResult.error);
+            }
+          } else {
+            console.error('Failed to trigger complete flow:', response.status);
+          }
+        } catch (flowError) {
+          console.error('Error triggering complete flow:', flowError);
+        }
+        
+        setActivityBookingData({
+          payment: paymentData,
+          booking: bookingData,
+          sessionId: sessionId
+        });
+        
+        // Fetch updated order info from Klook after payment is processed
+        if (webhookResult && webhookResult.success && webhookResult.data && webhookResult.data.order_no) {
+          await fetchOrderInfo(webhookResult.data.order_no);
+        }
+        
+        // Clear stored data
+        localStorage.removeItem('klookPayment');
+        localStorage.removeItem('pendingBooking');
+        localStorage.removeItem('klookOrderNo');
+        localStorage.removeItem('agentOrderId');
+      }
+    } catch (error) {
+      console.error('Error fetching activity booking data:', error);
+    } finally {
+      setIsLoadingActivity(false);
+    }
+  };
+
+  const fetchOrderInfo = async (orderNo) => {
+    try {
+      setIsLoadingOrderInfo(true);
+      console.log('Fetching order info for order:', orderNo);
+      
+      const response = await fetch(`http://localhost:8000/api/klook/orders/${orderNo}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Order info fetched successfully:', result);
+        setOrderInfo(result);
+      } else {
+        console.error('Failed to fetch order info:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching order info:', error);
+    } finally {
+      setIsLoadingOrderInfo(false);
+    }
+  };
+
+  if (!isAuthChecked || isBookingLoading || (sessionId && (isLoadingActivity || isLoadingOrderInfo))) {
     return (
       <main className="relative min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
         {/* Background Elements */}
@@ -77,7 +187,7 @@ const ThankYouContent = () => {
     );
   }
 
-  if (!bookingCode || bookingError || !bookingData?.status) {
+  if ((!bookingCode && !sessionId) || (bookingCode && (bookingError || !bookingData?.status)) || (sessionId && !activityBookingData)) {
     return (
       <main className="relative min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
         {/* Background Elements */}
@@ -110,6 +220,140 @@ const ThankYouContent = () => {
               <ArrowLeft className="h-5 w-5 mr-2" />
               Back to Home
             </Button>
+          </div>
+        </motion.div>
+      </main>
+    );
+  }
+
+  // Show activity booking success page
+  if (sessionId && activityBookingData) {
+    return (
+      <main className="relative min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+        {/* Background Elements */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-blue-500/10"></div>
+        <div className="absolute top-0 left-0 w-full h-full">
+          <div className="absolute top-20 left-10 w-32 h-32 bg-blue-200/30 rounded-full blur-3xl"></div>
+          <div className="absolute top-40 right-20 w-48 h-48 bg-indigo-200/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 left-20 w-40 h-40 bg-purple-200/25 rounded-full blur-3xl"></div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="relative z-10 pt-24 pb-16 px-4 sm:px-6 lg:px-8"
+        >
+          <div className="max-w-[85vw] mx-auto">
+            <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-blue-50 p-6 sm:p-8">
+              {/* Hero Header */}
+              <div className="mb-10 text-center">
+                <h1 className="text-3xl font-bold text-gray-900 font-montserrat">
+                  Payment Successful!
+                </h1>
+                <p className="text-gray-600 text-lg mt-2 font-montserrat">
+                  Your activity booking has been confirmed. We look forward to seeing you!
+                </p>
+                <div className="flex justify-center items-center mt-4">
+                  <CheckCircle className="h-6 w-6 text-green-500 mr-2" />
+                  <span className="text-sm font-semibold text-gray-600">
+                    Payment Completed
+                  </span>
+                </div>
+              </div>
+
+              {/* Activity Booking Summary */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-blue-50 p-6 sm:p-8 mt-8"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 font-montserrat">
+                    Booking Details
+                  </h2>
+                  <CheckCircle className="h-7 w-7 text-green-500" />
+                </div>
+                <div className="space-y-6 text-gray-700 text-lg">
+                  {/* Order Information from Klook */}
+                  {orderInfo && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="font-semibold">Order Number:</span>
+                        <span className="font-mono text-blue-600">{orderInfo.klktech_order_id}</span>
+                      </div>
+                      {orderInfo.bookings?.[0]?.booking_ref_number && (
+                        <div className="flex justify-between">
+                          <span className="font-semibold">Booking Reference:</span>
+                          <span className="font-mono text-blue-600">{orderInfo.bookings[0].booking_ref_number}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="font-semibold">Payment Status:</span>
+                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
+                          {orderInfo.transaction_status === 'TobePaid' ? 'Paid' : orderInfo.transaction_status}
+                        </span>
+                      </div>
+                      <div className="border-t border-gray-200 pt-4"></div>
+                    </>
+                  )}
+                  
+                  {/* Activity Details */}
+                  <div className="flex justify-between">
+                    <span className="font-semibold">Activity:</span>
+                    <span>{orderInfo?.bookings?.[0]?.activity_name || activityBookingData.booking.package_name || 'Klook Activity'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">Travel Date:</span>
+                    <span>{new Date(activityBookingData.booking.schedule?.start_time || activityBookingData.booking.start_time).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">Adults:</span>
+                    <span>{activityBookingData.booking.adult_quantity}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">Children:</span>
+                    <span>{activityBookingData.booking.child_quantity || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">Customer:</span>
+                    <span>{activityBookingData.booking.customer_info?.first_name} {activityBookingData.booking.customer_info?.last_name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">Email:</span>
+                    <span>{activityBookingData.booking.customer_info?.email}</span>
+                  </div>
+                  
+                  {/* Payment Information */}
+                  <div className="border-t border-blue-100 pt-6 mt-6">
+                    <div className="flex justify-between font-bold text-xl">
+                      <span>Total Paid:</span>
+                      <span className="text-green-500">
+                        {orderInfo?.total_amount ? `€${orderInfo.total_amount}` : `$${activityBookingData.payment.amount}`} 
+                        {orderInfo?.currency || activityBookingData.payment.currency}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Call to Action */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                className="mt-8 flex justify-center space-x-4"
+              >
+                <Button
+                  onClick={() => router.push('/')}
+                  className="bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 rounded-xl px-6 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <ArrowLeft className="h-5 w-5 mr-2" />
+                  Back to Home
+                </Button>
+              </motion.div>
+            </div>
           </div>
         </motion.div>
       </main>

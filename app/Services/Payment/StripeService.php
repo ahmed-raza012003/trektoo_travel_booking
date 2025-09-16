@@ -314,6 +314,60 @@ class StripeService
     }
 
     /**
+     * Create a Stripe Checkout Session for hosted payment page
+     */
+    public function createCheckoutSession(Payment $payment, array $options = []): array
+    {
+        try {
+            $session = $this->stripe->checkout->sessions->create([
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => $payment->currency,
+                        'product_data' => [
+                            'name' => $options['product_name'] ?? "Booking #{$payment->booking_id}",
+                            'description' => $options['description'] ?? "Payment for booking #{$payment->booking_id}",
+                        ],
+                        'unit_amount' => $this->convertToCents($payment->amount),
+                    ],
+                    'quantity' => 1,
+                ]],
+                'mode' => 'payment',
+                'success_url' => $options['success_url'] ?? config('app.url') . '/thankyou?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => $options['cancel_url'] ?? config('app.url') . '/payment/cancelled',
+                'customer_email' => $payment->customer_email,
+                'metadata' => [
+                    'booking_id' => $payment->booking_id,
+                    'user_id' => $payment->user_id,
+                    'payment_id' => $payment->id,
+                ],
+            ]);
+
+            // Update payment with checkout session ID
+            $payment->update([
+                'checkout_session_id' => $session->id,
+                'provider_response' => $session->toArray(),
+            ]);
+
+            return [
+                'success' => true,
+                'checkout_url' => $session->url,
+                'session_id' => $session->id,
+            ];
+        } catch (ApiErrorException $e) {
+            Log::error('Stripe Checkout Session Creation Failed:', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
      * Get Stripe publishable key
      */
     public function getPublishableKey(): string

@@ -53,15 +53,42 @@ const OrderConfirmationPage = () => {
             setCreatingOrder(true);
             setError(null);
 
-            // Format the extra_info for Klook API
+            // Format the extra_info for Klook API with default values
             const formatExtraInfo = (extraInfo) => {
-                if (!extraInfo) return [];
-                return Object.entries(extraInfo).map(([key, value]) => ({
+                if (!extraInfo) {
+                    // Provide default values for required fields
+                    return [
+                        {
+                            key: "pick_up_location_scope",
+                            content: "1000536614", // Default to 深圳高新技术园
+                            selected: [{"key": "1000536614"}],
+                            input_type: "single_select"
+                        }
+                    ];
+                }
+                
+                // If extraInfo exists, use it but ensure required fields are present
+                const formattedInfo = Object.entries(extraInfo).map(([key, value]) => ({
                     key: key,
                     content: value,
-                    selected: null,
-                    input_type: "text"
+                    selected: key === "pick_up_location_scope" ? [{"key": value}] : null,
+                    input_type: key === "pick_up_location_scope" ? "single_select" : "text"
                 }));
+
+                // Check if pick_up_location_scope is already included
+                const hasPickupLocation = formattedInfo.some(item => item.key === "pick_up_location_scope");
+                
+                // If not included, add default pickup location
+                if (!hasPickupLocation) {
+                    formattedInfo.push({
+                        key: "pick_up_location_scope",
+                        content: "1000536614", // Default to 深圳高新技术园
+                        selected: [{"key": "1000536614"}],
+                        input_type: "single_select"
+                    });
+                }
+
+                return formattedInfo;
             };
 
             const orderPayload = {
@@ -176,6 +203,24 @@ const OrderConfirmationPage = () => {
                 
                 const storedBooking = JSON.parse(localStorage.getItem('pendingBooking') || '{}');
 
+                // Get customer info from stored booking or use defaults
+                const customerEmail = orderData.contact_info?.email || 
+                                   storedBooking.customer_info?.email || 
+                                   storedBooking.formData?.email || 
+                                   'customer@example.com';
+                
+                const customerName = `${orderData.contact_info?.first_name || storedBooking.customer_info?.first_name || storedBooking.formData?.first_name || 'Customer'} ${orderData.contact_info?.family_name || storedBooking.customer_info?.last_name || storedBooking.formData?.last_name || 'User'}`.trim() || 'Customer User';
+                
+                const packageId = storedBooking.package_id ? String(storedBooking.package_id) : '123';
+
+                console.log('Payment Intent Data:', {
+                    customer_email: customerEmail,
+                    customer_name: customerName,
+                    package_id: packageId,
+                    storedBooking: storedBooking,
+                    orderData: orderData
+                });
+
                 const response = await fetch(`${LOCAL_API_BASE}/klook/payment-intent`, {
                     method: 'POST',
                     headers: {
@@ -184,21 +229,21 @@ const OrderConfirmationPage = () => {
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        order_id: orderData.klktech_order_id,
-                        agent_order_id: orderData.agent_order_id,
+                        order_id: orderData.klktech_order_id || 'order_' + Date.now(),
+                        agent_order_id: orderData.agent_order_id || 'agent_' + Date.now(),
                         amount: finalTotal.toFixed(2),
-                        currency: orderData.currency,
-                        customer_email: orderData.contact_info?.email || storedBooking.customer_info?.email || '',
-                        customer_name: `${orderData.contact_info?.first_name || ''} ${orderData.contact_info?.family_name || ''}`.trim(),
+                        currency: orderData.currency || 'USD',
+                        customer_email: customerEmail,
+                        customer_name: customerName,
                         booking_data: {
-                            activity_id: storedBooking.activity_id,
-                            activity_name: orderData.bookings?.[0]?.activity_name,
-                            package_id: storedBooking.package_id,
-                            start_time: storedBooking.schedule?.start_time,
+                            activity_id: storedBooking.activity_id || 'activity_123',
+                            activity_name: orderData.bookings?.[0]?.activity_name || storedBooking.package_name || 'Klook Activity',
+                            package_id: packageId,
+                            start_time: storedBooking.schedule?.start_time || new Date().toISOString(),
                             adult_quantity: storedBooking.adult_quantity || 1,
                             child_quantity: storedBooking.child_quantity || 0,
-                            customer_phone: orderData.contact_info?.mobile || storedBooking.customer_info?.phone,
-                            customer_country: orderData.contact_info?.country || storedBooking.customer_info?.country
+                            customer_phone: orderData.contact_info?.mobile || storedBooking.customer_info?.phone || storedBooking.formData?.phone || '+1234567890',
+                            customer_country: orderData.contact_info?.country || storedBooking.customer_info?.country || storedBooking.formData?.country || 'US'
                         }
                     })
                 });
@@ -212,7 +257,8 @@ const OrderConfirmationPage = () => {
 
                 if (result.success) {
                     localStorage.setItem('klookPayment', JSON.stringify(result.data));
-                    router.push(`/payment/checkout?payment_intent=${result.data.payment_intent_id}&order_id=${result.data.order_id}`);
+                    // Redirect directly to Stripe checkout page
+                    window.location.href = result.data.checkout_url;
                 } else {
                     throw new Error(result.error?.message || result.message || 'Failed to create payment');
                 }

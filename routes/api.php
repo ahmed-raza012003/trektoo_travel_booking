@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\StripeWebhookController;
 use App\Http\Controllers\Api\Klook\KlookApiController;
 use App\Http\Controllers\Api\Klook\KlookTestController;
 use Illuminate\Http\Request;
@@ -30,7 +31,7 @@ Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // Webhook routes (no auth required)
-Route::post('/webhooks/stripe', [PaymentController::class, 'stripeWebhook']);
+Route::post('/webhooks/stripe', [StripeWebhookController::class, 'handleWebhook']);
 
 // Protected authentication routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -120,7 +121,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-Route::post('/stripe/webhook', [PaymentController::class, 'stripeWebhook']);
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
+
+// Test endpoint for complete flow (for development/testing only)
+Route::post('/test/complete-flow', [StripeWebhookController::class, 'testCompleteFlow']);
+
+// Webhook simulation endpoint (for development/testing only)
+Route::post('/test/simulate-webhook', [StripeWebhookController::class, 'simulateWebhook']);
 
 // routes/api.php
 Route::get('/health', function () {

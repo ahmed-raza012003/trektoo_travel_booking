@@ -361,12 +361,25 @@ class PaymentController extends BaseController
                 'customer_name' => $request->customer_name,
             ]);
 
-            // Create Stripe payment intent
-            $result = $this->stripeService->createPaymentIntent($payment);
+            // Create Stripe checkout session
+            $activityName = $bookingData['activity_name'] ?? 'Klook Activity';
+            $adultQuantity = $bookingData['adult_quantity'] ?? 1;
+            $childQuantity = $bookingData['child_quantity'] ?? 0;
+            $description = "Payment for {$activityName} - {$adultQuantity} Adults";
+            if ($childQuantity > 0) {
+                $description .= ", {$childQuantity} Children";
+            }
+            
+            $result = $this->stripeService->createCheckoutSession($payment, [
+                'product_name' => $activityName,
+                'description' => $description,
+                'success_url' => config('app.frontend_url', 'http://localhost:3000') . '/thankyou?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => config('app.frontend_url', 'http://localhost:3000') . '/payment/cancelled',
+            ]);
 
             if (!$result['success']) {
                 DB::rollBack();
-                return $this->errorResponse('Failed to create payment intent', 400, $result['error']);
+                return $this->errorResponse('Failed to create checkout session', 400, $result['error']);
             }
 
             DB::commit();
@@ -374,10 +387,10 @@ class PaymentController extends BaseController
             return $this->successResponse([
                 'payment_id' => $payment->id,
                 'booking_id' => $booking->id,
-                'client_secret' => $result['client_secret'],
-                'payment_intent_id' => $result['payment_intent_id'],
+                'checkout_url' => $result['checkout_url'],
+                'session_id' => $result['session_id'],
                 'order_id' => $request->order_id
-            ], 'Payment intent created successfully');
+            ], 'Checkout session created successfully');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Klook Payment Intent Creation Failed:', [

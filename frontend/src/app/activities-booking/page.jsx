@@ -120,26 +120,42 @@ const BookingPage = () => {
     };
 
 
-    // Add this function to format extra_info for Klook API
+    // Add this function to format extra_info for Klook API with default values
     const formatExtraInfoForKlook = (extraInfo, otherInfoData) => {
-        if (!extraInfo || !otherInfoData) return { booking_extra_info: [], unit_extra_info: [] };
-
         const booking_extra_info = [];
 
-        // Convert your extra_info object to Klook's expected format
-        Object.entries(extraInfo).forEach(([key, value]) => {
-            if (value) {
-                // Find the corresponding field info from otherInfoData
-                const fieldInfo = findFieldInfo(key, otherInfoData);
+        // Always include default pickup location for package 102191
+        const defaultPickupLocation = {
+            key: "pick_up_location_scope",
+            content: "1000536614", // Default to 深圳高新技术园
+            selected: [{"key": "1000536614"}],
+            input_type: "single_select"
+        };
 
-                booking_extra_info.push({
-                    key: key,
-                    content: value,
-                    selected: fieldInfo?.input_type === "single_select" ? [{ key: value }] : null,
-                    input_type: fieldInfo?.input_type || "text"
-                });
-            }
-        });
+        // If extraInfo exists, process it
+        if (extraInfo) {
+            Object.entries(extraInfo).forEach(([key, value]) => {
+                if (value) {
+                    // Find the corresponding field info from otherInfoData
+                    const fieldInfo = findFieldInfo(key, otherInfoData);
+
+                    booking_extra_info.push({
+                        key: key,
+                        content: value,
+                        selected: fieldInfo?.input_type === "single_select" ? [{ key: value }] : null,
+                        input_type: fieldInfo?.input_type || "text"
+                    });
+                }
+            });
+        }
+
+        // Check if pick_up_location_scope is already included
+        const hasPickupLocation = booking_extra_info.some(item => item.key === "pick_up_location_scope");
+        
+        // If not included, add default pickup location
+        if (!hasPickupLocation) {
+            booking_extra_info.push(defaultPickupLocation);
+        }
 
         return { booking_extra_info, unit_extra_info: [] };
     };
