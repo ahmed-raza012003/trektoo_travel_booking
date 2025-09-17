@@ -397,4 +397,60 @@ public function retrievePaymentIntent(string $paymentIntentId): array
         ];
     }
 }
+
+/**
+ * Retrieve payment intent from checkout session
+ */
+    public function retrievePaymentIntentFromSession(string $sessionId): array
+    {
+        try {
+            // Set the API key explicitly and ensure it's set
+            $stripeSecret = config('stripe.secret');
+            if (!$stripeSecret) {
+                Log::error('Stripe secret key not found in configuration');
+                return [
+                    'success' => false,
+                    'error' => 'Stripe secret key not configured'
+                ];
+            }
+            
+            \Stripe\Stripe::setApiKey($stripeSecret);
+            
+            // Verify the API key is set
+            if (!\Stripe\Stripe::getApiKey()) {
+                Log::error('Failed to set Stripe API key');
+                return [
+                    'success' => false,
+                    'error' => 'Failed to set Stripe API key'
+                ];
+            }
+            
+            $session = \Stripe\Checkout\Session::retrieve($sessionId);
+        
+        if (!$session->payment_intent) {
+            return [
+                'success' => false,
+                'error' => 'No payment intent found in session'
+            ];
+        }
+        
+        $paymentIntent = \Stripe\PaymentIntent::retrieve($session->payment_intent);
+        
+        return [
+            'success' => true,
+            'status' => $paymentIntent->status,
+            'amount' => $paymentIntent->amount,
+            'currency' => $paymentIntent->currency,
+            'payment_intent' => $paymentIntent,
+            'session' => $session
+        ];
+    } catch (\Exception $e) {
+        Log::error('Stripe session retrieval failed: ' . $e->getMessage());
+        
+        return [
+            'success' => false,
+            'error' => $e->getMessage()
+        ];
+    }
+}
 }

@@ -15,7 +15,7 @@ class KlookApiService
 
     public function __construct()
     {
-        $this->baseUrl = config('klook.base_url', 'https://sandbox-api.klktech.com/');
+        $this->baseUrl = config('klook.base_url', 'https://sandbox-api.klktech.com');
         $this->apiKey = config('klook.api_key', 'Y3nhQkK5nP2f6y0k7blt0fJWu9Xw3WDG');
         $this->language = config('klook.language', 'en_US');
 
@@ -171,7 +171,7 @@ class KlookApiService
         try {
             // ✅ Log the exact payload being sent
             Log::info('Klook API - Availability Check Request:', [
-                'url' => $this->baseUrl . 'v3/availability/check',
+                'url' => $this->baseUrl . '/v3/availability/check',
                 'headers' => [
                     'X-API-KEY' => $this->apiKey,
                     'Accept-Language' => $this->language,
@@ -276,6 +276,24 @@ class KlookApiService
             return json_decode($response->getBody(), true);
         } catch (RequestException $e) {
             Log::error('Klook API Error - Get Bookings: ' . $e->getMessage());
+
+            return [
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get order details
+     */
+    public function getOrderDetails($orderId)
+    {
+        try {
+            $response = $this->client->get("v2/orders/{$orderId}");
+
+            return json_decode($response->getBody(), true);
+        } catch (RequestException $e) {
+            Log::error('Klook API Error - Get Order Details: ' . $e->getMessage());
 
             return [
                 'error' => $e->getMessage()

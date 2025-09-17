@@ -25,7 +25,7 @@ class StripeWebhookController extends Controller
         $this->stripeService = $stripeService;
         
         // Set Stripe API key
-        Stripe::setApiKey(config('stripe.secret_key'));
+        Stripe::setApiKey(config('stripe.secret'));
     }
 
     /**

@@ -375,7 +375,7 @@ class PaymentController extends BaseController
             $result = $this->stripeService->createCheckoutSession($payment, [
                 'product_name' => $activityName,
                 'description' => $description,
-                'success_url' => config('app.frontend_url', 'http://localhost:3000') . '/thankyou?session_id={CHECKOUT_SESSION_ID}',
+                'success_url' => config('app.frontend_url', 'http://localhost:3000') . '/thankyou?session_id={CHECKOUT_SESSION_ID}&payment_id=' . $payment->id . '&order_id=' . $request->order_id,
                 'cancel_url' => config('app.frontend_url', 'http://localhost:3000') . '/payment/cancelled',
             ]);
 
@@ -535,9 +535,15 @@ class PaymentController extends BaseController
             }
 
             // Verify Stripe payment is successful
+            // First try to retrieve as payment intent ID, if that fails, try as session ID
             $stripePayment = $this->stripeService->retrievePaymentIntent($request->stripe_payment_intent_id);
             
-            if ($stripePayment['status'] !== 'succeeded') {
+            if (!$stripePayment['success']) {
+                // If payment intent retrieval failed, try as session ID
+                $stripePayment = $this->stripeService->retrievePaymentIntentFromSession($request->stripe_payment_intent_id);
+            }
+            
+            if (!$stripePayment['success'] || $stripePayment['status'] !== 'succeeded') {
                 return $this->errorResponse('Stripe payment not completed', 400);
             }
 
@@ -587,10 +593,10 @@ class PaymentController extends BaseController
             ]);
 
             $payment->update([
-                'status' => 'completed',
-                'completed_at' => now(),
-                'metadata' => array_merge(
-                    $payment->metadata ?? [],
+                'status' => 'paid',
+                'paid_at' => now(),
+                'provider_response' => array_merge(
+                    $payment->provider_response ?? [],
                     [
                         'klook_balance_payment' => $balancePayment,
                         'klook_order_details' => $orderDetails['data'] ?? null
@@ -598,18 +604,52 @@ class PaymentController extends BaseController
                 )
             ]);
 
-            // Step 4: Resend voucher
-            $voucherResult = $this->klookService->resendVoucher($request->order_id);
+            // Step 4: Get updated order details after balance payment
+            $updatedOrderDetails = $this->klookService->getOrderDetails($request->order_id);
             
-            if (isset($voucherResult['error'])) {
-                Log::warning('Voucher resend failed', [
+            if (isset($updatedOrderDetails['error'])) {
+                Log::warning('Failed to get updated order details', [
                     'order_id' => $request->order_id,
-                    'error' => $voucherResult['error']
+                    'error' => $updatedOrderDetails['error']
+                ]);
+            } else {
+                // Update booking with latest order details
+                $booking->update([
+                    'external_booking_data' => array_merge(
+                        $booking->external_booking_data ?? [],
+                        [
+                            'updated_order_details' => $updatedOrderDetails['data'] ?? null,
+                            'updated_at' => now()->toISOString()
+                        ]
+                    )
                 ]);
             }
 
-            // Step 5: Generate PDF voucher
-            $voucherPdfPath = $this->generateVoucherPdf($booking, $orderDetails['data'] ?? []);
+            // Step 5: Resend voucher (only if order is confirmed)
+            $voucherResult = null;
+            if (isset($updatedOrderDetails['data']['confirm_status']) && 
+                $updatedOrderDetails['data']['confirm_status'] === 'confirmed') {
+                $voucherResult = $this->klookService->resendVoucher($request->order_id);
+                
+                if (isset($voucherResult['error'])) {
+                    Log::warning('Voucher resend failed', [
+                        'order_id' => $request->order_id,
+                        'error' => $voucherResult['error']
+                    ]);
+                }
+            } else {
+                Log::info('Order not yet confirmed, skipping voucher resend', [
+                    'order_id' => $request->order_id,
+                    'status' => $updatedOrderDetails['data']['confirm_status'] ?? 'unknown'
+                ]);
+            }
+
+            // Step 6: Generate PDF voucher (only if order details are available)
+            $voucherPdfPath = null;
+            $orderDataForVoucher = $updatedOrderDetails['data'] ?? $orderDetails['data'] ?? null;
+            if (!empty($orderDataForVoucher)) {
+                $voucherPdfPath = $this->generateVoucherPdf($booking, $orderDataForVoucher);
+            }
 
             DB::commit();
 
@@ -641,11 +681,12 @@ class PaymentController extends BaseController
     private function generateVoucherPdf(Booking $booking, array $orderDetails): ?string
     {
         try {
+            $logoPath = public_path('images/trektoo-logo.png');
             $voucherData = [
                 'booking' => $booking,
                 'order_details' => $orderDetails,
                 'company_name' => 'TrekToo',
-                'company_logo' => public_path('images/trektoo-logo.png'), // Ensure you have this logo
+                'company_logo' => file_exists($logoPath) ? $logoPath : null,
                 'issue_date' => now()->format('F j, Y'),
                 'voucher_number' => 'TT-' . $booking->id . '-' . time()
             ];

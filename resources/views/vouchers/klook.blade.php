@@ -21,7 +21,7 @@
 </head>
 <body>
     <div class="header">
-        @if(file_exists($company_logo))
+        @if($company_logo && file_exists($company_logo))
             <img src="{{ $company_logo }}" class="logo" alt="TrekToo Logo">
         @endif
         <h1>TrekToo Booking Voucher</h1>
@@ -34,24 +34,24 @@
         <div class="details">
             <div class="detail-row">
                 <div class="detail-label">Booking Reference:</div>
-                <div class="detail-value">{{ $order_details['bookings'][0]['booking_ref_number'] }}</div>
+                <div class="detail-value">{{ $order_details['bookings'][0]['booking_ref_number'] ?? $order_details['booking_ref_number'] ?? $booking->booking_reference ?? 'N/A' }}</div>
             </div>
             <div class="detail-row">
                 <div class="detail-label">Order Number:</div>
-                <div class="detail-value">{{ $order_details['klktech_order_id'] }}</div>
+                <div class="detail-value">{{ $order_details['klktech_order_id'] ?? $order_details['order_id'] ?? $booking->order_id ?? 'N/A' }}</div>
             </div>
             <div class="detail-row">
                 <div class="detail-label">Activity:</div>
-                <div class="detail-value">{{ $order_details['bookings'][0]['activity_name'] }}</div>
+                <div class="detail-value">{{ $order_details['bookings'][0]['activity_name'] ?? $order_details['activity_name'] ?? $booking->activity_name ?? 'N/A' }}</div>
             </div>
             <div class="detail-row">
                 <div class="detail-label">Package:</div>
-                <div class="detail-value">{{ $order_details['bookings'][0]['package_name'] }}</div>
+                <div class="detail-value">{{ $order_details['bookings'][0]['package_name'] ?? $order_details['package_name'] ?? 'N/A' }}</div>
             </div>
             <div class="detail-row">
                 <div class="detail-label">Status:</div>
                 <div class="detail-value" style="color: green; font-weight: bold;">
-                    {{ strtoupper($order_details['confirm_status']) }}
+                    {{ strtoupper($order_details['confirm_status'] ?? 'PENDING') }}
                 </div>
             </div>
         </div>
@@ -63,20 +63,20 @@
             <div class="detail-row">
                 <div class="detail-label">Name:</div>
                 <div class="detail-value">
-                    {{ $order_details['contact_info']['first_name'] }} {{ $order_details['contact_info']['family_name'] }}
+                    {{ ($order_details['contact_info']['first_name'] ?? '') . ' ' . ($order_details['contact_info']['family_name'] ?? '') }}
                 </div>
             </div>
             <div class="detail-row">
                 <div class="detail-label">Email:</div>
-                <div class="detail-value">{{ $order_details['contact_info']['email'] }}</div>
+                <div class="detail-value">{{ $order_details['contact_info']['email'] ?? 'N/A' }}</div>
             </div>
             <div class="detail-row">
                 <div class="detail-label">Phone:</div>
-                <div class="detail-value">{{ $order_details['contact_info']['mobile'] }}</div>
+                <div class="detail-value">{{ $order_details['contact_info']['mobile'] ?? 'N/A' }}</div>
             </div>
             <div class="detail-row">
                 <div class="detail-label">Country:</div>
-                <div class="detail-value">{{ $order_details['contact_info']['country'] }}</div>
+                <div class="detail-value">{{ $order_details['contact_info']['country'] ?? 'N/A' }}</div>
             </div>
         </div>
     </div>
@@ -84,18 +84,20 @@
     <div class="section">
         <div class="section-title">Booking Details</div>
         <div class="details">
-            @foreach($order_details['skus'] as $sku)
-            <div class="detail-row">
-                <div class="detail-label">SKU {{ $sku['sku_id'] }}:</div>
-                <div class="detail-value">
-                    {{ $sku['quantity'] }} x {{ $sku['sku_price'] }} {{ $sku['currency'] }}
+            @if(!empty($order_details['skus']))
+                @foreach($order_details['skus'] as $sku)
+                <div class="detail-row">
+                    <div class="detail-label">SKU {{ $sku['sku_id'] ?? 'N/A' }}:</div>
+                    <div class="detail-value">
+                        {{ $sku['quantity'] ?? 0 }} x {{ $sku['sku_price'] ?? 0 }} {{ $sku['currency'] ?? 'EUR' }}
+                    </div>
                 </div>
-            </div>
-            @endforeach
+                @endforeach
+            @endif
             <div class="detail-row">
                 <div class="detail-label">Total Amount:</div>
                 <div class="detail-value" style="font-weight: bold;">
-                    {{ $order_details['total_amount'] }} {{ $order_details['currency'] }}
+                    {{ $order_details['total_amount'] ?? 'N/A' }} {{ $order_details['currency'] ?? 'EUR' }}
                 </div>
             </div>
         </div>
@@ -106,12 +108,14 @@
         <div class="section-title">Voucher Codes</div>
         <div class="details">
             @foreach($order_details['bookings'][0]['original_vouchers'] as $voucher)
-                @foreach($voucher['codes'] as $code)
-                <div class="detail-row">
-                    <div class="detail-label">Code:</div>
-                    <div class="detail-value">{{ $code['code'] }} - {{ $code['description'] }}</div>
-                </div>
-                @endforeach
+                @if(!empty($voucher['codes']))
+                    @foreach($voucher['codes'] as $code)
+                    <div class="detail-row">
+                        <div class="detail-label">Code:</div>
+                        <div class="detail-value">{{ $code['code'] ?? 'N/A' }} - {{ $code['description'] ?? 'N/A' }}</div>
+                    </div>
+                    @endforeach
+                @endif
             @endforeach
         </div>
     </div>
@@ -123,8 +127,8 @@
         <div class="details">
             @foreach($order_details['bookings'][0]['operator_contacts'] as $contact)
             <div class="detail-row">
-                <div class="detail-label">{{ $contact['method'] }}:</div>
-                <div class="detail-value">{{ implode(', ', $contact['details']) }}</div>
+                <div class="detail-label">{{ $contact['method'] ?? 'Contact' }}:</div>
+                <div class="detail-value">{{ !empty($contact['details']) ? implode(', ', $contact['details']) : 'N/A' }}</div>
             </div>
             @endforeach
         </div>
