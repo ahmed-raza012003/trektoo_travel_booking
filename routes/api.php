@@ -37,13 +37,13 @@ Route::post('/webhooks/stripe', [StripeWebhookController::class, 'handleWebhook'
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [AuthController::class, 'profile']);
-    
+
     // Booking routes
     Route::apiResource('bookings', BookingController::class);
     Route::post('/bookings/{id}/complete', [BookingController::class, 'completeBooking']);
     Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
     Route::get('/bookings-statistics', [BookingController::class, 'statistics']);
-    
+
     // Payment routes
     Route::apiResource('payments', PaymentController::class)->only(['index', 'show']);
     Route::post('/payments/create-intent', [PaymentController::class, 'createPaymentIntent']);
@@ -60,21 +60,21 @@ Route::prefix('klook')->group(function () {
     Route::get('/test', [KlookTestController::class, 'testAll']);
     Route::get('/test/categories', [KlookTestController::class, 'testCategories']);
     Route::get('/test/activities', [KlookTestController::class, 'testActivities']);
-    
+
     // Categories
     Route::get('/categories', [KlookApiController::class, 'getCategories']);
-    
+
     // Activities
     Route::get('/activities', [KlookApiController::class, 'getActivities']);
     Route::get('/activities/{activityId}', [KlookApiController::class, 'getActivityDetail']);
-    
+
     // Schedules
     Route::get('/schedules', [KlookApiController::class, 'getSchedules']);
-    
+
     // Pricing
     Route::get('/msp/{productId}', [KlookApiController::class, 'getMinimumSellingPrice']);
     Route::get('/otherinfo/{productId}', [KlookApiController::class, 'getOtherInfo']);
-    
+
     // Orders
     Route::post('/availability/check', [KlookApiController::class, 'checkAvailability']);
     Route::post('/availability/check-direct', [KlookApiController::class, 'checkAvailabilityDirect']);
@@ -110,25 +110,24 @@ Route::prefix('klook')->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     // ... other routes ...
-    
+
     // Klook specific payment routes (protected)
     Route::prefix('klook')->group(function () {
         Route::post('/payment-intent', [PaymentController::class, 'createKlookPaymentIntent']);
         Route::post('/confirm-payment', [PaymentController::class, 'confirmKlookPayment']);
         Route::get('/order-status/{orderId}', [PaymentController::class, 'getKlookOrderStatus']);
-    });
+        // Klook payment flow routes
+        Route::post('/complete-payment-flow', [PaymentController::class, 'completeKlookPaymentFlow']);
+        Route::post('/apply-cancellation', [PaymentController::class, 'applyCancellation']);
+        Route::get('/cancellation-status/{orderId}', [PaymentController::class, 'getCancellationStatus']);
 
-    // Klook payment flow routes
-    Route::post('/complete-payment-flow', [PaymentController::class, 'completeKlookPaymentFlow']);
-    Route::post('/apply-cancellation', [PaymentController::class, 'applyCancellation']);
-    Route::get('/cancellation-status/{orderId}', [PaymentController::class, 'getCancellationStatus']);
-    
-    // Voucher download
-    Route::get('/bookings/{bookingId}/voucher', [PaymentController::class, 'downloadVoucher']);
-    
-    // Additional Klook routes
-    Route::post('/klook/resend-voucher/{orderId}', [KlookApiController::class, 'resendVoucher']);
-    Route::get('/klook/balance', [KlookApiController::class, 'getBalance']);
+        // Voucher download
+        Route::get('/bookings/{bookingId}/voucher', [PaymentController::class, 'downloadVoucher']);
+
+        // Additional Klook routes
+        Route::post('/resend-voucher/{orderId}', [KlookApiController::class, 'resendVoucher']);
+        Route::get('/balance', [KlookApiController::class, 'getBalance']);
+    });
 });
 
 
