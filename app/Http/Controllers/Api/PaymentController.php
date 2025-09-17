@@ -3,17 +3,19 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\BaseController;
-use App\Models\Payment;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Booking;
+use App\Models\Payment;
 use App\Services\Payment\PaymentManager;
 use App\Services\Payment\StripeService;
 use App\Services\Klook\KlookApiService;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 
 class PaymentController extends BaseController
 {
@@ -505,5 +507,301 @@ class PaymentController extends BaseController
 
             return $this->errorResponse('Failed to fetch order status', 500, $e->getMessage());
         }
+    }
+
+
+    
+    /**
+     * Complete Klook payment flow after successful Stripe payment
+     */
+    public function completeKlookPaymentFlow(Request $request): JsonResponse
+    {
+        $request->validate([
+            'order_id' => 'required|string',
+            'payment_id' => 'required|exists:payments,id',
+            'stripe_payment_intent_id' => 'required|string'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $user = Auth::user();
+            $payment = Payment::findOrFail($request->payment_id);
+            $booking = $payment->booking;
+
+            // Verify the payment belongs to the user
+            if ($booking->user_id !== $user->id) {
+                return $this->errorResponse('Unauthorized access to payment', 403);
+            }
+
+            // Verify Stripe payment is successful
+            $stripePayment = $this->stripeService->retrievePaymentIntent($request->stripe_payment_intent_id);
+            
+            if ($stripePayment['status'] !== 'succeeded') {
+                return $this->errorResponse('Stripe payment not completed', 400);
+            }
+
+            // Step 1: Pay Klook order with balance
+            $balancePayment = $this->klookService->payWithBalance($request->order_id);
+
+            if (isset($balancePayment['error'])) {
+                Log::error('Klook balance payment failed', [
+                    'order_id' => $request->order_id,
+                    'error' => $balancePayment['error'],
+                    'payment_id' => $payment->id
+                ]);
+
+                // Update payment status to reflect the issue
+                $payment->update([
+                    'status' => 'failed',
+                    'failure_reason' => 'Klook balance payment failed: ' . $balancePayment['error']
+                ]);
+
+                DB::rollBack();
+                return $this->errorResponse('Klook balance payment failed', 400, $balancePayment['error']);
+            }
+
+            // Step 2: Get updated order details
+            $orderDetails = $this->klookService->getOrderDetail($request->order_id);
+
+            if (isset($orderDetails['error'])) {
+                Log::warning('Failed to fetch order details after balance payment', [
+                    'order_id' => $request->order_id,
+                    'error' => $orderDetails['error']
+                ]);
+                // Continue anyway since balance payment succeeded
+            }
+
+            // Step 3: Update booking and payment status
+            $booking->update([
+                'status' => 'confirmed',
+                'confirmed_at' => now(),
+                'external_booking_data' => array_merge(
+                    $booking->external_booking_data ?? [],
+                    [
+                        'balance_payment_result' => $balancePayment,
+                        'order_details' => $orderDetails['data'] ?? null,
+                        'confirmed_at' => now()->toISOString()
+                    ]
+                )
+            ]);
+
+            $payment->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+                'metadata' => array_merge(
+                    $payment->metadata ?? [],
+                    [
+                        'klook_balance_payment' => $balancePayment,
+                        'klook_order_details' => $orderDetails['data'] ?? null
+                    ]
+                )
+            ]);
+
+            // Step 4: Resend voucher
+            $voucherResult = $this->klookService->resendVoucher($request->order_id);
+            
+            if (isset($voucherResult['error'])) {
+                Log::warning('Voucher resend failed', [
+                    'order_id' => $request->order_id,
+                    'error' => $voucherResult['error']
+                ]);
+            }
+
+            // Step 5: Generate PDF voucher
+            $voucherPdfPath = $this->generateVoucherPdf($booking, $orderDetails['data'] ?? []);
+
+            DB::commit();
+
+            return $this->successResponse([
+                'booking' => $booking->fresh(),
+                'payment' => $payment->fresh(),
+                'balance_payment' => $balancePayment,
+                'order_details' => $orderDetails['data'] ?? null,
+                'voucher_resend' => $voucherResult['success'] ?? false,
+                'voucher_pdf_url' => $voucherPdfPath ? Storage::url($voucherPdfPath) : null
+            ], 'Klook payment flow completed successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Klook payment flow failed', [
+                'order_id' => $request->order_id,
+                'payment_id' => $request->payment_id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return $this->errorResponse('Failed to complete Klook payment flow', 500, $e->getMessage());
+        }
+    }
+
+    /**
+     * Generate PDF voucher for the booking
+     */
+    private function generateVoucherPdf(Booking $booking, array $orderDetails): ?string
+    {
+        try {
+            $voucherData = [
+                'booking' => $booking,
+                'order_details' => $orderDetails,
+                'company_name' => 'TrekToo',
+                'company_logo' => public_path('images/trektoo-logo.png'), // Ensure you have this logo
+                'issue_date' => now()->format('F j, Y'),
+                'voucher_number' => 'TT-' . $booking->id . '-' . time()
+            ];
+
+            $pdf = Pdf::loadView('vouchers.klook', $voucherData);
+            
+            $filename = 'vouchers/klook-voucher-' . $booking->id . '.pdf';
+            Storage::put($filename, $pdf->output());
+            
+            // Update booking with voucher path
+            $booking->update([
+                'voucher_path' => $filename
+            ]);
+
+            return $filename;
+        } catch (\Exception $e) {
+            Log::error('Voucher PDF generation failed', [
+                'booking_id' => $booking->id,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Download voucher PDF
+     */
+    /**
+ * Download voucher PDF
+ */
+public function downloadVoucher($bookingId): \Symfony\Component\HttpFoundation\BinaryFileResponse
+{
+    $booking = Booking::where('id', $bookingId)
+        ->where('user_id', Auth::id())
+        ->firstOrFail();
+
+    if (!$booking->voucher_path || !Storage::exists($booking->voucher_path)) {
+        abort(404, 'Voucher not found');
+    }
+
+    return response()->download(
+        Storage::path($booking->voucher_path),
+        'trektoo-voucher-' . $booking->id . '.pdf',
+        ['Content-Type' => 'application/pdf']
+    );
+}
+
+    /**
+     * Get Klook order cancellation status
+     */
+    public function getCancellationStatus($orderId): JsonResponse
+    {
+        try {
+            $result = $this->klookService->getOrderCancellationStatus($orderId);
+
+            if (isset($result['error'])) {
+                return $this->errorResponse('Failed to fetch cancellation status', 400, $result['error']);
+            }
+
+            return $this->successResponse($result['data'], 'Cancellation status retrieved successfully');
+        } catch (\Exception $e) {
+            Log::error('Klook cancellation status check failed', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->errorResponse('Failed to fetch cancellation status', 500, $e->getMessage());
+        }
+    }
+
+    /**
+     * Apply for order cancellation
+     */
+    public function applyCancellation(Request $request): JsonResponse
+    {
+        $request->validate([
+            'order_id' => 'required|string',
+            'reason' => 'required|string|max:500'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $user = Auth::user();
+            
+            // Find the booking
+            $booking = Booking::where('external_booking_id', $request->order_id)
+                ->where('user_id', $user->id)
+                ->firstOrFail();
+
+            // Apply cancellation with Klook
+            $cancellationResult = $this->klookService->applyOrderCancellation($request->order_id, $this->getRefundReasonId($request->reason));
+
+            if (isset($cancellationResult['error'])) {
+                DB::rollBack();
+                return $this->errorResponse('Cancellation application failed', 400, $cancellationResult['error']);
+            }
+
+            // Update booking status
+            $booking->update([
+                'status' => 'cancellation_requested',
+                'cancellation_reason' => $request->reason,
+                'cancellation_requested_at' => now(),
+                'external_booking_data' => array_merge(
+                    $booking->external_booking_data ?? [],
+                    [
+                        'cancellation_application' => $cancellationResult,
+                        'cancellation_requested_at' => now()->toISOString()
+                    ]
+                )
+            ]);
+
+            DB::commit();
+
+            return $this->successResponse([
+                'booking' => $booking->fresh(),
+                'cancellation_result' => $cancellationResult
+            ], 'Cancellation applied successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Cancellation application failed', [
+                'order_id' => $request->order_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->errorResponse('Failed to apply for cancellation', 500, $e->getMessage());
+        }
+    }
+
+    /**
+     * Map cancellation reason to Klook's refund reason IDs
+     */
+    private function getRefundReasonId(string $reason): int
+    {
+        $reasonMap = [
+            'change of plans' => 1,
+            'schedule conflict' => 2,
+            'found better option' => 3,
+            'personal emergency' => 4,
+            'weather conditions' => 5,
+            'travel restrictions' => 6,
+            'health issues' => 7,
+            'financial reasons' => 8,
+            'dissatisfied with service' => 9,
+            'other' => 99
+        ];
+
+        $lowerReason = strtolower($reason);
+        
+        foreach ($reasonMap as $key => $id) {
+            if (str_contains($lowerReason, $key)) {
+                return $id;
+            }
+        }
+
+        return 99; // Default to "other"
     }
 }

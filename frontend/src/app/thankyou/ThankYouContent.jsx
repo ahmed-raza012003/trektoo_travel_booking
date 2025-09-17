@@ -3,167 +3,165 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { AlertCircle, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle, Loader2, Download, FileText, Calendar, Users, MapPin, Clock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { useBookingDetails } from '@/hooks/useHotels';
 
 const ThankYouContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isAuthenticated, token } = useAuth();
   const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingError, setProcessingError] = useState(null);
 
-  const bookingCode = searchParams.get('booking_code');
   const sessionId = searchParams.get('session_id');
-  const roomTitle = searchParams.get('roomTitle');
-  const roomImage = searchParams.get('roomImage');
-  const beds = searchParams.get('beds');
-  const adults = searchParams.get('adults');
-  const children = searchParams.get('children');
-  const number_of_rooms = searchParams.get('number_of_rooms');
-  const start_date = searchParams.get('start_date');
-  const end_date = searchParams.get('end_date');
-  const hotelTitle = searchParams.get('hotelTitle');
-  
-  // For activity bookings from Stripe
+  const paymentId = searchParams.get('payment_id');
+  const orderId = searchParams.get('order_id');
+
   const [activityBookingData, setActivityBookingData] = useState(null);
   const [isLoadingActivity, setIsLoadingActivity] = useState(false);
   const [orderInfo, setOrderInfo] = useState(null);
-  const [isLoadingOrderInfo, setIsLoadingOrderInfo] = useState(false);
+  const [voucherUrl, setVoucherUrl] = useState(null);
 
-  const {
-    data: bookingData,
-    isLoading: isBookingLoading,
-    error: bookingError,
-  } = useBookingDetails(bookingCode, token);
-
+  // Add this debug section to your ThankYou component
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!isAuthenticated || !token) {
-        console.warn('Redirecting to login: User not authenticated', {
-          isAuthenticated,
-          token,
-          localStorageToken: localStorage.getItem('authToken'),
-        });
-        router.push(`/login?redirect=/thankyou&${searchParams.toString()}`);
-      } else {
-        console.log('Authentication successful', { isAuthenticated, token });
-      }
-      setIsAuthChecked(true);
-    }, 200);
+    console.log('🔵 ThankYou Component Debug Info:', {
+      sessionId,
+      paymentId,
+      orderId,
+      isAuthChecked,
+      hasToken: !!token,
+      hasStoredPayment: !!localStorage.getItem('klookPayment'),
+      hasStoredBooking: !!localStorage.getItem('pendingBooking')
+    });
 
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, token, router, searchParams]);
-
-  // Handle Stripe session ID for activity bookings
-  useEffect(() => {
-    if (sessionId && isAuthChecked && token) {
-      fetchActivityBookingData();
+    if (sessionId && paymentId && orderId && isAuthChecked && token) {
+      console.log('🟢 Starting payment flow with parameters:', {
+        order_id: orderId,
+        payment_id: JSON.parse(localStorage.getItem('klookPayment') || '{}').payment_id,
+        stripe_payment_intent_id: sessionId
+      });
+      completePaymentFlow();
     }
-  }, [sessionId, isAuthChecked, token]);
+  }, [sessionId, paymentId, orderId, isAuthChecked, token]);
 
-  const fetchActivityBookingData = async () => {
+  // In your ThankYouContent component, replace the completePaymentFlow function:
+
+  const completePaymentFlow = async () => {
     try {
-      setIsLoadingActivity(true);
-      
-      // Get stored booking data from localStorage
+      setIsProcessing(true);
+      setProcessingError(null);
+
+      // Get stored booking data
       const storedPayment = localStorage.getItem('klookPayment');
       const storedBooking = localStorage.getItem('pendingBooking');
-      
-      if (storedPayment && storedBooking) {
-        const paymentData = JSON.parse(storedPayment);
-        const bookingData = JSON.parse(storedBooking);
-        
-        // Trigger the complete flow to process payment and update database
-        let webhookResult = null;
-        try {
-          console.log('Triggering complete flow for payment:', paymentData.payment_id);
-          
-          const response = await fetch('http://localhost:8000/api/test/simulate-webhook', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              payment_id: paymentData.payment_id
-            })
-          });
 
-          if (response.ok) {
-            webhookResult = await response.json();
-            console.log('Complete flow result:', webhookResult);
-            
-            if (webhookResult.success) {
-              console.log('Payment and booking processed successfully:', webhookResult.data);
-            } else {
-              console.error('Complete flow failed:', webhookResult.error);
-            }
-          } else {
-            console.error('Failed to trigger complete flow:', response.status);
-          }
-        } catch (flowError) {
-          console.error('Error triggering complete flow:', flowError);
-        }
-        
+      if (!storedPayment || !storedBooking) {
+        throw new Error('Missing booking data in localStorage');
+      }
+
+      const paymentData = JSON.parse(storedPayment);
+      const bookingData = JSON.parse(storedBooking);
+
+      console.log('Starting complete payment flow with:', {
+        paymentData,
+        bookingData,
+        sessionId,
+        orderId
+      });
+
+      // ✅ CORRECT ENDPOINT - Use the new complete-payment-flow endpoint
+      const response = await fetch('http://localhost:8000/api/klook/complete-payment-flow', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          order_id: orderId, // This should be the Klook order ID
+          payment_id: paymentData.payment_id, // From your stored payment data
+          stripe_payment_intent_id: sessionId // The Stripe session ID
+        })
+      });
+
+      console.log('Complete payment flow response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Payment flow failed with status:', response.status, 'Error:', errorText);
+        throw new Error(`Payment flow failed: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Complete payment flow result:', result);
+
+      if (result.success) {
+        setFlowStatus({
+          completed: true,
+          error: null,
+          data: result.data
+        });
+
         setActivityBookingData({
           payment: paymentData,
           booking: bookingData,
           sessionId: sessionId
         });
-        
-        // Fetch updated order info from Klook after payment is processed
-        if (webhookResult && webhookResult.success && webhookResult.data && webhookResult.data.order_no) {
-          await fetchOrderInfo(webhookResult.data.order_no);
-        }
-        
+
+        setOrderInfo(result.data.order_details);
+        setVoucherUrl(result.data.voucher_pdf_url);
+
         // Clear stored data
         localStorage.removeItem('klookPayment');
         localStorage.removeItem('pendingBooking');
         localStorage.removeItem('klookOrderNo');
         localStorage.removeItem('agentOrderId');
+      } else {
+        throw new Error(result.error || result.message || 'Payment flow failed');
       }
     } catch (error) {
-      console.error('Error fetching activity booking data:', error);
+      console.error('Payment flow error:', error);
+      setProcessingError(error.message);
+      setFlowStatus({
+        completed: false,
+        error: error.message,
+        data: null
+      });
     } finally {
-      setIsLoadingActivity(false);
+      setIsProcessing(false);
     }
   };
 
-  const fetchOrderInfo = async (orderNo) => {
+  const downloadVoucher = async () => {
     try {
-      setIsLoadingOrderInfo(true);
-      console.log('Fetching order info for order:', orderNo);
-      
-      const response = await fetch(`http://localhost:8000/api/klook/orders/${orderNo}`, {
-        method: 'GET',
+      const response = await fetch(`http://localhost:8000/api/bookings/${orderInfo.bookings[0].booking_ref_number}/voucher`, {
         headers: {
-          'Accept': 'application/json',
           'Authorization': `Bearer ${token}`
         }
       });
 
       if (response.ok) {
-        const result = await response.json();
-        console.log('Order info fetched successfully:', result);
-        setOrderInfo(result);
-      } else {
-        console.error('Failed to fetch order info:', response.status);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `trektoo-voucher-${orderInfo.klktech_order_id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
       }
     } catch (error) {
-      console.error('Error fetching order info:', error);
-    } finally {
-      setIsLoadingOrderInfo(false);
+      console.error('Download error:', error);
     }
   };
 
-  if (!isAuthChecked || isBookingLoading || (sessionId && (isLoadingActivity || isLoadingOrderInfo))) {
+  if (!isAuthChecked || isProcessing) {
     return (
       <main className="relative min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-        {/* Background Elements */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-blue-500/10"></div>
         <div className="absolute top-0 left-0 w-full h-full">
           <div className="absolute top-20 left-10 w-32 h-32 bg-blue-200/30 rounded-full blur-3xl"></div>
@@ -178,8 +176,8 @@ const ThankYouContent = () => {
         >
           <div className="max-w-md mx-auto p-8 text-center bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-blue-50">
             <Loader2 className="h-8 w-8 text-blue-500 animate-spin mx-auto" />
-            <p className="text-gray-600 text-base mt-3 font-montserrat">
-              Loading confirmation...
+            <p className="text-gray-600 text-base mt-3">
+              {isProcessing ? 'Completing your booking...' : 'Loading...'}
             </p>
           </div>
         </motion.div>
@@ -187,10 +185,9 @@ const ThankYouContent = () => {
     );
   }
 
-  if ((!bookingCode && !sessionId) || (bookingCode && (bookingError || !bookingData?.status)) || (sessionId && !activityBookingData)) {
+  if (processingError) {
     return (
       <main className="relative min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-        {/* Background Elements */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-blue-500/10"></div>
         <div className="absolute top-0 left-0 w-full h-full">
           <div className="absolute top-20 left-10 w-32 h-32 bg-blue-200/30 rounded-full blur-3xl"></div>
@@ -205,13 +202,11 @@ const ThankYouContent = () => {
         >
           <div className="max-w-md mx-auto p-8 text-center bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-blue-50">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
-            <h3 className="text-3xl font-bold text-gray-900 mt-4 font-montserrat">
-              Invalid Booking
+            <h3 className="text-3xl font-bold text-gray-900 mt-4">
+              Processing Error
             </h3>
             <p className="text-gray-600 text-base mt-3">
-              {bookingError
-                ? bookingError.message
-                : 'No booking code provided. Please try booking again.'}
+              {processingError}
             </p>
             <Button
               onClick={() => router.push('/')}
@@ -226,11 +221,9 @@ const ThankYouContent = () => {
     );
   }
 
-  // Show activity booking success page
-  if (sessionId && activityBookingData) {
+  if (!orderInfo) {
     return (
       <main className="relative min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-        {/* Background Elements */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-blue-500/10"></div>
         <div className="absolute top-0 left-0 w-full h-full">
           <div className="absolute top-20 left-10 w-32 h-32 bg-blue-200/30 rounded-full blur-3xl"></div>
@@ -239,136 +232,33 @@ const ThankYouContent = () => {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="relative z-10 pt-24 pb-16 px-4 sm:px-6 lg:px-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="relative z-10 flex items-center justify-center min-h-screen pt-24 pb-16 px-4"
         >
-          <div className="max-w-[85vw] mx-auto">
-            <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-blue-50 p-6 sm:p-8">
-              {/* Hero Header */}
-              <div className="mb-10 text-center">
-                <h1 className="text-3xl font-bold text-gray-900 font-montserrat">
-                  Payment Successful!
-                </h1>
-                <p className="text-gray-600 text-lg mt-2 font-montserrat">
-                  Your activity booking has been confirmed. We look forward to seeing you!
-                </p>
-                <div className="flex justify-center items-center mt-4">
-                  <CheckCircle className="h-6 w-6 text-green-500 mr-2" />
-                  <span className="text-sm font-semibold text-gray-600">
-                    Payment Completed
-                  </span>
-                </div>
-              </div>
-
-              {/* Activity Booking Summary */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-                className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-blue-50 p-6 sm:p-8 mt-8"
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 font-montserrat">
-                    Booking Details
-                  </h2>
-                  <CheckCircle className="h-7 w-7 text-green-500" />
-                </div>
-                <div className="space-y-6 text-gray-700 text-lg">
-                  {/* Order Information from Klook */}
-                  {orderInfo && (
-                    <>
-                      <div className="flex justify-between">
-                        <span className="font-semibold">Order Number:</span>
-                        <span className="font-mono text-blue-600">{orderInfo.klktech_order_id}</span>
-                      </div>
-                      {orderInfo.bookings?.[0]?.booking_ref_number && (
-                        <div className="flex justify-between">
-                          <span className="font-semibold">Booking Reference:</span>
-                          <span className="font-mono text-blue-600">{orderInfo.bookings[0].booking_ref_number}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="font-semibold">Payment Status:</span>
-                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
-                          {orderInfo.transaction_status === 'TobePaid' ? 'Paid' : orderInfo.transaction_status}
-                        </span>
-                      </div>
-                      <div className="border-t border-gray-200 pt-4"></div>
-                    </>
-                  )}
-                  
-                  {/* Activity Details */}
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Activity:</span>
-                    <span>{orderInfo?.bookings?.[0]?.activity_name || activityBookingData.booking.package_name || 'Klook Activity'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Travel Date:</span>
-                    <span>{new Date(activityBookingData.booking.schedule?.start_time || activityBookingData.booking.start_time).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Adults:</span>
-                    <span>{activityBookingData.booking.adult_quantity}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Children:</span>
-                    <span>{activityBookingData.booking.child_quantity || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Customer:</span>
-                    <span>{activityBookingData.booking.customer_info?.first_name} {activityBookingData.booking.customer_info?.last_name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Email:</span>
-                    <span>{activityBookingData.booking.customer_info?.email}</span>
-                  </div>
-                  
-                  {/* Payment Information */}
-                  <div className="border-t border-blue-100 pt-6 mt-6">
-                    <div className="flex justify-between font-bold text-xl">
-                      <span>Total Paid:</span>
-                      <span className="text-green-500">
-                        {orderInfo?.total_amount ? `€${orderInfo.total_amount}` : `$${activityBookingData.payment.amount}`} 
-                        {orderInfo?.currency || activityBookingData.payment.currency}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Call to Action */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-                className="mt-8 flex justify-center space-x-4"
-              >
-                <Button
-                  onClick={() => router.push('/')}
-                  className="bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 rounded-xl px-6 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  <ArrowLeft className="h-5 w-5 mr-2" />
-                  Back to Home
-                </Button>
-              </motion.div>
-            </div>
+          <div className="max-w-md mx-auto p-8 text-center bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-blue-50">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
+            <h3 className="text-3xl font-bold text-gray-900 mt-4">
+              No Booking Information
+            </h3>
+            <p className="text-gray-600 text-base mt-3">
+              Unable to find booking details. Please contact support.
+            </p>
+            <Button
+              onClick={() => router.push('/')}
+              className="mt-6 bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 rounded-xl px-6 py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <ArrowLeft className="h-5 w-5 mr-2" />
+              Back to Home
+            </Button>
           </div>
         </motion.div>
       </main>
     );
   }
 
-  // Hardcoded values as per request
-  const roomPrice = '0.00';
-  const hotelPrice = '900.00';
-  const bookingFee = '1090';
-  const totalPrice = '1090';
-
   return (
     <main className="relative min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Background Elements */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-blue-500/10"></div>
       <div className="absolute top-0 left-0 w-full h-full">
         <div className="absolute top-20 left-10 w-32 h-32 bg-blue-200/30 rounded-full blur-3xl"></div>
@@ -382,45 +272,23 @@ const ThankYouContent = () => {
         transition={{ duration: 0.5, ease: 'easeOut' }}
         className="relative z-10 pt-24 pb-16 px-4 sm:px-6 lg:px-8"
       >
-        <div className="max-w-[85vw] mx-auto">
+        <div className="max-w-4xl mx-auto">
           <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-blue-50 p-6 sm:p-8">
             {/* Hero Header */}
             <div className="mb-10 text-center">
-              <h1 className="text-3xl font-bold text-gray-900 font-montserrat">
+              <h1 className="text-3xl font-bold text-gray-900">
                 Booking Confirmed!
               </h1>
-              <p className="text-gray-600 text-lg mt-2 font-montserrat">
-                Thank you for your reservation. We look forward to welcoming
-                you!
+              <p className="text-gray-600 text-lg mt-2">
+                Your activity booking has been confirmed. We look forward to seeing you!
               </p>
               <div className="flex justify-center items-center mt-4">
-                <CheckCircle className="h-6 w-6 text-blue-500 mr-2" />
+                <CheckCircle className="h-6 w-6 text-green-500 mr-2" />
                 <span className="text-sm font-semibold text-gray-600">
-                  Booking Secured
+                  Payment Completed & Confirmed
                 </span>
               </div>
             </div>
-
-            {roomImage && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4 }}
-                className="relative h-72 rounded-xl overflow-hidden mb-10"
-              >
-                <Image
-                  src={
-                    roomImage.includes('staging.trektoo.com')
-                      ? `/api/image/proxy?url=${encodeURIComponent(roomImage)}`
-                      : roomImage
-                  }
-                  alt={roomTitle || 'Room Image'}
-                  fill
-                  className="object-cover"
-                  quality={90}
-                />
-              </motion.div>
-            )}
 
             {/* Booking Summary */}
             <motion.div
@@ -430,67 +298,98 @@ const ThankYouContent = () => {
               className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-blue-50 p-6 sm:p-8 mt-8"
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 font-montserrat">
+                <h2 className="text-2xl font-bold text-gray-900">
                   Booking Details
                 </h2>
-                <CheckCircle className="h-7 w-7 text-blue-500" />
+                <CheckCircle className="h-7 w-7 text-green-500" />
               </div>
-              <div className="space-y-6 text-gray-700 text-lg">
-                <div className="flex justify-between">
-                  <span className="font-semibold">Booking Code:</span>
-                  <span>{bookingCode}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">Hotel:</span>
-                  <span>{hotelTitle || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">Room:</span>
-                  <span>{roomTitle || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">Number of Rooms:</span>
-                  <span>{number_of_rooms || '1'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">Check-in:</span>
-                  <span>{start_date || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">Check-out:</span>
-                  <span>{end_date || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">Guests:</span>
-                  <span>
-                    {adults || 1} Adult{adults > 1 ? 's' : ''}, {children || 0}{' '}
-                    Child
-                    {children > 1 ? 'ren' : ''}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">Beds:</span>
-                  <span>{beds || 'N/A'}</span>
-                </div>
-                <div className="border-t border-blue-100 pt-6 mt-6">
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Room Price (4 rooms):</span>
-                    <span>${roomPrice}</span>
+
+              <div className="grid md:grid-cols-2 gap-6 text-gray-700">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <p className="font-semibold">Order Number</p>
+                      <p className="text-blue-600">{orderInfo.klktech_order_id}</p>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Hotel Price:</span>
-                    <span>${hotelPrice}</span>
+
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <p className="font-semibold">Booking Reference</p>
+                      <p className="text-blue-600">{orderInfo.bookings[0].booking_ref_number}</p>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Booking Fee:</span>
-                    <span>${bookingFee}</span>
+
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <p className="font-semibold">Status</p>
+                      <p className="capitalize text-green-600">{orderInfo.confirm_status}</p>
+                    </div>
                   </div>
-                  <div className="flex justify-between font-bold text-xl mt-4">
-                    <span>Total Price:</span>
-                    <span className="text-blue-500">${totalPrice}</span>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <p className="font-semibold">Activity</p>
+                      <p>{orderInfo.bookings[0].activity_name}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Users className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <p className="font-semibold">Package</p>
+                      <p>{orderInfo.bookings[0].package_name}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="h-5 w-5 text-blue-500">💰</div>
+                    <div>
+                      <p className="font-semibold">Total Paid</p>
+                      <p className="text-green-600 font-bold">
+                        {orderInfo.total_amount} {orderInfo.currency}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* Voucher Download */}
+              {voucherUrl && (
+                <div className="mt-8 p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-green-800">Your Voucher is Ready!</h3>
+                      <p className="text-sm text-green-600">Download your official booking voucher</p>
+                    </div>
+                    <Button
+                      onClick={downloadVoucher}
+                      className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download Voucher
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Operator Contacts */}
+              {orderInfo.bookings[0].operator_contacts && (
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h3 className="font-semibold text-blue-800 mb-2">Operator Contacts</h3>
+                  {orderInfo.bookings[0].operator_contacts.map((contact, index) => (
+                    <div key={index} className="text-sm text-blue-700">
+                      <p><strong>{contact.method}:</strong> {contact.details.join(', ')}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </motion.div>
 
             {/* Call to Action */}
@@ -507,6 +406,16 @@ const ThankYouContent = () => {
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 Back to Home
               </Button>
+
+              {voucherUrl && (
+                <Button
+                  onClick={downloadVoucher}
+                  className="bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 rounded-xl px-6 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <Download className="h-5 w-5 mr-2" />
+                  Download Voucher
+                </Button>
+              )}
             </motion.div>
           </div>
         </div>

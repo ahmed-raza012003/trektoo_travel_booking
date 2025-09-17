@@ -374,4 +374,27 @@ class StripeService
     {
         return config('stripe.key');
     }
+
+    // In your StripeService class
+public function retrievePaymentIntent(string $paymentIntentId): array
+{
+    try {
+        $paymentIntent = \Stripe\PaymentIntent::retrieve($paymentIntentId);
+        
+        return [
+            'success' => true,
+            'status' => $paymentIntent->status,
+            'amount' => $paymentIntent->amount,
+            'currency' => $paymentIntent->currency,
+            'payment_intent' => $paymentIntent
+        ];
+    } catch (\Exception $e) {
+        Log::error('Stripe payment intent retrieval failed: ' . $e->getMessage());
+        
+        return [
+            'success' => false,
+            'error' => $e->getMessage()
+        ];
+    }
+}
 }

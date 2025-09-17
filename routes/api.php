@@ -117,6 +117,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/confirm-payment', [PaymentController::class, 'confirmKlookPayment']);
         Route::get('/order-status/{orderId}', [PaymentController::class, 'getKlookOrderStatus']);
     });
+
+    // Klook payment flow routes
+    Route::post('/complete-payment-flow', [PaymentController::class, 'completeKlookPaymentFlow']);
+    Route::post('/apply-cancellation', [PaymentController::class, 'applyCancellation']);
+    Route::get('/cancellation-status/{orderId}', [PaymentController::class, 'getCancellationStatus']);
+    
+    // Voucher download
+    Route::get('/bookings/{bookingId}/voucher', [PaymentController::class, 'downloadVoucher']);
+    
+    // Additional Klook routes
+    Route::post('/klook/resend-voucher/{orderId}', [KlookApiController::class, 'resendVoucher']);
+    Route::get('/klook/balance', [KlookApiController::class, 'getBalance']);
 });
 
 
