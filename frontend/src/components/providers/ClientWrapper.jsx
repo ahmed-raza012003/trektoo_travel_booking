@@ -56,7 +56,7 @@ export default function ClientWrapper({ children }) {
         <LoadingProvider>
           <ToastProvider>
             <AuthProvider>
-              <Topbar cartCount={99} />
+              <Topbar />
               <Navbar />
               <main className="relative overflow-hidden">{children}</main>
               <Footer />
