@@ -13,24 +13,23 @@ import {
   List,
   Heart,
   Eye,
-  ArrowLeft,
   Filter,
   SortAsc,
   Calendar,
   DollarSign,
   Award,
   Navigation,
+  Ticket,
 } from 'lucide-react';
 import Link from 'next/link';
 import API_BASE from "@/lib/api/klookApi";
 
-
 const LoadingSpinner = lazy(() => import('@/components/ui/LoadingSpinner').then(m => ({ default: m.LoadingSpinner })));
-const EmptyState = lazy(() => import('@/components/ui/EmptyState'));
+const { ActivityGridSkeleton, CardSkeleton } = require('@/components/ui/LoadingSkeleton');
 
 const ActivitiesPage = () => {
   const searchParams = useSearchParams();
-  const categoryId = searchParams.get('category_id'); // Fixed: Changed from 'category' to 'category_id'
+  const categoryId = searchParams.get('category_id');
   const limit = searchParams.get('limit') || '20';
   const page = searchParams.get('page') || '1';
 
@@ -39,6 +38,7 @@ const ActivitiesPage = () => {
   const [favorites, setFavorites] = useState(new Set());
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('popular');
+  const [isSortOpen, setIsSortOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -50,6 +50,9 @@ const ActivitiesPage = () => {
       try {
         setIsLoading(true);
         setError(null);
+        
+        // Add minimum loading time to prevent flash of empty state
+        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 500));
 
         // Build API URL with proper parameters
         const apiUrl = new URL(`${API_BASE}/activities`);
@@ -61,13 +64,17 @@ const ActivitiesPage = () => {
 
         console.log('Fetching activities from:', apiUrl.toString());
 
-        const res = await fetch(apiUrl.toString(), {
-          signal: controller.signal,
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        });
+        // Wait for both API call and minimum loading time
+        const [res] = await Promise.all([
+          fetch(apiUrl.toString(), {
+            signal: controller.signal,
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+          }),
+          minLoadingTime
+        ]);
 
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const json = await res.json();
@@ -85,6 +92,8 @@ const ActivitiesPage = () => {
         } else if (Array.isArray(json)) {
           activities = json;
         }
+
+        console.log("Extracted activities:", activities.length);
 
         // Enhance activities with mock data for better display
         const enhancedActivities = activities.map(activity => ({
@@ -131,12 +140,15 @@ const ActivitiesPage = () => {
           }
         }
 
+        // Only set loading to false after successful data fetch
+        setIsLoading(false);
+
       } catch (err) {
         if (err.name !== 'AbortError') {
           console.error('Error fetching activities:', err);
           setError(`Failed to load activities: ${err.message}`);
         }
-      } finally {
+        // Set loading to false even on error so user can see error state
         setIsLoading(false);
       }
     };
@@ -152,6 +164,20 @@ const ActivitiesPage = () => {
       return next;
     });
   }, []);
+
+  // Handle click outside for sort dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isSortOpen && !event.target.closest('[data-sort-dropdown]')) {
+        setIsSortOpen(false);
+      }
+    };
+
+    if (isSortOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isSortOpen]);
 
   // Sort activities based on selected criteria
   const sortedActivities = React.useMemo(() => {
@@ -171,25 +197,45 @@ const ActivitiesPage = () => {
     }
   }, [activitiesData, sortBy]);
 
-  // Animation variants
+  // Animation variants matching landing page
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.6,
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 200, damping: 20 } },
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: 'easeOut',
+      },
+    },
   };
 
   const headerVariants = {
-    hidden: { opacity: 0, y: -20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
+    hidden: { opacity: 0, y: -30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: 'easeOut',
+      },
+    },
   };
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
         <div className="text-center">
           <motion.div
             initial={{ scale: 0 }}
@@ -198,112 +244,269 @@ const ActivitiesPage = () => {
           >
             <Sparkles className="h-8 w-8 text-red-500" />
           </motion.div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Something went wrong</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <Link href="/categories">
-            <button className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors">
-              Back to Categories
-            </button>
-          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden">
+      {/* Background Pattern - Matching Landing Page */}
+      <div className="absolute inset-0 opacity-5">
+        <svg
+          className="w-full h-full"
+          viewBox="0 0 100 100"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <pattern
+              id="grid-activities"
+              width="10"
+              height="10"
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                d="M 10 0 L 0 0 0 10"
+                fill="none"
+                stroke="#2196F3"
+                strokeWidth="0.5"
+              />
+            </pattern>
+          </defs>
+          <rect width="100" height="100" fill="url(#grid-activities)" />
+        </svg>
+      </div>
+
+      {/* Decorative Elements - Matching Landing Page */}
+      <div className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full blur-xl"></div>
+      <div className="absolute bottom-20 right-10 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full blur-xl"></div>
+      <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-gradient-to-br from-blue-300/10 to-blue-500/10 rounded-full blur-lg"></div>
+
       {/* Enhanced Header Section */}
-      <div className="bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/20"></div>
-
-        {/* Floating background elements */}
-        <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-xl"></div>
-        <div className="absolute bottom-10 right-10 w-40 h-40 bg-gradient-to-br from-pink-400/10 to-blue-400/10 rounded-full blur-xl"></div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 mt-10">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 pt-40">
           <motion.div
-            variants={headerVariants}
+          variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="text-white"
-          >
-            {/* Back Button */}
-            <Link href="/categories">
-              <motion.button
-                whileHover={{ scale: 1.05, x: -5 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-2 mb-8 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-white/20 transition-all"
-              >
-                <ArrowLeft className="h-5 w-5" />
-                Back to Categories
-              </motion.button>
-            </Link>
-
-            {/* Header Content */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div>
-                <h1 className="text-4xl md:text-6xl font-bold mb-4">
-                  {categoryData?.name ? `${categoryData.name} Activities` : 'Activities'}
+          className="text-center mb-16"
+        >
+          <motion.div variants={itemVariants}>
+            <h1
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 leading-tight mb-6"
+              style={{
+                fontFamily:
+                  "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                letterSpacing: '-0.02em',
+              }}
+            >
+              Discover Amazing{' '}
+              <span className="text-blue-500 relative">
+                Activities
+                <svg
+                  className="absolute -bottom-2 left-0 w-full h-3"
+                  viewBox="0 0 200 12"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M2 10C50 2 100 2 198 10"
+                    stroke="#E0C097"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
                 </h1>
-                <p className="text-xl text-blue-100 mb-2">
-                  {categoryData?.description || 'Discover amazing experiences and create unforgettable memories'}
-                </p>
-                <p className="text-blue-200/80">
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            {isLoading ? (
+              <div className="h-8 bg-gray-200 rounded animate-pulse max-w-4xl mx-auto"></div>
+            ) : (
+              <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
+                {categoryData?.description || 'Create unforgettable memories with our curated selection of amazing experiences'}
+              </p>
+            )}
+          </motion.div>
+        </motion.div>
+
+        {/* Controls Section - Single Line */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex flex-col lg:flex-row gap-4 lg:gap-6 justify-between items-center mb-12"
+        >
+          {/* Left side - Activities count */}
+          <motion.div variants={itemVariants}>
+            {isLoading ? (
+              <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+            ) : (
+              <p className="text-lg text-gray-500 font-medium">
                   {sortedActivities.length} activities found
                 </p>
-              </div>
+            )}
+          </motion.div>
 
-              {/* View and Sort Controls */}
-              <div className="flex flex-col sm:flex-row gap-4">
+          {/* Right side - Controls */}
+          <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 items-center">
                 {/* View Mode Toggle */}
-                <div className="flex bg-white/10 backdrop-blur-sm rounded-2xl p-2 border border-white/20">
+            <div className="flex bg-white rounded-3xl p-2 border border-gray-200 shadow-lg">
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-3 rounded-xl transition-all ${viewMode === 'grid'
-                      ? 'bg-white text-blue-900 shadow-lg'
-                      : 'text-white hover:bg-white/20'
+                className={`p-3 rounded-2xl transition-all ${viewMode === 'grid'
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'text-gray-600 hover:bg-blue-50'
                       }`}
                   >
                     <Grid className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-3 rounded-xl transition-all ${viewMode === 'list'
-                      ? 'bg-white text-blue-900 shadow-lg'
-                      : 'text-white hover:bg-white/20'
+                className={`p-3 rounded-2xl transition-all ${viewMode === 'list'
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'text-gray-600 hover:bg-blue-50'
                       }`}
                   >
                     <List className="h-5 w-5" />
                   </button>
                 </div>
 
-                {/* Sort Dropdown */}
-                <div className="relative">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="appearance-none bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-6 py-3 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
-                  >
-                    <option value="popular" className="text-gray-900">Most Popular</option>
-                    <option value="rating" className="text-gray-900">Highest Rated</option>
-                    <option value="price_low" className="text-gray-900">Price: Low to High</option>
-                    <option value="price_high" className="text-gray-900">Price: High to Low</option>
-                    <option value="reviews" className="text-gray-900">Most Reviews</option>
-                  </select>
-                  <SortAsc className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white pointer-events-none" />
-                </div>
+            {/* Custom Sort Dropdown */}
+            <div className="relative" data-sort-dropdown>
+              <button
+                onClick={() => setIsSortOpen(!isSortOpen)}
+                className="flex items-center gap-2 bg-white border border-gray-200 rounded-3xl px-6 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <span className="font-medium">
+                  {sortBy === 'popular' ? 'Most Popular' :
+                   sortBy === 'rating' ? 'Highest Rated' :
+                   sortBy === 'price_low' ? 'Price: Low to High' :
+                   sortBy === 'price_high' ? 'Price: High to Low' :
+                   sortBy === 'reviews' ? 'Most Reviews' : 'Sort by'}
+                </span>
+                <svg
+                  className={`w-4 h-4 transition-transform ${isSortOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+
+              {/* Dropdown Menu */}
+              <div
+                className={`absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl py-2 z-50 border border-blue-100 transition-all duration-200 ease-in-out ${
+                  isSortOpen ? 'block' : 'hidden'
+                }`}
+                role="menu"
+              >
+                <button
+                  onClick={() => {
+                    setSortBy('popular');
+                    setIsSortOpen(false);
+                  }}
+                  className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                    sortBy === 'popular' 
+                      ? 'bg-blue-100 text-blue-600 font-medium' 
+                      : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
+                  }`}
+                  role="menuitem"
+                >
+                  Most Popular
+                </button>
+                <button
+                  onClick={() => {
+                    setSortBy('rating');
+                    setIsSortOpen(false);
+                  }}
+                  className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                    sortBy === 'rating' 
+                      ? 'bg-blue-100 text-blue-600 font-medium' 
+                      : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
+                  }`}
+                  role="menuitem"
+                >
+                  Highest Rated
+                </button>
+                <button
+                  onClick={() => {
+                    setSortBy('price_low');
+                    setIsSortOpen(false);
+                  }}
+                  className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                    sortBy === 'price_low' 
+                      ? 'bg-blue-100 text-blue-600 font-medium' 
+                      : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
+                  }`}
+                  role="menuitem"
+                >
+                  Price: Low to High
+                </button>
+                <button
+                  onClick={() => {
+                    setSortBy('price_high');
+                    setIsSortOpen(false);
+                  }}
+                  className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                    sortBy === 'price_high' 
+                      ? 'bg-blue-100 text-blue-600 font-medium' 
+                      : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
+                  }`}
+                  role="menuitem"
+                >
+                  Price: High to Low
+                </button>
+                <button
+                  onClick={() => {
+                    setSortBy('reviews');
+                    setIsSortOpen(false);
+                  }}
+                  className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                    sortBy === 'reviews' 
+                      ? 'bg-blue-100 text-blue-600 font-medium' 
+                      : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
+                  }`}
+                  role="menuitem"
+                >
+                  Most Reviews
+                </button>
               </div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 relative z-10">
         <Suspense fallback={<div className="py-20 text-center">Loading...</div>}>
           {isLoading && (
-            <div className="py-20">
-              <LoadingSpinner size="lg" />
+            <div className="py-8">
+              {viewMode === 'grid' ? (
+                <ActivityGridSkeleton items={6} />
+              ) : (
+                <div className="space-y-6">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-row h-64">
+                      <div className="w-64 flex-shrink-0 h-64 bg-gray-200 animate-pulse"></div>
+                      <div className="p-6 flex-1 space-y-3">
+                        <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                        <div className="h-3 bg-gray-200 rounded animate-pulse w-1/2"></div>
+                        <div className="h-3 bg-gray-200 rounded animate-pulse w-1/3"></div>
+                        <div className="h-3 bg-gray-200 rounded animate-pulse w-1/4"></div>
+                        <div className="h-10 bg-gray-200 rounded-xl animate-pulse w-full mt-4"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -317,7 +520,7 @@ const ActivitiesPage = () => {
                 exit="hidden"
                 className={
                   viewMode === 'grid'
-                    ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8'
+                    ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6'
                     : 'space-y-6'
                 }
               >
@@ -326,43 +529,42 @@ const ActivitiesPage = () => {
                     key={activity.activity_id}
                     variants={itemVariants}
                     custom={index}
-                    className={`group bg-white rounded-3xl overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-200/50 relative cursor-pointer backdrop-blur-sm ${viewMode === 'list' ? 'flex' : ''
+                    className={`group bg-white rounded-3xl overflow-hidden hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 border border-gray-200 relative cursor-pointer flex flex-col h-full ${viewMode === 'list' ? 'flex-row' : ''
                       }`}
                   >
-                    {/* Favorite Button */}
+                    {/* Activity Image */}
+                    <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-64 flex-shrink-0 h-64' : 'h-56'}`}>
+                      <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                        <Ticket className="h-24 w-24 text-blue-500" />
+                      </div>
+
+                      {/* Favorite Button */}
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={() => handleFavoriteToggle(activity.activity_id)}
-                      className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200/50 hover:bg-white transition-all shadow-lg"
+                        className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200/50 hover:bg-white transition-all shadow-lg"
                     >
                       <Heart
-                        className={`h-5 w-5 transition-colors ${favorites.has(activity.activity_id)
+                          className={`h-4 w-4 transition-colors ${favorites.has(activity.activity_id)
                           ? 'text-red-500 fill-current'
                           : 'text-gray-400'
                           }`}
                       />
                     </motion.button>
 
-                    {/* Activity Image */}
-                    <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'h-48'}`}>
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20"></div>
-                      <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                        <Sparkles className="h-16 w-16 text-blue-500" />
-                      </div>
-
                       {/* Rating Badge */}
                       <div className="absolute top-3 left-3">
                         <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-sm shadow-lg">
                           <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                          <span className="font-semibold">{activity.rating}</span>
+                          <span className="font-semibold text-gray-800">{activity.rating}</span>
                           <span className="text-gray-500">({activity.review_count})</span>
                         </div>
                       </div>
 
                       {/* Duration Badge */}
                       <div className="absolute bottom-3 left-3">
-                        <div className="flex items-center gap-2 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm">
+                        <div className="flex items-center gap-2 bg-gray-800/80 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm">
                           <Clock className="h-4 w-4" />
                           <span>{activity.duration}</span>
                         </div>
@@ -370,41 +572,41 @@ const ActivitiesPage = () => {
                     </div>
 
                     {/* Activity Info */}
-                    <div className="p-6 flex-1">
+                    <div className="p-6 flex-1 flex flex-col">
                       <div className="flex items-start justify-between gap-3 mb-3">
-                        <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                        <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-500 transition-colors line-clamp-2 flex-1">
                           {activity.title}
                         </h3>
                         <div className="flex items-center gap-1 text-green-600 font-bold text-lg flex-shrink-0">
                           <DollarSign className="h-5 w-5" />
-                          {activity.price}
+                          <span>{activity.price}</span>
                         </div>
                       </div>
 
-                      <p className="text-gray-600 mb-4 line-clamp-2">
+                      <p className="text-gray-600 mb-3 line-clamp-2 text-sm">
                         {activity.sub_title}
                       </p>
 
                       {/* Location */}
-                      <div className="flex items-center gap-2 text-gray-500 mb-4">
-                        <MapPin className="h-4 w-4" />
-                        <span className="text-sm">{activity.location}</span>
+                      <div className="flex items-center gap-2 text-gray-500 mb-3">
+                        <MapPin className="h-3 w-3" />
+                        <span className="text-xs">{activity.location}</span>
                       </div>
 
                       {/* Highlights */}
-                      <div className="space-y-2 mb-6">
+                      <div className="space-y-1 mb-4 flex-1">
                         {activity.highlights.slice(0, 2).map((highlight, idx) => (
-                          <div key={idx} className="flex items-center gap-2 text-sm text-gray-600">
-                            <Award className="h-3 w-3 text-blue-500" />
-                            {highlight}
+                          <div key={idx} className="flex items-center gap-2 text-xs text-gray-600">
+                            <Award className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                            <span className="line-clamp-1">{highlight}</span>
                           </div>
                         ))}
                       </div>
 
                       {/* Availability */}
-                      <div className="flex items-center gap-2 mb-6">
-                        <Calendar className="h-4 w-4 text-green-500" />
-                        <span className="text-sm text-green-600 font-medium">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Calendar className="h-3 w-3 text-green-500" />
+                        <span className="text-xs text-green-600 font-medium">
                           Available: {activity.available_dates[0]}
                         </span>
                       </div>
@@ -414,7 +616,7 @@ const ActivitiesPage = () => {
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
-                          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-2xl font-medium hover:from-blue-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl"
+                          className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2.5 px-4 rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl text-sm"
                         >
                           View Details & Book
                         </motion.button>
@@ -426,25 +628,26 @@ const ActivitiesPage = () => {
             )}
 
             {!isLoading && sortedActivities.length === 0 && (
-              <EmptyState
-                icon={Sparkles}
-                title="No activities found"
-                subtitle={categoryData?.name
-                  ? `No activities found in ${categoryData.name} category.`
-                  : "No activities match your current filters."
-                }
-                action={
-                  <Link href="/categories">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-10 py-4 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition-all font-bold text-lg shadow-xl hover:shadow-2xl"
-                    >
-                      Browse All Categories
-                    </motion.button>
-                  </Link>
-                }
-              />
+              <div className="text-center py-20">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="h-8 w-8 text-gray-400" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">No activities found</h2>
+                <p className="text-gray-600 mb-6">
+                  {categoryData?.name
+                    ? `No activities found in ${categoryData.name} category.`
+                    : "No activities match your current filters."}
+                </p>
+                <Link href="/categories">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-10 py-4 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition-all font-bold text-lg shadow-xl hover:shadow-2xl"
+                  >
+                    Browse All Categories
+                  </motion.button>
+                </Link>
+              </div>
             )}
           </AnimatePresence>
         </Suspense>
