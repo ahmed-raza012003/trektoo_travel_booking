@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
     CheckCircle,
@@ -9,9 +9,39 @@ import {
     MapPin,
     CreditCard,
     Shield,
+    AlertCircle,
+    Clock,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import API_BASE from "@/lib/api/klookApi";
 
+// Enhanced form validation with more comprehensive rules
+const VALIDATION_RULES = {
+    email: {
+        pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        message: "Please enter a valid email address"
+    },
+    phone: {
+        pattern: /^[\+]?[1-9][\d]{0,15}$/,
+        minLength: 10,
+        message: "Phone number must be at least 10 digits"
+    },
+    name: {
+        minLength: 2,
+        pattern: /^[a-zA-Z\s'-]+$/,
+        message: "Name must contain only letters, spaces, hyphens, and apostrophes"
+    },
+    country: {
+        minLength: 2,
+        message: "Please enter a valid country name"
+    }
+};
+
+// Memoized country list for better performance
+const POPULAR_COUNTRIES = [
+    "United States", "United Kingdom", "Canada", "Australia", 
+    "Germany", "France", "Japan", "Singapore", "China", "India"
+];
 
 const BookingPage = () => {
     const router = useRouter();
@@ -29,116 +59,183 @@ const BookingPage = () => {
     const [loading, setLoading] = useState(false);
     const [voucherApplied, setVoucherApplied] = useState(false);
     const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // ✅ Load pendingBooking from localStorage
-    useEffect(() => {
-        const data = localStorage.getItem("pendingBooking");
-        if (!data) {
-            // No booking data found, redirect back to home or activities page
-            router.push("/activities");
-            return;
-        }
-        setBooking(JSON.parse(data));
-    }, [router]);
-
-    const validateField = (name, value) => {
+    // Enhanced validation function with better error messages
+    const validateField = useCallback((name, value) => {
         switch (name) {
             case "email":
-                return /\S+@\S+\.\S+/.test(value)
-                    ? ""
-                    : "Invalid email address";
+                if (!value.trim()) return "Email is required";
+                return VALIDATION_RULES.email.pattern.test(value) ? "" : VALIDATION_RULES.email.message;
+            
             case "phone":
-                return value.length >= 10
-                    ? ""
-                    : "Phone number must be at least 10 digits";
+                if (!value.trim()) return "Phone number is required";
+                const cleanPhone = value.replace(/\D/g, '');
+                return cleanPhone.length >= VALIDATION_RULES.phone.minLength ? "" : VALIDATION_RULES.phone.message;
+            
             case "first_name":
             case "last_name":
-                return value.trim().length >= 2
-                    ? ""
-                    : "Must be at least 2 characters";
+                if (!value.trim()) return `${name === 'first_name' ? 'First' : 'Last'} name is required`;
+                if (value.trim().length < VALIDATION_RULES.name.minLength) {
+                    return `${name === 'first_name' ? 'First' : 'Last'} name must be at least 2 characters`;
+                }
+                return VALIDATION_RULES.name.pattern.test(value) ? "" : VALIDATION_RULES.name.message;
+            
+            case "country":
+                if (!value.trim()) return "Country is required";
+                return value.trim().length >= VALIDATION_RULES.country.minLength ? "" : VALIDATION_RULES.country.message;
+            
             default:
                 return value.trim() ? "" : "This field is required";
         }
-    };
+    }, []);
 
-    const handleInputChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: type === "checkbox" ? checked : value,
-        }));
-        if (errors[name]) {
-            setErrors((prev) => ({ ...prev, [name]: "" }));
+    // Load booking data with error handling
+    useEffect(() => {
+        try {
+            const data = localStorage.getItem("pendingBooking");
+            if (!data) {
+                router.push("/activities");
+                return;
+            }
+            
+            const parsedBooking = JSON.parse(data);
+            
+            // Validate required booking fields
+            if (!parsedBooking.package_id || !parsedBooking.schedule || !parsedBooking.total_price) {
+                console.error("Invalid booking data structure");
+                router.push("/activities");
+                return;
+            }
+            
+            setBooking(parsedBooking);
+        } catch (error) {
+            console.error("Error loading booking data:", error);
+            router.push("/activities");
         }
-    };
+    }, [router]);
 
-    const handleApplyVoucher = async () => {
+    // Enhanced input change handler with real-time validation
+    const handleInputChange = useCallback((e) => {
+        const { name, value, type, checked } = e.target;
+        const newValue = type === "checkbox" ? checked : value;
+        
+        setFormData(prev => ({
+            ...prev,
+            [name]: newValue,
+        }));
+        
+        // Clear error if field becomes valid
+        if (errors[name] && type !== "checkbox") {
+            const error = validateField(name, newValue);
+            if (!error) {
+                setErrors(prev => {
+                    const newErrors = { ...prev };
+                    delete newErrors[name];
+                    return newErrors;
+                });
+            }
+        }
+    }, [errors, validateField]);
+
+    // Enhanced voucher application with better error handling
+    const handleApplyVoucher = useCallback(async () => {
         if (!formData.voucher.trim()) {
-            setErrors((prev) => ({
+            setErrors(prev => ({
                 ...prev,
                 voucher: "Please enter a voucher code",
             }));
             return;
         }
 
+        if (voucherApplied) {
+            return; // Prevent double application
+        }
+
         setLoading(true);
+        setErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.voucher;
+            return newErrors;
+        });
+
         try {
-            // Call your backend coupon validation API
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/coupons/apply`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        code: formData.voucher,
+                        code: formData.voucher.trim().toUpperCase(),
                         service_type: booking.service_type,
                         service_id: booking.service_id,
                         total: booking.total_price,
                     }),
+                    signal: controller.signal,
                 }
             );
 
+            clearTimeout(timeoutId);
+
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+
             const json = await res.json();
-            if (json.success) {
+            
+            if (json.success && json.data?.amount) {
                 setDiscount(json.data.amount);
                 setVoucherApplied(true);
+                
+                // Show success feedback
+                setTimeout(() => {
+                    const successElement = document.querySelector('.voucher-success');
+                    if (successElement) {
+                        successElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }, 100);
             } else {
-                setErrors((prev) => ({
+                setErrors(prev => ({
                     ...prev,
                     voucher: json.message || "Invalid voucher code",
                 }));
             }
         } catch (err) {
             console.error("Voucher error:", err);
-            setErrors((prev) => ({
-                ...prev,
-                voucher: "Error applying voucher. Please try again.",
-            }));
+            if (err.name === 'AbortError') {
+                setErrors(prev => ({
+                    ...prev,
+                    voucher: "Request timed out. Please try again.",
+                }));
+            } else {
+                setErrors(prev => ({
+                    ...prev,
+                    voucher: "Error applying voucher. Please try again.",
+                }));
+            }
         } finally {
             setLoading(false);
         }
-    };
+    }, [formData.voucher, voucherApplied, booking]);
 
-
-    // Add this function to format extra_info for Klook API with default values
-    const formatExtraInfoForKlook = (extraInfo, otherInfoData) => {
+    // Memoized extra info formatting function
+    const formatExtraInfoForKlook = useCallback((extraInfo, otherInfoData) => {
         const booking_extra_info = [];
 
-        // Always include default pickup location for package 102191
         const defaultPickupLocation = {
             key: "pick_up_location_scope",
-            content: "1000536614", // Default to 深圳高新技术园
+            content: "1000536614",
             selected: [{"key": "1000536614"}],
             input_type: "single_select"
         };
 
-        // If extraInfo exists, process it
         if (extraInfo) {
             Object.entries(extraInfo).forEach(([key, value]) => {
                 if (value) {
-                    // Find the corresponding field info from otherInfoData
                     const fieldInfo = findFieldInfo(key, otherInfoData);
-
                     booking_extra_info.push({
                         key: key,
                         content: value,
@@ -149,19 +246,16 @@ const BookingPage = () => {
             });
         }
 
-        // Check if pick_up_location_scope is already included
         const hasPickupLocation = booking_extra_info.some(item => item.key === "pick_up_location_scope");
         
-        // If not included, add default pickup location
         if (!hasPickupLocation) {
             booking_extra_info.push(defaultPickupLocation);
         }
 
         return { booking_extra_info, unit_extra_info: [] };
-    };
+    }, []);
 
-    // Helper function to find field information
-    const findFieldInfo = (key, otherInfoData) => {
+    const findFieldInfo = useCallback((key, otherInfoData) => {
         if (!otherInfoData?.items) return null;
 
         for (const item of otherInfoData.items) {
@@ -169,11 +263,15 @@ const BookingPage = () => {
             if (field) return field;
         }
         return null;
-    };
+    }, []);
 
+    // Enhanced form submission with comprehensive validation
+    const handleSubmit = useCallback(async () => {
+        if (isSubmitting) return; // Prevent double submission
 
+        setIsSubmitting(true);
 
-    const handleSubmit = async () => {
+        // Comprehensive form validation
         const newErrors = {};
         Object.keys(formData).forEach((key) => {
             if (key !== "voucher" && key !== "term_conditions") {
@@ -187,9 +285,18 @@ const BookingPage = () => {
         }
 
         setErrors(newErrors);
-        if (Object.keys(newErrors).length > 0) return;
+        
+        if (Object.keys(newErrors).length > 0) {
+            setIsSubmitting(false);
+            // Scroll to first error
+            const firstErrorField = document.querySelector(`[name="${Object.keys(newErrors)[0]}"]`);
+            if (firstErrorField) {
+                firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstErrorField.focus();
+            }
+            return;
+        }
 
-        // Use the same format for both availability check and order validation
         const formatDateForKlook = (dateString) => {
             const d = new Date(dateString);
             const yyyy = d.getFullYear();
@@ -198,7 +305,6 @@ const BookingPage = () => {
             return `${yyyy}-${mm}-${dd} 00:00:00`;
         };
 
-        // Build availability payload
         const availabilityPayload = [
             {
                 package_id: Number(booking.package_id),
@@ -214,32 +320,45 @@ const BookingPage = () => {
         ];
 
         try {
-            // 1. Check availability
+            // 1. Check availability with timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
             const res = await fetch(`${API_BASE}/availability/check-direct`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(availabilityPayload),
+                signal: controller.signal,
             });
+
+            clearTimeout(timeoutId);
+
+            if (!res.ok) {
+                throw new Error(`Availability check failed with status: ${res.status}`);
+            }
 
             const json = await res.json();
 
             if (json.success) {
                 console.log("✅ Availability confirmed. Proceeding with booking initiation...");
 
-                // 2. Fetch otherInfo to get the field structure
+                // 2. Fetch otherInfo
                 const otherInfoRes = await fetch(`${API_BASE}/otherinfo/${booking.package_id}`);
+                if (!otherInfoRes.ok) {
+                    throw new Error("Failed to fetch additional booking information");
+                }
                 const otherInfoData = await otherInfoRes.json();
 
-                // 3. Format the extra_info for Klook API
+                // 3. Format the extra_info
                 const formattedExtraInfo = formatExtraInfoForKlook(booking.extra_info, otherInfoData.data);
 
                 const bookingPayload = {
                     customer_info: {
-                        first_name: formData.first_name,
-                        last_name: formData.last_name,
-                        email: formData.email,
-                        phone: formData.phone,
-                        country: formData.country,
+                        first_name: formData.first_name.trim(),
+                        last_name: formData.last_name.trim(),
+                        email: formData.email.trim().toLowerCase(),
+                        phone: formData.phone.trim(),
+                        country: formData.country.trim(),
                     },
                     booking_details: {
                         package_id: booking.package_id,
@@ -252,49 +371,60 @@ const BookingPage = () => {
                         total_price: booking.total_price,
                         original_total_price: booking.original_total_price,
                         discount: discount,
-                        voucher_code: formData.voucher,
+                        voucher_code: voucherApplied ? formData.voucher.trim() : "",
                         markup_percentage: 0.15,
-                        extra_info: formattedExtraInfo, // Use formatted extra info
+                        extra_info: formattedExtraInfo,
                         travel_date: formatDateForKlook(booking.schedule.start_time)
                     },
                     terms_accepted: formData.term_conditions,
                 };
 
-                console.log("Booking payload with formatted extra_info:", bookingPayload);
-
-                // 4. Call the new booking initiation endpoint
+                // 4. Submit booking
                 const bookingRes = await fetch(`${API_BASE}/activities-booking/initiate`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(bookingPayload),
+                    signal: controller.signal,
                 });
+
+                if (!bookingRes.ok) {
+                    throw new Error(`Booking initiation failed with status: ${bookingRes.status}`);
+                }
 
                 const bookingData = await bookingRes.json();
 
                 if (bookingData.success) {
-                    // Store booking data for payment page
+                    // Store booking data
                     localStorage.setItem('currentBooking', JSON.stringify({
                         agent_order_id: bookingData.data.agent_order_id,
                         payment_intent: bookingData.data.payment_intent,
                         validation: bookingData.data.validation
                     }));
 
-                    // Redirect to payment page
+                    // Redirect to payment
                     window.location.href = bookingData.data.checkout_url;
                 } else {
-                    // Handle specific errors
-                    if (bookingData.error && bookingData.error.code === "1401") {
-                        alert("Missing required information. Please check all required fields and try again.");
-                    } else if (bookingData.error && bookingData.error.code === "1103") {
-                        alert("Sorry, this time slot can no longer be booked due to cut-off time restrictions. Please select a different date or time.");
-                    } else {
-                        alert(bookingData.message || "Booking initiation failed");
+                    // Handle specific booking errors
+                    const errorCode = bookingData.error?.code;
+                    let errorMessage = "Booking initiation failed. Please try again.";
+                    
+                    switch (errorCode) {
+                        case "1401":
+                            errorMessage = "Missing required information. Please check all required fields and try again.";
+                            break;
+                        case "1103":
+                            errorMessage = "Sorry, this time slot can no longer be booked due to cut-off time restrictions. Please select a different date or time.";
+                            break;
+                        default:
+                            errorMessage = bookingData.message || errorMessage;
                     }
+                    
+                    alert(errorMessage);
                     console.error("Booking Error:", bookingData.error);
                 }
 
             } else {
-                // Handle price change error
+                // Handle availability errors
                 if (json.message && json.message.includes("price had changed")) {
                     const newPriceMatch = json.message.match(/new price (\d+\.\d+)/);
                     if (newPriceMatch && newPriceMatch[1]) {
@@ -320,365 +450,610 @@ const BookingPage = () => {
                     }
                 }
 
-                // Handle availability errors
-                if (json.error && json.error.code === "1103") {
-                    alert("Sorry, this date is no longer available for booking. Please select a different date.");
-                } else {
-                    alert(json.message || "Availability check failed");
+                const errorCode = json.error?.code;
+                let errorMessage = "Availability check failed. Please try again.";
+                
+                if (errorCode === "1103") {
+                    errorMessage = "Sorry, this date is no longer available for booking. Please select a different date.";
                 }
+                
+                alert(errorMessage);
                 console.error("Backend Error:", json.error);
             }
         } catch (err) {
             console.error("Booking error:", err);
-            alert("Something went wrong. Please try again.");
+            
+            if (err.name === 'AbortError') {
+                alert("Request timed out. Please try again.");
+            } else {
+                alert("Something went wrong. Please try again.");
+            }
+        } finally {
+            setIsSubmitting(false);
         }
-    };
+    }, [booking, formData, discount, voucherApplied, validateField, formatExtraInfoForKlook, isSubmitting]);
 
+    // Memoized calculations for better performance
+    const priceCalculations = useMemo(() => {
+        if (!booking) return { totalBeforeDiscount: 0, finalTotal: 0 };
+        
+        const totalBeforeDiscount = booking.total_price;
+        const finalTotal = Math.max(totalBeforeDiscount - discount, 0);
+        
+        return { totalBeforeDiscount, finalTotal };
+    }, [booking, discount]);
 
+    // Memoized date formatting
+    const formattedDate = useMemo(() => {
+        if (!booking?.schedule?.start_time) return "";
+        
+        return new Date(booking.schedule.start_time).toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric'
+        });
+    }, [booking?.schedule?.start_time]);
 
     if (!booking) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
-                <div className="animate-pulse text-center">
-                    <div className="w-16 h-16 bg-blue-200 rounded-full mx-auto mb-4"></div>
+                <motion.div 
+                    className="text-center"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                >
+                    <div className="w-16 h-16 bg-blue-200 rounded-full mx-auto mb-4 animate-pulse"></div>
                     <p className="text-gray-600 text-lg">
                         Loading booking details...
                     </p>
-                </div>
+                </motion.div>
             </div>
         );
     }
 
-    const totalBeforeDiscount = booking.total_price;
-    const finalTotal = Math.max(totalBeforeDiscount - discount, 0);
+    const { totalBeforeDiscount, finalTotal } = priceCalculations;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-            <div className="max-w-6xl mx-auto py-12 px-4">
+        <div className="min-h-screen bg-white relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-3">
+                <svg
+                    className="w-full h-full"
+                    viewBox="0 0 100 100"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    <defs>
+                        <pattern
+                            id="grid-booking-page"
+                            width="20"
+                            height="20"
+                            patternUnits="userSpaceOnUse"
+                        >
+                            <path
+                                d="M 20 0 L 0 0 0 20"
+                                fill="none"
+                                stroke="#2196F3"
+                                strokeWidth="0.3"
+                            />
+                        </pattern>
+                    </defs>
+                    <rect width="100" height="100" fill="url(#grid-booking-page)" />
+                </svg>
+            </div>
+
+            {/* Decorative Elements */}
+            <div className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-blue-600/5 rounded-full blur-2xl"></div>
+            <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-br from-blue-500/5 to-blue-600/5 rounded-full blur-2xl"></div>
+
+            <div className="w-full px-8 lg:px-16 xl:px-24 py-20 relative z-10">
                 {/* Header */}
-                <div className="text-center mb-12 mt-12">
-                    <div className="inline-flex items-center gap-3 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full border border-blue-100 mb-6">
+                <div className="text-center mb-16 mt-24">
+                    <div className="inline-flex items-center gap-3 bg-blue-50 px-6 py-3 rounded-full border border-blue-200 mb-6">
                         <Shield className="w-5 h-5 text-blue-600" />
                         <span className="text-sm font-medium text-blue-700">Secure Booking Process</span>
                     </div>
-                    <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-700 via-purple-600 to-blue-800 bg-clip-text text-transparent mb-4">
-                        Complete Your Booking
+                    <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6" style={{
+                        fontFamily: "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                        letterSpacing: '-0.02em',
+                    }}>
+                        Complete Your{' '}
+                        <span className="text-blue-600 relative">
+                            Booking
+                            <svg
+                                className="absolute -bottom-2 left-0 w-full h-3"
+                                viewBox="0 0 200 12"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    d="M2 10C50 2 100 2 198 10"
+                                    stroke="#E0C097"
+                                    strokeWidth="4"
+                                    strokeLinecap="round"
+                                />
+                            </svg>
+                        </span>
                     </h1>
-                    <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                    <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
                         You're just one step away from your amazing journey. Please review your details and proceed to secure payment.
                     </p>
                 </div>
 
-                <div className="grid lg:grid-cols-3 gap-8">
-                    {/* Left Column - Forms */}
-                    <div className="lg:col-span-2 space-y-8">
-                        {/* Booking Summary */}
-
-                        <div className="bg-white/70 backdrop-blur-sm p-8 rounded-3xl border border-white/50 shadow-xl shadow-blue-100/20">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-blue-100 rounded-full">
-                                    <Calendar className="w-5 h-5 text-blue-600" />
+                {/* Main Content */}
+                <div className="max-w-6xl mx-auto">
+                    <div className="grid lg:grid-cols-3 gap-12 items-start">
+                        {/* Left Column - Forms */}
+                        <div className="lg:col-span-2 space-y-8">
+                            {/* Booking Summary */}
+                            <motion.div 
+                                className="bg-white rounded-2xl p-10 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                            >
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="bg-blue-600 rounded-2xl p-3 shadow-lg">
+                                        <Calendar className="w-6 h-6 text-white" />
+                                    </div>
+                                    <h2 className="text-3xl font-bold text-gray-900">Booking Summary</h2>
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-800">Booking Summary</h2>
-                            </div>
 
-                            <div className="grid md:grid-cols-2 gap-6">
-                                {/* Left Column */}
-                                <div className="space-y-4">
-                                    {/* Package Name or ID */}
-                                    <div className="flex items-start gap-3">
-                                        <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                        <div>
-                                            <p className="font-semibold text-gray-800">
+                                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {/* Package Info */}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <MapPin className="w-4 h-4 text-blue-600" />
+                                                <span className="text-sm font-semibold text-gray-900">Package</span>
+                                            </div>
+                                            <p className="text-lg font-bold text-gray-800">
                                                 {booking.package_name || `PKG ID: ${booking.package_id}`}
                                             </p>
                                             {booking.schedule?.sku_id && (
-                                                <p className="text-gray-500 text-sm">SKU: {booking.schedule.sku_id}</p>
+                                                <p className="text-sm text-gray-600">SKU: {booking.schedule.sku_id}</p>
                                             )}
-                                            <p className="text-gray-600 text-sm">Premium Experience</p>
                                         </div>
-                                    </div>
 
-                                    {/* Departure Date */}
-                                    <div className="flex items-start gap-3">
-                                        <Calendar className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                        <div>
-                                            <p className="font-semibold text-gray-800">
-                                                {new Date(booking.schedule.start_time).toLocaleDateString('en-US', {
-                                                    weekday: 'long',
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric'
-                                                })}
-                                            </p>
-                                            <p className="text-gray-600 text-sm">Departure Date</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Pickup Location (if exists) */}
-                                    {booking.extra_info?.pickup_location && (
-                                        <div className="flex items-start gap-3">
-                                            <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                            <div>
-                                                <p className="font-semibold text-gray-800">
-                                                    {booking.extra_info.pickup_location}
-                                                </p>
-                                                <p className="text-gray-600 text-sm">Pickup Location</p>
+                                        {/* Date & Time */}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className="w-4 h-4 text-blue-600" />
+                                                <span className="text-sm font-semibold text-gray-900">Date & Time</span>
                                             </div>
+                                            <p className="text-lg font-bold text-gray-800">
+                                                {formattedDate}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                {booking.schedule.start_time.split(' ')[1]} - {booking.schedule.end_time.split(' ')[1]}
+                                            </p>
                                         </div>
-                                    )}
-                                </div>
 
-                                {/* Right Column */}
-                                <div className="space-y-4">
-                                    {/* Travelers */}
-                                    <div className="flex items-start gap-3">
-                                        <Users className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                        <div>
-                                            <p className="font-semibold text-gray-800">
+                                        {/* Travelers */}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <Users className="w-4 h-4 text-blue-600" />
+                                                <span className="text-sm font-semibold text-gray-900">Travelers</span>
+                                            </div>
+                                            <p className="text-lg font-bold text-gray-800">
                                                 {booking.adult_quantity} Adults
                                                 {booking.child_quantity > 0 && `, ${booking.child_quantity} Children`}
                                             </p>
-                                            <p className="text-gray-600 text-sm">Total Travelers</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Price */}
-                                    <div className="flex items-start gap-3">
-                                        <CreditCard className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                        <div>
-                                            <p className="font-semibold text-gray-800">
-                                                {booking.schedule.price} {booking.schedule.currency} per traveller
+                                            <p className="text-sm text-gray-600">
+                                                {booking.schedule.price.toFixed(2)} {booking.schedule.currency} per person
                                             </p>
-                                            <p className="text-gray-600 text-sm">Base Price</p>
                                         </div>
                                     </div>
 
-                                    {/* Language (if exists) */}
-                                    {booking.language && (
-                                        <div className="flex items-start gap-3">
-                                            <Tag className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                            <div>
-                                                <p className="font-semibold text-gray-800">{booking.language}</p>
-                                                <p className="text-gray-600 text-sm">Preferred Language</p>
+                                    {/* Pickup Location */}
+                                    {booking.extra_info?.pickup_location && (
+                                        <div className="mt-6 pt-6 border-t border-gray-200">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <MapPin className="w-4 h-4 text-blue-600" />
+                                                <span className="text-sm font-semibold text-gray-900">Pickup Location</span>
                                             </div>
+                                            <p className="text-lg font-bold text-gray-800">
+                                                {booking.extra_info.pickup_location}
+                                            </p>
                                         </div>
                                     )}
                                 </div>
-                            </div>
-                        </div>
+                            </motion.div>
 
-
-                        {/* Discount Voucher */}
-                        <div className="bg-white/70 backdrop-blur-sm p-8 rounded-3xl border border-white/50 shadow-xl shadow-blue-100/20">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-green-100 rounded-full">
-                                    <Tag className="w-5 h-5 text-green-600" />
-                                </div>
-                                <h2 className="text-2xl font-bold text-gray-800">Promotional Code</h2>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        name="voucher"
-                                        placeholder="Enter your voucher code"
-                                        value={formData.voucher}
-                                        onChange={handleInputChange}
-                                        disabled={voucherApplied}
-                                        className={`w-full p-4 pr-32 border-2 rounded-2xl font-mono text-sm tracking-wider transition-all duration-300 ${voucherApplied
-                                            ? 'border-green-200 bg-green-50 text-green-700'
-                                            : errors.voucher
-                                                ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-4 focus:ring-red-100'
-                                                : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-400 focus:ring-4 focus:ring-blue-100'
-                                            }`}
-                                    />
-                                    <button
-                                        onClick={handleApplyVoucher}
-                                        disabled={loading || voucherApplied}
-                                        className={`absolute right-2 top-2 bottom-2 px-6 rounded-xl font-semibold text-sm transition-all duration-300 ${voucherApplied
-                                            ? 'bg-green-500 text-white cursor-default'
-                                            : loading
-                                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-md hover:shadow-lg transform hover:scale-105'
-                                            }`}
-                                    >
-                                        {voucherApplied ? (
-                                            <div className="flex items-center gap-2">
-                                                <CheckCircle className="w-4 h-4" />
-                                                Applied
-                                            </div>
-                                        ) : loading ? (
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                                                Applying
-                                            </div>
-                                        ) : (
-                                            'Apply Code'
-                                        )}
-                                    </button>
-                                </div>
-
-                                {errors.voucher && (
-                                    <p className="text-red-500 text-sm flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-red-500 rounded-full flex items-center justify-center">
-                                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                        </div>
-                                        {errors.voucher}
-                                    </p>
-                                )}
-
-                                {voucherApplied && (
-                                    <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
-                                        <div className="flex items-center gap-3">
-                                            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                                            <div>
-                                                <p className="font-semibold text-green-800">Voucher Applied Successfully!</p>
-                                                <p className="text-green-600 text-sm">
-                                                    You saved {discount} {booking.schedule?.currency || 'USD'} on this booking
-                                                </p>
-                                            </div>
-                                        </div>
+                            {/* Passenger Details */}
+                            <motion.div 
+                                className="bg-white rounded-2xl p-10 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                            >
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="bg-purple-600 rounded-2xl p-3 shadow-lg">
+                                        <Users className="w-6 h-6 text-white" />
                                     </div>
-                                )}
-
-                                <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-xl">
-                                    <p className="font-medium mb-1">Try these demo codes:</p>
-                                    <p><code className="bg-white px-2 py-1 rounded">SAVE2</code> - Save 2 %</p>
-                                    <p><code className="bg-white px-2 py-1 rounded">WELCOME10</code> - Save 10 %</p>
+                                    <h2 className="text-3xl font-bold text-gray-900">Passenger Details</h2>
                                 </div>
-                            </div>
-                        </div>
 
-                        {/* Passenger Details */}
-                        <div className="bg-white/70 backdrop-blur-sm p-8 rounded-3xl border border-white/50 shadow-xl shadow-blue-100/20">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-purple-100 rounded-full">
-                                    <Users className="w-5 h-5 text-purple-600" />
-                                </div>
-                                <h2 className="text-2xl font-bold text-gray-800">Passenger Details</h2>
-                            </div>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    {[
+                                        { field: 'first_name', label: 'First Name', type: 'text', placeholder: 'Enter your first name' },
+                                        { field: 'last_name', label: 'Last Name', type: 'text', placeholder: 'Enter your last name' },
+                                        { field: 'email', label: 'Email Address', type: 'email', placeholder: 'Enter your email address' },
+                                        { field: 'phone', label: 'Phone Number', type: 'tel', placeholder: 'Enter your phone number' },
+                                    ].map(({ field, label, type, placeholder }) => (
+                                        <div key={field} className="space-y-3">
+                                            <label className="block text-sm font-semibold text-gray-900">
+                                                {label} <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type={type}
+                                                name={field}
+                                                value={formData[field]}
+                                                onChange={handleInputChange}
+                                                placeholder={placeholder}
+                                                className={`w-full p-4 border-2 rounded-xl transition-all duration-300 ${errors[field]
+                                                    ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100'
+                                                    : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                                                    }`}
+                                                aria-invalid={errors[field] ? 'true' : 'false'}
+                                                aria-describedby={errors[field] ? `${field}-error` : undefined}
+                                            />
+                                            <AnimatePresence>
+                                                {errors[field] && (
+                                                    <motion.p 
+                                                        id={`${field}-error`}
+                                                        className="text-red-500 text-sm flex items-center gap-2"
+                                                        initial={{ opacity: 0, y: -10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, y: -10 }}
+                                                    >
+                                                        <AlertCircle className="w-4 h-4" />
+                                                        {errors[field]}
+                                                    </motion.p>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
+                                    ))}
 
-                            <div className="grid md:grid-cols-2 gap-6">
-                                {[
-                                    { field: 'first_name', label: 'First Name', type: 'text' },
-                                    { field: 'last_name', label: 'Last Name', type: 'text' },
-                                    { field: 'email', label: 'Email Address', type: 'email' },
-                                    { field: 'phone', label: 'Phone Number', type: 'tel' },
-                                ].map(({ field, label, type }) => (
-                                    <div key={field} className="space-y-2">
-                                        <label className="block text-sm font-semibold text-gray-700">
-                                            {label}
+                                    <div className="md:col-span-2 space-y-3">
+                                        <label className="block text-sm font-semibold text-gray-900">
+                                            Country <span className="text-red-500">*</span>
                                         </label>
                                         <input
-                                            type={type}
-                                            name={field}
-                                            value={formData[field]}
+                                            type="text"
+                                            name="country"
+                                            value={formData.country}
                                             onChange={handleInputChange}
-                                            className={`w-full p-4 border-2 rounded-2xl transition-all duration-300 ${errors[field]
-                                                ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-4 focus:ring-red-100'
-                                                : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-400 focus:ring-4 focus:ring-blue-100'
+                                            placeholder="Enter your country"
+                                            list="countries-list"
+                                            className={`w-full p-4 border-2 rounded-xl transition-all duration-300 ${errors.country
+                                                ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100'
+                                                : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                                                 }`}
+                                            aria-invalid={errors.country ? 'true' : 'false'}
+                                            aria-describedby={errors.country ? 'country-error' : undefined}
                                         />
-                                        {errors[field] && (
-                                            <p className="text-red-500 text-sm">{errors[field]}</p>
-                                        )}
+                                        <datalist id="countries-list">
+                                            {POPULAR_COUNTRIES.map(country => (
+                                                <option key={country} value={country} />
+                                            ))}
+                                        </datalist>
+                                        <AnimatePresence>
+                                            {errors.country && (
+                                                <motion.p 
+                                                    id="country-error"
+                                                    className="text-red-500 text-sm flex items-center gap-2"
+                                                    initial={{ opacity: 0, y: -10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -10 }}
+                                                >
+                                                    <AlertCircle className="w-4 h-4" />
+                                                    {errors.country}
+                                                </motion.p>
+                                            )}
+                                        </AnimatePresence>
                                     </div>
-                                ))}
-
-                                <div className="md:col-span-2 space-y-2">
-                                    <label className="block text-sm font-semibold text-gray-700">
-                                        Country
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="country"
-                                        value={formData.country}
-                                        onChange={handleInputChange}
-                                        className={`w-full p-4 border-2 rounded-2xl transition-all duration-300 ${errors.country
-                                            ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-4 focus:ring-red-100'
-                                            : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-400 focus:ring-4 focus:ring-blue-100'
-                                            }`}
-                                    />
-                                    {errors.country && (
-                                        <p className="text-red-500 text-sm">{errors.country}</p>
-                                    )}
                                 </div>
-                            </div>
 
-                            <div className="mt-6 pt-6 border-t border-gray-200">
-                                <label className="flex items-start gap-4 cursor-pointer group">
-                                    <input
-                                        type="checkbox"
-                                        name="term_conditions"
-                                        checked={formData.term_conditions}
-                                        onChange={handleInputChange}
-                                        className="mt-1 w-5 h-5 text-blue-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                                    />
-                                    <div className="flex-1">
-                                        <span className="text-gray-700 group-hover:text-gray-900 transition-colors">
-                                            I agree to the <a href="#" className="text-blue-600 hover:text-blue-800 font-semibold">Terms & Conditions</a> and <a href="#" className="text-blue-600 hover:text-blue-800 font-semibold">Privacy Policy</a>
-                                        </span>
-                                        {errors.term_conditions && (
-                                            <p className="text-red-500 text-sm mt-1">{errors.term_conditions}</p>
-                                        )}
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Right Column - Price Summary */}
-                    <div className="lg:col-span-1">
-                        <div className="sticky top-6">
-                            <div className="bg-white/70 backdrop-blur-sm p-8 rounded-3xl border border-white/50 shadow-xl shadow-blue-100/20">
-                                <h3 className="text-2xl font-bold text-gray-800 mb-6">Price Summary</h3>
-
-                                <div className="space-y-4 mb-6">
-                                    <div className="flex justify-between text-gray-600">
-                                        <span>Subtotal</span>
-                                        <span className="font-semibold">{totalBeforeDiscount} {booking.schedule.currency}</span>
-                                    </div>
-
-                                    {discount > 0 && (
-                                        <div className="flex justify-between text-green-600 bg-green-50 -mx-2 px-2 py-2 rounded-lg">
-                                            <span>Voucher Discount</span>
-                                            <span className="font-semibold">-{discount} {booking.schedule.currency}</span>
+                                <div className="mt-8 pt-6 border-t border-gray-200">
+                                    <label className="flex items-center gap-4 cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            name="term_conditions"
+                                            checked={formData.term_conditions}
+                                            onChange={handleInputChange}
+                                            className="w-5 h-5 text-blue-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                                            aria-describedby={errors.term_conditions ? 'terms-error' : undefined}
+                                        />
+                                        <div className="flex-1">
+                                            <span className="text-gray-700 group-hover:text-gray-900 transition-colors text-base">
+                                                I agree to the <a href="#" className="text-blue-600 hover:text-blue-800 font-semibold">Terms & Conditions</a> and <a href="#" className="text-blue-600 hover:text-blue-800 font-semibold">Privacy Policy</a>
+                                            </span>
+                                            <AnimatePresence>
+                                                {errors.term_conditions && (
+                                                    <motion.p 
+                                                        id="terms-error"
+                                                        className="text-red-500 text-sm mt-2 flex items-center gap-2"
+                                                        initial={{ opacity: 0, y: -10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, y: -10 }}
+                                                    >
+                                                        <AlertCircle className="w-4 h-4" />
+                                                        {errors.term_conditions}
+                                                    </motion.p>
+                                                )}
+                                            </AnimatePresence>
                                         </div>
-                                    )}
+                                    </label>
+                                </div>
+                            </motion.div>
 
-                                    <div className="border-t border-gray-200 pt-4">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xl font-bold text-gray-800">Total</span>
-                                            <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                                {finalTotal} {booking.schedule.currency}
+                            {/* Promotional Code */}
+                            <motion.div 
+                                className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                            >
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="bg-green-600 rounded-2xl p-3 shadow-lg">
+                                        <Tag className="w-6 h-6 text-white" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-gray-900">Promotional Code</h3>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="flex gap-3">
+                                        <div className="flex-1">
+                                            <input
+                                                type="text"
+                                                name="voucher"
+                                                placeholder="Enter your voucher code"
+                                                value={formData.voucher}
+                                                onChange={handleInputChange}
+                                                disabled={voucherApplied}
+                                                className={`w-full p-3 border-2 rounded-xl font-mono text-sm tracking-wider transition-all duration-300 ${voucherApplied
+                                                    ? 'border-green-200 bg-green-50 text-green-700'
+                                                    : errors.voucher
+                                                        ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100'
+                                                        : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                                                    }`}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && !voucherApplied && !loading) {
+                                                        handleApplyVoucher();
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={handleApplyVoucher}
+                                            disabled={loading || voucherApplied || !formData.voucher.trim()}
+                                            className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 ${voucherApplied
+                                                ? 'bg-green-600 text-white cursor-default'
+                                                : loading
+                                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                    : !formData.voucher.trim()
+                                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                        : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg'
+                                                }`}
+                                        >
+                                            {voucherApplied ? (
+                                                <div className="flex items-center gap-2">
+                                                    <CheckCircle className="w-4 h-4" />
+                                                    Applied
+                                                </div>
+                                            ) : loading ? (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                    Applying
+                                                </div>
+                                            ) : (
+                                                'Apply'
+                                            )}
+                                        </button>
+                                    </div>
+
+                                    <AnimatePresence>
+                                        {errors.voucher && (
+                                            <motion.p 
+                                                className="text-red-500 text-sm flex items-center gap-2"
+                                                initial={{ opacity: 0, y: -10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                            >
+                                                <AlertCircle className="w-4 h-4" />
+                                                {errors.voucher}
+                                            </motion.p>
+                                        )}
+                                    </AnimatePresence>
+
+                                    <AnimatePresence>
+                                        {voucherApplied && (
+                                            <motion.div 
+                                                className="voucher-success bg-green-50 border border-green-200 rounded-xl p-4"
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                exit={{ opacity: 0, scale: 0.95 }}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-green-800">Voucher Applied!</p>
+                                                        <p className="text-xs text-green-600">
+                                                            You saved {discount.toFixed(2)} {booking.schedule?.currency || 'USD'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+
+                                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                                        <p className="font-semibold text-gray-900 mb-3 text-sm">Try these demo codes:</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            <button
+                                                onClick={() => !voucherApplied && setFormData(prev => ({ ...prev, voucher: 'SAVE2' }))}
+                                                disabled={voucherApplied}
+                                                className="flex items-center gap-2 hover:bg-white transition-colors p-1 rounded"
+                                            >
+                                                <code className="bg-white px-2 py-1 rounded-lg border border-gray-200 font-mono text-xs">SAVE2</code>
+                                                <span className="text-xs text-gray-600">Save 2%</span>
+                                            </button>
+                                            <button
+                                                onClick={() => !voucherApplied && setFormData(prev => ({ ...prev, voucher: 'WELCOME10' }))}
+                                                disabled={voucherApplied}
+                                                className="flex items-center gap-2 hover:bg-white transition-colors p-1 rounded"
+                                            >
+                                                <code className="bg-white px-2 py-1 rounded-lg border border-gray-200 font-mono text-xs">WELCOME10</code>
+                                                <span className="text-xs text-gray-600">Save 10%</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+
+                        {/* Right Column - Price Summary */}
+                        <div className="lg:col-span-1">
+                            <div className="sticky top-32">
+                                <motion.div 
+                                    className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.3 }}
+                                >
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                                            <CreditCard className="w-5 h-5 text-white" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-gray-900">Price Summary</h3>
+                                    </div>
+
+                                    <div className="space-y-4 mb-6">
+                                        <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                                            <span className="text-gray-600">Subtotal</span>
+                                            <span className="font-semibold text-gray-900">
+                                                {totalBeforeDiscount.toFixed(2)} {booking.schedule.currency}
                                             </span>
                                         </div>
-                                    </div>
-                                </div>
 
-                                <button
-                                    onClick={handleSubmit}
-                                    className="w-full p-4 bg-gradient-to-r from-blue-600 via-blue-600 to-blue-700 hover:from-blue-700 hover:via-blue-700 hover:to-blue-800 text-white rounded-2xl font-bold text-lg transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 hover:-translate-y-1"
-                                >
-                                    <div className="flex items-center justify-center gap-3">
-                                        <Shield className="w-5 h-5" />
-                                        Secure Checkout
-                                    </div>
-                                </button>
+                                        <AnimatePresence>
+                                            {discount > 0 && (
+                                                <motion.div 
+                                                    className="flex justify-between items-center py-3 bg-green-50 rounded-xl px-4 border border-green-200"
+                                                    initial={{ opacity: 0, scale: 0.95 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    exit={{ opacity: 0, scale: 0.95 }}
+                                                    transition={{ delay: 0.2 }}
+                                                >
+                                                    <span className="text-green-700 font-medium">Voucher Discount</span>
+                                                    <span className="font-semibold text-green-800">
+                                                        -{discount.toFixed(2)} {booking.schedule.currency}
+                                                    </span>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
 
-                                <div className="mt-4 text-center text-xs text-gray-500">
-                                    <div className="flex items-center justify-center gap-2 mb-2">
-                                        <Shield className="w-4 h-4" />
-                                        <span>256-bit SSL encrypted payment</span>
+                                        <div className="border-t-2 border-gray-200 pt-4">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-xl font-bold text-gray-900">Total</span>
+                                                <span className="text-2xl font-bold text-blue-600">
+                                                    {finalTotal.toFixed(2)} {booking.schedule.currency}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <p>Your payment information is secure and protected</p>
-                                </div>
+
+                                    <motion.button
+                                        onClick={handleSubmit}
+                                        disabled={isSubmitting}
+                                        className={`w-full p-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-md hover:shadow-lg ${
+                                            isSubmitting 
+                                                ? 'bg-gray-400 cursor-not-allowed' 
+                                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                        }`}
+                                        whileHover={!isSubmitting ? { scale: 1.02 } : {}}
+                                        whileTap={!isSubmitting ? { scale: 0.98 } : {}}
+                                    >
+                                        <div className="flex items-center justify-center gap-3">
+                                            {isSubmitting ? (
+                                                <>
+                                                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                    Processing...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Shield className="w-6 h-6" />
+                                                    Secure Checkout
+                                                </>
+                                            )}
+                                        </div>
+                                    </motion.button>
+
+                                    <div className="mt-6 text-center">
+                                        <div className="flex items-center justify-center gap-2 mb-2 text-gray-500 text-sm">
+                                            <Shield className="w-4 h-4" />
+                                            <span>256-bit SSL encrypted</span>
+                                        </div>
+                                        <p className="text-gray-500 text-xs">Your payment information is secure and protected</p>
+                                    </div>
+                                </motion.div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                {/* Mobile Price Summary - Fixed at Bottom */}
+                <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50 p-4">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <span className="text-lg font-semibold text-gray-900">Total</span>
+                            <span className="text-2xl font-bold text-blue-600 ml-2">
+                                {finalTotal.toFixed(2)} {booking.schedule.currency}
+                            </span>
+                        </div>
+                        <motion.button
+                            onClick={handleSubmit}
+                            disabled={isSubmitting}
+                            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg ${
+                                isSubmitting 
+                                    ? 'bg-gray-400 cursor-not-allowed text-white' 
+                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            }`}
+                            whileHover={!isSubmitting ? { scale: 1.05 } : {}}
+                            whileTap={!isSubmitting ? { scale: 0.95 } : {}}
+                        >
+                            <div className="flex items-center gap-2">
+                                {isSubmitting ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        Processing
+                                    </>
+                                ) : (
+                                    <>
+                                        <Shield className="w-4 h-4" />
+                                        Checkout
+                                    </>
+                                )}
+                            </div>
+                        </motion.button>
+                    </div>
+                    <AnimatePresence>
+                        {discount > 0 && (
+                            <motion.div 
+                                className="text-sm text-green-600 text-center"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                            >
+                                You saved {discount.toFixed(2)} {booking.schedule.currency} with your voucher!
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                {/* Add bottom padding for mobile price summary */}
+                <div className="lg:hidden h-24"></div>
             </div>
         </div>
     );
