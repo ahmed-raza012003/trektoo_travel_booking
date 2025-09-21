@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Booking extends Model
 {
@@ -41,6 +42,12 @@ class Booking extends Model
         'agent_order_id',
         'customer_info',
         'booking_details',
+        'ratehawk_booking_data',
+        'ratehawk_order_id',
+        'hotel_images',
+        'hotel_rating',
+        'hotel_amenities',
+        'room_details',
         'confirmed_at',
         'cancelled_at',
     ];
@@ -49,6 +56,10 @@ class Booking extends Model
         'activity_schedule' => 'array',
         'customer_info' => 'array',
         'booking_details' => 'array',
+        'ratehawk_booking_data' => 'array',
+        'hotel_images' => 'array',
+        'hotel_amenities' => 'array',
+        'room_details' => 'array',
         'activity_date' => 'date',
         'check_in_date' => 'date',
         'check_out_date' => 'date',
@@ -178,5 +189,37 @@ class Booking extends Model
     public function getTotalGuestsAttribute(): int
     {
         return $this->adults + $this->children;
+    }
+
+    /**
+     * Get the ratehawk order for this booking.
+     */
+    public function ratehawkOrder(): HasOne
+    {
+        return $this->hasOne(RatehawkOrder::class);
+    }
+
+    /**
+     * Scope for hotel bookings.
+     */
+    public function scopeHotelBookings($query)
+    {
+        return $query->where('type', 'hotel');
+    }
+
+    /**
+     * Check if this is a hotel booking.
+     */
+    public function isHotelBooking(): bool
+    {
+        return $this->type === 'hotel';
+    }
+
+    /**
+     * Get hotel display name.
+     */
+    public function getHotelDisplayNameAttribute(): string
+    {
+        return $this->hotel_name ?? 'Hotel Booking';
     }
 }
