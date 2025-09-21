@@ -6,51 +6,29 @@ import { motion } from 'framer-motion';
 import { Collapse } from 'react-collapse';
 import { useInView } from 'react-intersection-observer';
 
-const ExpandableItem = ({ question, answer, isExpandedByDefault = false, index }) => {
+const ExpandableItem = ({
+  question,
+  answer,
+  isExpandedByDefault = false,
+  index,
+}) => {
   const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
 
   return (
-    <motion.div
-      className="border border-gray-200 rounded-2xl p-6 bg-white transition-all duration-300 hover:border-blue-500 shadow-lg hover:shadow-xl"
-      initial={{ opacity: 0, y: 20, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ 
-        duration: 0.6, 
-        delay: index * 0.1,
-        ease: [0.25, 0.46, 0.45, 0.94]
-      }}
-      whileHover={{ 
-        y: -4,
-        transition: { duration: 0.3, ease: "easeOut" }
-      }}
-      style={{ willChange: 'transform, opacity' }}
-    >
-      <motion.div
+    <div className="border border-gray-200 rounded-3xl p-6 bg-white transition-all duration-300 hover:border-blue-500 shadow-2xl hover:shadow-2xl hover:shadow-blue-500/10">
+      <div
         className="flex justify-between items-center cursor-pointer group"
         onClick={() => setIsExpanded(!isExpanded)}
-        whileHover={{ scale: 1.01 }}
-        style={{ willChange: 'transform' }}
       >
-        <motion.h4 
-          className="text-lg font-bold text-gray-900 tracking-tight m-0 pr-4 group-hover:text-blue-500 transition-colors duration-200"
-          style={{ willChange: 'color' }}
-        >
+        <h4 className="text-lg font-bold text-gray-800 tracking-tight m-0 pr-4 group-hover:text-blue-500 transition-colors duration-200">
           {question}
-        </motion.h4>
-        <motion.div
-          className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-lg"
-          whileHover={{ scale: 1.1 }}
-          transition={{ duration: 0.2 }}
-          style={{ willChange: 'transform' }}
-        >
-          <motion.svg
-            className="w-4 h-4"
+        </h4>
+        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-lg hover:shadow-xl transition-all duration-300">
+          <svg
+            className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
-            animate={{ rotate: isExpanded ? 180 : 0 }}
-            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-            style={{ willChange: 'transform' }}
           >
             <path
               strokeLinecap="round"
@@ -58,43 +36,29 @@ const ExpandableItem = ({ question, answer, isExpandedByDefault = false, index }
               strokeWidth={2}
               d="M19 9l-7 7-7-7"
             />
-          </motion.svg>
-        </motion.div>
-      </motion.div>
-      
+          </svg>
+        </div>
+      </div>
+
       <Collapse
         isOpened={isExpanded}
         theme={{
           collapse: 'ReactCollapse--collapse',
-          content: 'ReactCollapse--content'
+          content: 'ReactCollapse--content',
         }}
-        springConfig={{ 
-          stiffness: 400, 
+        springConfig={{
+          stiffness: 400,
           damping: 35,
-          mass: 0.7
+          mass: 0.7,
         }}
         className="mt-4 pt-4 border-t border-gray-100"
         style={{
-          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        <motion.p 
-          className="text-gray-600 leading-relaxed text-base"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ 
-            opacity: isExpanded ? 1 : 0, 
-            y: isExpanded ? 0 : 10 
-          }}
-          transition={{ 
-            duration: 0.4,
-            ease: [0.25, 0.46, 0.45, 0.94]
-          }}
-          style={{ willChange: 'transform, opacity' }}
-        >
-          {answer}
-        </motion.p>
+        <p className="text-gray-600 leading-relaxed text-base">{answer}</p>
       </Collapse>
-    </motion.div>
+    </div>
   );
 };
 
@@ -108,41 +72,27 @@ ExpandableItem.propTypes = {
 const FAQSection = () => {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
 
-  const sectionVariants = {
+  // Animation variants matching Hero Section
+  const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { 
-        duration: 1, 
-        ease: [0.25, 0.46, 0.45, 0.94], 
-        staggerChildren: 0.15,
-        delayChildren: 0.2
-      }
-    }
+      transition: {
+        duration: 0.6,
+        staggerChildren: 0.1,
+      },
+    },
   };
 
-  const headerVariants = {
-    hidden: { opacity: 0, y: -30, scale: 0.95 },
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
     visible: {
       opacity: 1,
       y: 0,
-      scale: 1,
       transition: {
-        duration: 0.8,
-        ease: [0.25, 0.46, 0.45, 0.94],
-        type: "spring",
-        stiffness: 100,
-        damping: 15
-      }
-    }
-  };
-
-  const backgroundVariants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: { duration: 1.5, ease: "easeOut" }
+        duration: 0.6,
+        ease: 'easeOut',
+      },
     },
   };
 
@@ -158,100 +108,100 @@ const FAQSection = () => {
       }
     `;
     document.head.appendChild(style);
-    
+
     return () => {
       document.head.removeChild(style);
     };
   }, []);
 
   return (
-    <motion.section
+    <section
       ref={ref}
-      className="py-20 bg-gradient-to-br from-gray-50 via-white to-blue-50 relative overflow-hidden"
-      variants={sectionVariants}
-      initial="hidden"
-      animate={inView ? 'visible' : 'hidden'}
+      className="py-20 bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden"
       aria-labelledby="faq-section-heading"
     >
-                    {/* Enhanced Background Elements */}
-      <motion.div 
-        className="absolute inset-0 pointer-events-none"
-        variants={backgroundVariants}
-        initial="hidden"
-        animate={inView ? 'visible' : 'hidden'}
-      >
-        <motion.div 
-          className="absolute top-20 left-10 w-32 h-32 bg-blue-100 rounded-full opacity-20 blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.2, 0.3, 0.2],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div 
-          className="absolute bottom-20 right-10 w-40 h-40 bg-indigo-100 rounded-full opacity-20 blur-3xl"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.3, 0.2, 0.3],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2
-          }}
-        />
-        <motion.div 
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full opacity-10 blur-3xl"
-          animate={{
-            scale: [1, 1.1, 1],
-            opacity: [0.1, 0.15, 0.1],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1
-          }}
-        />
-      </motion.div>
+      {/* Background Pattern - Matching Hero Section */}
+      <div className="absolute inset-0 opacity-5">
+        <svg
+          className="w-full h-full"
+          viewBox="0 0 100 100"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <pattern
+              id="grid-faq"
+              width="10"
+              height="10"
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                d="M 10 0 L 0 0 0 10"
+                fill="none"
+                stroke="#2196F3"
+                strokeWidth="0.5"
+              />
+            </pattern>
+          </defs>
+          <rect width="100" height="100" fill="url(#grid-faq)" />
+        </svg>
+      </div>
+
+      {/* Decorative Elements - Matching Hero Section */}
+      <div className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full blur-xl"></div>
+      <div className="absolute bottom-20 right-10 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full blur-xl"></div>
+      <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-gradient-to-br from-blue-300/10 to-blue-500/10 rounded-full blur-lg"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
-          variants={headerVariants}
+          variants={containerVariants}
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
           className="text-center mb-16"
         >
-          <motion.h2 
-            id="faq-section-heading"
-            className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-6"
-            style={{ willChange: 'transform, opacity' }}
-          >
-            Frequently Asked{' '}
-            <span className="text-blue-500">
-              Questions
-            </span>
-          </motion.h2>
-          <motion.p 
-            className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed"
-            style={{ willChange: 'transform, opacity' }}
-          >
-            Everything you need to know about planning your perfect adventure with TrekToo
-          </motion.p>
+          <motion.div variants={itemVariants}>
+            <h2
+              id="faq-section-heading"
+              className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6"
+              style={{
+                fontFamily:
+                  "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                letterSpacing: '-0.02em',
+              }}
+            >
+              Frequently asked{' '}
+              <span className="text-blue-600 relative">
+                questions
+                <svg
+                  className="absolute -bottom-2 left-0 w-full h-3"
+                  viewBox="0 0 200 12"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M2 10C50 2 100 2 198 10"
+                    stroke="#E0C097"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+            </h2>
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
+              Get answers to common questions about booking, payments, 
+              cancellations, and more
+            </p>
+          </motion.div>
         </motion.div>
 
         <motion.div
-          className="max-w-4xl mx-auto"
-          variants={sectionVariants}
+          variants={containerVariants}
           initial="hidden"
-          animate="visible"
+          animate={inView ? 'visible' : 'hidden'}
+          className="max-w-4xl mx-auto"
         >
-                                <div className="space-y-6">
+          <motion.div variants={itemVariants} className="space-y-6">
             <ExpandableItem
               question="How Much Price About Tour & Travels?"
               answer="Our tours are priced competitively, offering premium experiences starting from $129. From kayaking in Phuket to luxurious villas in the Maldives, we tailor adventures to your budget."
@@ -278,10 +228,10 @@ const FAQSection = () => {
               answer="Yes, we offer comprehensive travel insurance packages that cover medical emergencies, trip cancellations, lost luggage, and more. We highly recommend our insurance to ensure peace of mind during your adventure."
               index={4}
             />
-          </div>
+          </motion.div>
         </motion.div>
       </div>
-    </motion.section>
+    </section>
   );
 };
 

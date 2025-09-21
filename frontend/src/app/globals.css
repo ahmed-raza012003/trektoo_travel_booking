@@ -91,19 +91,22 @@ body {
 }
 
 /* Ensure your topbar/navbar has proper z-index */
-.navbar,
-.topbar,
-header {
+.navbar {
   z-index: 50 !important;
   /* Higher than hero section */
-  position: relative;
-  /* or fixed/absolute */
+}
+
+.topbar,
+header {
+  z-index: 1000 !important;
+  /* Higher than hero section */
+  position: fixed !important;
 }
 
 /* Optional: Add backdrop blur to topbar for better visibility */
 .topbar {
   backdrop-filter: blur(10px);
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(17, 24, 39, 0.95) !important;
 }
 
 /* Ensure global font application */

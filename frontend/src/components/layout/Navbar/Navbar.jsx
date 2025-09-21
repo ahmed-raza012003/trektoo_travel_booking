@@ -14,7 +14,11 @@ const dropdownItems = {
   exploreTrektoo: [
     { href: '/hotels-list', label: 'Hotels', key: 'hotels-main' },
     { href: '/tours', label: 'Tours & Experiences', key: 'tours-main' },
-    { href: '/attractions', label: 'Attraction Tickets', key: 'attractions-main' },
+    {
+      href: '/attractions',
+      label: 'Attraction Tickets',
+      key: 'attractions-main',
+    },
     { href: '/transport', label: 'Transport', key: 'transport-main' },
     { href: '/car-rentals', label: 'Car Rentals', key: 'cars-main' },
   ],
@@ -35,14 +39,9 @@ const Navbar = () => {
   } = useAuth();
   const router = useRouter();
 
-  // Handle scroll for sticky navbar
+  // Keep navbar always at top-10 to stick with topbar
   useEffect(() => {
-    const handleScroll = () => {
-      setTopOffset(window.scrollY > 10 ? 'top-0' : 'top-10');
-    };
-    window.addEventListener('scroll', handleScroll);
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    setTopOffset('top-10');
   }, []);
 
   // Clear messages when profile dropdown closes
@@ -54,7 +53,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     if (isLoggingOut) return; // Prevent multiple logout attempts
-    
+
     setIsLoggingOut(true);
     try {
       await logout();
@@ -68,7 +67,7 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`fixed ${topOffset} z-20 w-full bg-white border-b border-gray-200 transition-all duration-300 font-montserrat shadow-lg`}
+      className={`fixed ${topOffset} z-40 w-full bg-white border-b border-gray-200 transition-all duration-300 font-montserrat shadow-lg`}
       aria-label="Main navigation"
     >
       {(authSuccess || authError) && (
@@ -90,47 +89,30 @@ const Navbar = () => {
           <div className="flex items-center gap-1 md:gap-3">
             {/* Desktop Menu */}
             <div className="hidden lg:flex items-center space-x-2">
-              <Link
-                href="/"
-                className="text-gray-800 hover:text-blue-600 transition-colors font-medium text-sm md:text-base uppercase tracking-wide py-2 px-3 focus:outline-none"
-              >
-                Home
-              </Link>
-
-              {/* <DropdownMenu
-                title="Explore TrekToo"
-                items={dropdownItems.exploreTrektoo}
-              /> */}
-              
               <button
-                onClick={() => toast.error('Coming Soon!', {
-                  duration: 3000,
-                  position: 'top-center',
-                  style: {
-                    background: '#ef4444',
-                    color: '#fff',
-                    fontSize: '16px',
-                    padding: '12px 24px',
-                    borderRadius: '8px',
-                  },
-                })}
+                onClick={() =>
+                  toast.error('Coming Soon!', {
+                    duration: 3000,
+                    position: 'top-center',
+                    style: {
+                      background: '#ef4444',
+                      color: '#fff',
+                      fontSize: '16px',
+                      padding: '12px 24px',
+                      borderRadius: '8px',
+                    },
+                  })
+                }
                 className="text-gray-800 hover:text-blue-600 transition-colors font-medium text-sm md:text-base uppercase tracking-wide py-2 px-3 focus:outline-none"
               >
                 Explore TrekToo
               </button>
-              <Link
-                href="/about"
-                className="text-gray-800 hover:text-blue-600 transition-colors font-medium text-sm md:text-base uppercase tracking-wide py-2 px-3 focus:outline-none"
-              >
-                About Us
-              </Link>
-              <Link
-                href="/contact"
-                className="text-gray-800 hover:text-blue-600 transition-colors font-medium text-sm md:text-base uppercase tracking-wide py-2 px-3 focus:outline-none"
-              >
-                Contact
-              </Link>
               <span className="h-6 border-l border-gray-300 mx-2"></span>
+
+              {/* Palestine Flag */}
+              {/* <div className="hidden md:block">
+                <PalestineFlag />
+              </div> */}
             </div>
 
             {/* Search */}
@@ -141,7 +123,9 @@ const Navbar = () => {
             {/* Profile */}
             <div className="relative">
               <button
-                onClick={() => !isLoggingOut && setIsProfileOpen(!isProfileOpen)}
+                onClick={() =>
+                  !isLoggingOut && setIsProfileOpen(!isProfileOpen)
+                }
                 disabled={isLoggingOut}
                 className="p-1.5 rounded-full text-gray-800 hover:bg-blue-100 transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Profile menu"
@@ -251,38 +235,24 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden bg-white border border-gray-200 rounded-lg shadow-lg fixed top-10 left-0 right-0 max-h-[calc(100vh-3rem)] overflow-y-auto z-20">
+          <div
+            className="lg:hidden bg-white border border-gray-200 rounded-lg shadow-lg fixed left-0 right-0 max-h-[calc(100vh-5.5rem)] overflow-y-auto z-20"
+            style={{ top: '5.5rem' }}
+          >
             <div className="px-3 py-4 space-y-3">
               <div className="sm:hidden mb-3">
                 <SearchInput />
               </div>
-              <Link
-                href="/"
-                className="block text-gray-800 hover:text-blue-600 font-medium text-sm uppercase tracking-wide py-1.5"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Home
-              </Link>
               <DropdownMenu
                 title="Explore TrekToo"
                 items={dropdownItems.exploreTrektoo}
                 onItemClick={() => setIsMobileMenuOpen(false)}
               />
-              <Link
-                href="/about"
-                className="block text-gray-800 hover:text-blue-600 font-medium text-sm uppercase tracking-wide py-1.5"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                About Us
-              </Link>
 
-              <Link
-                href="/contact"
-                className="block text-gray-800 hover:text-blue-600 font-medium text-sm uppercase tracking-wide py-1.5"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Contact
-              </Link>
+              {/* Mobile Palestine Flag */}
+              {/* <div className="md:hidden py-2">
+                <PalestineFlag />
+              </div> */}
 
               <div className="pt-2 border-t border-gray-200">
                 {isAuthenticated ? (
