@@ -1,16 +1,31 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CheckCircle, Calendar, Users, MapPin, CreditCard, Loader, Shield, FileText, ArrowLeft } from "lucide-react";
+import { 
+  CheckCircle, 
+  Calendar, 
+  Users, 
+  MapPin, 
+  CreditCard, 
+  Loader, 
+  Shield, 
+  FileText, 
+  ArrowLeft,
+  ChevronRight,
+  BadgeCheck,
+  Percent,
+  Sparkles
+} from "lucide-react";
 import { KLOOK_API_BASE, LOCAL_API_BASE } from "@/lib/api/klookApi";
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { motion, AnimatePresence } from "framer-motion";
 
 const OrderConfirmationPage = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const agentOrderId = searchParams.get('agent_order_id');
-    const { token, isAuthenticated, isLoading: authLoading } = useAuth(); // Use your auth context
+    const { token, isAuthenticated, isLoading: authLoading } = useAuth();
 
     const [loading, setLoading] = useState(true);
     const [creatingOrder, setCreatingOrder] = useState(false);
@@ -170,28 +185,6 @@ const OrderConfirmationPage = () => {
         return originalPrice * (1 + markupRate);
     };
 
-
-    // const handleProceedToPayment = () => {
-    //     if (orderData) {
-    //         // Store order data for payment page
-    //         localStorage.setItem('currentOrder', JSON.stringify(orderData));
-
-    //         // Get it back from localStorage (to confirm it saved correctly)
-    //         const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
-
-    //         // Show alert with order data (stringified for display)
-    //         alert(`Current Order Data:\n${JSON.stringify(currentOrder, null, 2)}`);
-
-    //         // Log the order data in console
-    //         console.log("Current Order:", currentOrder);
-
-    //         // Commenting out router push for now
-    //         // router.push(`/payment/checkout?order_id=${orderData.klktech_order_id}`);
-    //     }
-    // };
-
-    // Update your handleProceedToPayment function
-    // In your OrderConfirmationPage component
     const handleProceedToPayment = async () => {
         if (orderData && token) {
             try {
@@ -271,8 +264,6 @@ const OrderConfirmationPage = () => {
         }
     };
 
-
-    // Add this function to test backend connection
     const testBackendConnection = async () => {
         try {
             const response = await fetch('http://localhost:8000/api/health', {
@@ -296,11 +287,9 @@ const OrderConfirmationPage = () => {
         }
     };
 
-    // Call this function when component mounts
     useEffect(() => {
         testBackendConnection();
     }, []);
-
 
     const handleBackToBooking = () => {
         router.back();
@@ -310,11 +299,19 @@ const OrderConfirmationPage = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
                 <div className="text-center">
-                    <Loader className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
-                    <p className="text-lg font-semibold text-gray-700">
-                        {creatingOrder ? 'Creating your order...' : 'Loading order details...'}
+                    <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6"
+                    >
+                        <Loader className="h-8 w-8 text-white" />
+                    </motion.div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                        {creatingOrder ? 'Creating Your Order' : 'Loading Order Details'}
+                    </h2>
+                    <p className="text-gray-600 max-w-md mx-auto">
+                        Please wait while we process your booking. This may take a moment.
                     </p>
-                    <p className="text-sm text-gray-500 mt-2">Please wait while we process your booking</p>
                 </div>
             </div>
         );
@@ -322,35 +319,50 @@ const OrderConfirmationPage = () => {
 
     if (error) {
         return (
-            
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
-                <div className="text-center max-w-md mx-4">
-                    <div className="bg-red-100 rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                        <FileText className="h-8 w-8 text-red-600" />
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 px-4">
+                <motion.div 
+                    className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 max-w-md w-full"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                >
+                    <div className="text-center">
+                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <FileText className="h-8 w-8 text-red-600" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Connection Error</h2>
+                        <p className="text-gray-600 mb-6">{error}</p>
+                        
+                        <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left">
+                            <p className="text-sm text-gray-700 font-medium mb-2">Troubleshooting tips:</p>
+                            <ul className="text-sm text-gray-600 space-y-1">
+                                <li className="flex items-start gap-2">
+                                    <ChevronRight className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                                    Ensure backend server is running on http://localhost:8000
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <ChevronRight className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                                    Run: <code className="bg-gray-100 px-2 py-1 rounded text-xs">php artisan serve</code>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                            <button
+                                onClick={handleBackToBooking}
+                                className="flex items-center justify-center gap-2 bg-gray-600 text-white px-6 py-3 rounded-xl hover:bg-gray-700 transition-colors"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                                Go Back
+                            </button>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
+                            >
+                                Try Again
+                            </button>
+                        </div>
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Connection Error</h2>
-                    <p className="text-gray-600 mb-4">{error}</p>
-                    <p className="text-sm text-gray-500 mb-6">
-                        Please ensure your backend server is running on http://localhost:8000
-                        <br />
-                        Run: <code className="bg-gray-100 p-1 rounded">php artisan serve</code>
-                    </p>
-                    <div className="flex gap-4 justify-center">
-                        <button
-                            onClick={handleBackToBooking}
-                            className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            Go Back
-                        </button>
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                            Try Again
-                        </button>
-                    </div>
-                </div>
+                </motion.div>
             </div>
         );
     }
@@ -364,160 +376,317 @@ const OrderConfirmationPage = () => {
     const markupAmount = originalTotal * markupRate;
     const finalTotal = originalTotal + markupAmount;
 
+    // Format date for display
+    const formatDate = (dateString) => {
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
     return (
         <ProtectedRoute>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-12">
-            <div className="max-w-4xl mx-auto px-4">
-                {/* Header */}
-                <div className="text-center mb-8 mt-10">
-                    <div className="inline-flex items-center gap-3 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full border border-green-100 mb-4">
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                        <span className="text-sm font-medium text-green-700">Order Created Successfully</span>
-                    </div>
-                    <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-green-700 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                        Order Confirmation
-                    </h1>
-                    <p className="text-gray-600">Review your order details before proceeding to payment</p>
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative overflow-hidden">
+                {/* Background Pattern */}
+                <div className="absolute inset-0 opacity-5">
+                    <svg
+                        className="w-full h-full"
+                        viewBox="0 0 100 100"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <defs>
+                            <pattern
+                                id="grid-confirmation-page"
+                                width="20"
+                                height="20"
+                                patternUnits="userSpaceOnUse"
+                            >
+                                <path
+                                    d="M 20 0 L 0 0 0 20"
+                                    fill="none"
+                                    stroke="#2196F3"
+                                    strokeWidth="0.3"
+                                />
+                            </pattern>
+                        </defs>
+                        <rect width="100" height="100" fill="url(#grid-confirmation-page)" />
+                    </svg>
                 </div>
 
-                <div className="grid lg:grid-cols-2 gap-8">
-                    {/* Order Details */}
-                    <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl border border-white/50 shadow-xl shadow-blue-100/20">
-                        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                            <FileText className="w-5 h-5" />
-                            Order Information
-                        </h2>
+                {/* Decorative Elements */}
+                <div className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-blue-600/5 rounded-full blur-2xl"></div>
+                <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-br from-blue-500/5 to-blue-600/5 rounded-full blur-2xl"></div>
 
-                        <div className="space-y-4">
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Order Number:</span>
-                                <span className="font-semibold">{orderData.klktech_order_id}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Agent Order ID:</span>
-                                <span className="font-semibold">{orderData.agent_order_id}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Status:</span>
-                                <span className="font-semibold capitalize">{orderData.confirm_status}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Transaction Status:</span>
-                                <span className="font-semibold">{orderData.transaction_status}</span>
-                            </div>
-                        </div>
-
-                        <div className="mt-6 pt-4 border-t border-gray-200">
-                            <h3 className="font-semibold text-gray-800 mb-3">Booking Summary</h3>
-                            {orderData.bookings?.map((booking, index) => (
-                                <div key={index} className="space-y-2">
-                                    <p className="font-medium">{booking.activity_name}</p>
-                                    <p className="text-sm text-gray-600">{booking.package_name}</p>
-                                    <p className="text-sm">Reference: {booking.booking_ref_number}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Price Summary */}
-                    <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl border border-white/50 shadow-xl shadow-blue-100/20">
-                        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                            <CreditCard className="w-5 h-5" />
-                            Payment Summary
-                        </h2>
-
-                        <div className="space-y-3">
-                            {/* Show original price details */}
-                            <div className="text-sm text-gray-500 mb-2">Original Price:</div>
-                            {orderData.skus?.map((sku, index) => (
-                                <div key={index} className="flex justify-between text-sm text-gray-500">
-                                    <span>SKU {sku.sku_id} (x{sku.quantity})</span>
-                                    <span>
-                                        {sku.sku_price} {sku.currency}
-                                    </span>
-                                </div>
-                            ))}
-
-                            <div className="border-t border-gray-200 pt-2">
-                                <div className="flex justify-between text-sm text-gray-500">
-                                    <span>Original Total:</span>
-                                    <span>
-                                        {orderData.total_amount} {orderData.currency}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Show markup details */}
-                            <div className="pt-4">
-                                <div className="text-sm font-medium mb-2">Service Fee ({markupRate * 100}%):</div>
-                                <div className="flex justify-between text-sm">
-                                    <span>Service Fee</span>
-                                    <span className="text-blue-600">
-                                        +{markupAmount.toFixed(2)} {orderData.currency}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Final total */}
-                            <div className="border-t border-gray-200 pt-3">
-                                <div className="flex justify-between text-lg font-bold">
-                                    <span>Total Amount:</span>
-                                    <span className="text-green-600">
-                                        {finalTotal.toFixed(2)} {orderData.currency}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={handleProceedToPayment}
-                            className="w-full mt-6 py-3 bg-gradient-to-r from-blue-600 to-blue-600 hover:from-blue-700 hover:to-blue-700 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                <div className="relative z-10 py-12 px-4 sm:px-6 lg:px-8">
+                    {/* Header */}
+                    <div className="text-center mb-12 max-w-3xl mx-auto">
+                        <motion.div 
+                            className="inline-flex items-center gap-3 bg-green-50 px-6 py-3 rounded-full border border-green-200 mb-6"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
                         >
-                            <Shield className="w-5 h-5" />
-                            Proceed Booking
-                        </button>
-
-                        <p className="text-xs text-gray-500 text-center mt-3">
-                            Your booking will be confirmed after successful payment
-                        </p>
+                            <BadgeCheck className="w-5 h-5 text-green-600" />
+                            <span className="text-sm font-medium text-green-700">Order Created Successfully</span>
+                        </motion.div>
+                        
+                        <motion.h1 
+                            className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            style={{
+                                fontFamily: "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                                letterSpacing: '-0.02em',
+                            }}
+                        >
+                            Order{' '}
+                            <span className="text-blue-600 relative">
+                                Confirmation
+                                <svg
+                                    className="absolute -bottom-2 left-0 w-full h-3"
+                                    viewBox="0 0 200 12"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path
+                                        d="M2 10C50 2 100 2 198 10"
+                                        stroke="#E0C097"
+                                        strokeWidth="4"
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                            </span>
+                        </motion.h1>
+                        
+                        <motion.p 
+                            className="text-xl text-gray-600"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                        >
+                            Review your order details before proceeding to payment
+                        </motion.p>
                     </div>
-                </div>
 
-                {/* Additional Details */}
-                <div className="mt-8 bg-white/70 backdrop-blur-sm p-6 rounded-2xl border border-white/50 shadow-xl shadow-blue-100/20">
-                    <h2 className="text-xl font-bold text-gray-800 mb-4">Booking Details</h2>
+                    <div className="max-w-6xl mx-auto">
+                        <div className="grid lg:grid-cols-3 gap-8 items-start">
+                            {/* Left Column - Order Details */}
+                            <div className="lg:col-span-2 space-y-8">
+                                {/* Order Information */}
+                                <motion.div 
+                                    className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.3 }}
+                                >
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="bg-blue-600 rounded-2xl p-3 shadow-lg">
+                                            <FileText className="w-6 h-6 text-white" />
+                                        </div>
+                                        <h2 className="text-2xl font-bold text-gray-900">Order Information</h2>
+                                    </div>
 
-                    <div className="grid md:grid-cols-2 gap-6">
-                        {orderData.bookings?.map((booking, bookingIndex) => (
-                            <div key={bookingIndex}>
-                                <h3 className="font-semibold text-gray-800 mb-3">Booking #{bookingIndex + 1}</h3>
-                                <div className="space-y-2 text-sm">
-                                    <p><span className="font-medium">Activity:</span> {booking.activity_name}</p>
-                                    <p><span className="font-medium">Package:</span> {booking.package_name}</p>
-                                    <p><span className="font-medium">Reference:</span> {booking.booking_ref_number}</p>
-                                    <p><span className="font-medium">Status:</span> {booking.confirm_status}</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-semibold text-gray-500">Order Number</span>
+                                            </div>
+                                            <p className="text-lg font-semibold text-gray-800">
+                                                {orderData.klktech_order_id}
+                                            </p>
+                                        </div>
 
-                                    {booking.operator_contacts?.length > 0 && (
-                                        <div>
-                                            <p className="font-medium mb-1">Operator Contacts:</p>
-                                            {booking.operator_contacts.map((contact, contactIndex) => (
-                                                <div key={contactIndex} className="text-sm">
-                                                    {contact.details.map((detail, detailIndex) => (
-                                                        <p key={detailIndex}>{contact.method}: {detail}</p>
-                                                    ))}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-semibold text-gray-500">Agent Order ID</span>
+                                            </div>
+                                            <p className="text-lg font-semibold text-gray-800">
+                                                {orderData.agent_order_id}
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-semibold text-gray-500">Status</span>
+                                            </div>
+                                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                                                {orderData.confirm_status}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-semibold text-gray-500">Transaction Status</span>
+                                            </div>
+                                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                                                {orderData.transaction_status}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+
+                                {/* Booking Summary */}
+                                <motion.div 
+                                    className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.4 }}
+                                >
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="bg-purple-600 rounded-2xl p-3 shadow-lg">
+                                            <Calendar className="w-6 h-6 text-white" />
+                                        </div>
+                                        <h2 className="text-2xl font-bold text-gray-900">Booking Summary</h2>
+                                    </div>
+
+                                    {orderData.bookings?.map((booking, index) => (
+                                        <div key={index} className="bg-gray-50 rounded-xl p-6 border border-gray-200 mb-6 last:mb-0">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-semibold text-gray-500">Activity</span>
+                                                    </div>
+                                                    <p className="text-lg font-semibold text-gray-800">
+                                                        {booking.activity_name}
+                                                    </p>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-semibold text-gray-500">Package</span>
+                                                    </div>
+                                                    <p className="text-lg font-semibold text-gray-800">
+                                                        {booking.package_name}
+                                                    </p>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-semibold text-gray-500">Reference Number</span>
+                                                    </div>
+                                                    <p className="text-lg font-semibold text-gray-800">
+                                                        {booking.booking_ref_number}
+                                                    </p>
+                                                </div>
+
+                                                {booking.operator_contacts?.length > 0 && (
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm font-semibold text-gray-500">Operator Contacts</span>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            {booking.operator_contacts.map((contact, contactIndex) => (
+                                                                <div key={contactIndex} className="text-sm text-gray-700">
+                                                                    {contact.details.map((detail, detailIndex) => (
+                                                                        <p key={detailIndex} className="flex items-center gap-2">
+                                                                            <span className="font-medium">{contact.method}:</span> {detail}
+                                                                        </p>
+                                                                    ))}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </motion.div>
+                            </div>
+
+                            {/* Right Column - Price Summary */}
+                            <div className="lg:col-span-1">
+                                <div className="sticky top-32">
+                                    <motion.div 
+                                        className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.5 }}
+                                    >
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                                                <CreditCard className="w-5 h-5 text-white" />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-gray-900">Payment Summary</h3>
+                                        </div>
+
+                                        <div className="space-y-4 mb-6">
+                                            {/* Original Price */}
+                                            <div className="text-sm text-gray-500 mb-2">Original Price:</div>
+                                            {orderData.skus?.map((sku, index) => (
+                                                <div key={index} className="flex justify-between text-sm text-gray-500">
+                                                    <span>SKU {sku.sku_id} (x{sku.quantity})</span>
+                                                    <span>
+                                                        {sku.sku_price} {sku.currency}
+                                                    </span>
                                                 </div>
                                             ))}
+
+                                            <div className="border-t border-gray-200 pt-2">
+                                                <div className="flex justify-between text-sm text-gray-500">
+                                                    <span>Original Total:</span>
+                                                    <span>
+                                                        {orderData.total_amount} {orderData.currency}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Service Fee */}
+                                            <div className="pt-4">
+                                                <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                                                    <Percent className="w-4 h-4 text-blue-600" />
+                                                    <span>Service Fee ({markupRate * 100}%)</span>
+                                                </div>
+                                                <div className="flex justify-between text-sm">
+                                                    <span>Service Fee</span>
+                                                    <span className="text-blue-600">
+                                                        +{markupAmount.toFixed(2)} {orderData.currency}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Final total */}
+                                            <div className="border-t-2 border-gray-200 pt-4">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-lg font-bold text-gray-900">Total Amount</span>
+                                                    <span className="text-2xl font-bold text-green-600">
+                                                        {finalTotal.toFixed(2)} {orderData.currency}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
-                                    )}
+
+                                        <motion.button
+                                            onClick={handleProceedToPayment}
+                                            className="w-full mt-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3"
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                        >
+                                            <Shield className="w-5 h-5" />
+                                            Proceed to Payment
+                                        </motion.button>
+
+                                        <div className="mt-4 text-center">
+                                            <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
+                                                <Sparkles className="w-4 h-4" />
+                                                <span>Your adventure awaits!</span>
+                                            </div>
+                                            <p className="text-xs text-gray-500 mt-2">
+                                                Your booking will be confirmed after successful payment
+                                            </p>
+                                        </div>
+                                    </motion.div>
                                 </div>
                             </div>
-                        ))}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
         </ProtectedRoute>
-
     );
 };
 
