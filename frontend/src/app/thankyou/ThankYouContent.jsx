@@ -314,7 +314,7 @@ const ThankYouPage = () => {
 
       <div className="relative z-10 pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-12 max-w-3xl mx-auto">
+        <div className="text-center mb-12 max-w-3xl mx-auto mt-10">
           <motion.div 
             className="inline-flex items-center gap-3 bg-green-50 px-6 py-3 rounded-full border border-green-200 mb-6"
             initial={{ opacity: 0, y: 10 }}
