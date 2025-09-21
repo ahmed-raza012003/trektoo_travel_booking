@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { Globe, Compass, MapPin } from 'lucide-react';
+import { Globe, Compass, MapPin, Star, Shield, Heart, Users, Award, CheckCircle } from 'lucide-react';
 
 const WhyChooseUs = () => {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
@@ -78,16 +78,16 @@ const WhyChooseUs = () => {
         >
           <motion.div variants={itemVariants}>
             <h2
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 leading-tight mb-6"
+              className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6"
               style={{
                 fontFamily:
                   "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                 letterSpacing: '-0.02em',
               }}
             >
-              Why Choose{' '}
-              <span className="text-blue-500 relative">
-                TREKTOO
+              Why travelers{' '}
+              <span className="text-blue-600 relative">
+                choose us
                 <svg
                   className="absolute -bottom-2 left-0 w-full h-3"
                   viewBox="0 0 200 12"
@@ -106,9 +106,8 @@ const WhyChooseUs = () => {
           </motion.div>
           <motion.div variants={itemVariants}>
             <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
-              Experience the difference with our commitment to safety, value,
-              and authentic local expertise that makes every journey
-              unforgettable.
+              Transparent pricing, verified reviews, and 24/7 support. 
+              We make travel planning simple and trustworthy.
             </p>
           </motion.div>
         </motion.div>
