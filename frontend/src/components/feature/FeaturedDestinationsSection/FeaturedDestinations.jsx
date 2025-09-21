@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { MapPin, Star, Users } from 'lucide-react';
+import { MapPin, Star, Users, Heart, ArrowRight, CheckCircle } from 'lucide-react';
 
 const FeaturedDestinations = () => {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
@@ -109,16 +109,16 @@ const FeaturedDestinations = () => {
           <motion.div variants={itemVariants}>
             <h2
               id="featured-destinations-heading"
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 leading-tight mb-6"
+              className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6"
               style={{
                 fontFamily:
                   "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                 letterSpacing: '-0.02em',
               }}
             >
-              Featured{' '}
-              <span className="text-blue-500 relative">
-                Destinations
+              Popular{' '}
+              <span className="text-blue-600 relative">
+                destinations
                 <svg
                   className="absolute -bottom-2 left-0 w-full h-3"
                   viewBox="0 0 200 12"
@@ -137,8 +137,8 @@ const FeaturedDestinations = () => {
           </motion.div>
           <motion.div variants={itemVariants}>
             <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
-              Discover the world's most breathtaking destinations with our
-              curated selection of unforgettable experiences
+              Handpicked destinations with verified accommodations and 
+              authentic experiences for your next trip
             </p>
           </motion.div>
         </motion.div>

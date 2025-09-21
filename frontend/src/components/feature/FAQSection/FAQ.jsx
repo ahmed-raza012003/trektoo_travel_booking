@@ -161,16 +161,16 @@ const FAQSection = () => {
           <motion.div variants={itemVariants}>
             <h2
               id="faq-section-heading"
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 leading-tight mb-6"
+              className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6"
               style={{
                 fontFamily:
                   "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                 letterSpacing: '-0.02em',
               }}
             >
-              Frequently Asked{' '}
-              <span className="text-blue-500 relative">
-                Questions
+              Frequently asked{' '}
+              <span className="text-blue-600 relative">
+                questions
                 <svg
                   className="absolute -bottom-2 left-0 w-full h-3"
                   viewBox="0 0 200 12"
@@ -189,8 +189,8 @@ const FAQSection = () => {
           </motion.div>
           <motion.div variants={itemVariants}>
             <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
-              Everything you need to know about planning your perfect adventure
-              with TrekToo
+              Get answers to common questions about booking, payments, 
+              cancellations, and more
             </p>
           </motion.div>
         </motion.div>

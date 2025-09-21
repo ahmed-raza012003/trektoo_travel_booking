@@ -16,6 +16,13 @@ import {
   Car,
   Building,
   Ticket,
+  Star,
+  Shield,
+  Heart,
+  ArrowRight,
+  CheckCircle,
+  Users2,
+  Globe,
 } from 'lucide-react';
 import DateInput from '@/components/ui/Custom/DateInput';
 import { useLocations } from '@/hooks/useHotels';
@@ -317,17 +324,17 @@ function HeroContent() {
           animate={inView ? 'visible' : 'hidden'}
           className="space-y-8 text-center"
         >
-          <motion.div variants={itemVariants} className="space-y-6">
+          <motion.div variants={itemVariants} className="space-y-8">
             <h1
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-gray-800 leading-tight md:whitespace-nowrap"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight"
               style={{
                 fontFamily:
                   "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                 letterSpacing: '-0.02em',
               }}
             >
-              Life's an{' '}
-              <span className="text-blue-500 relative">
+              Find your next{' '}
+              <span className="text-blue-600 relative">
                 adventure
                 <svg
                   className="absolute -bottom-2 left-0 w-full h-3"
@@ -343,18 +350,28 @@ function HeroContent() {
                   />
                 </svg>
               </span>
-              , live it!
             </h1>
-          </motion.div>
-
-          <motion.div
-            variants={itemVariants}
-            className="space-y-4 max-w-4xl mx-auto"
-          >
-            <p className="text-xl md:text-2xl text-gray-600 leading-relaxed font-medium">
-              Discover amazing destinations, book unforgettable experiences, and
-              create memories that last a lifetime.
+            
+            <p className="text-xl md:text-2xl text-gray-600 leading-relaxed font-medium max-w-3xl mx-auto">
+              Book hotels, activities, and car rentals with confidence. 
+              Transparent pricing, verified reviews, and 24/7 support.
             </p>
+            
+            {/* Subtle Trust Indicators */}
+            <div className="flex flex-wrap justify-center gap-8 text-gray-500 text-sm">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-blue-500" />
+                <span>Secure Booking</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Star className="h-4 w-4 text-yellow-500" />
+                <span>4.8/5 Rating</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users2 className="h-4 w-4 text-green-500" />
+                <span>500K+ Travelers</span>
+              </div>
+            </div>
           </motion.div>
         </motion.div>
 
@@ -364,9 +381,9 @@ function HeroContent() {
           animate={inView ? 'visible' : 'hidden'}
           className="relative w-full max-w-5xl mx-auto"
         >
-          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-visible">
-            <div className="bg-gray-50 px-4 sm:px-6 pt-4 sm:pt-6 pb-4 border-b border-gray-100">
-              <div className="flex flex-wrap justify-center gap-2">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <div className="flex flex-wrap justify-center gap-1">
                 {serviceOptions.map((service, index) => {
                   const IconComponent = service.icon;
                   const isSelected = selectedService === service.id;
@@ -378,10 +395,10 @@ function HeroContent() {
                       animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
                       transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
                       onClick={() => handleServiceSelect(service.id)}
-                      className={`flex items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 font-semibold text-sm ${
+                      className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all duration-300 font-medium text-sm ${
                         isSelected
-                          ? 'bg-blue-500 text-white shadow-md'
-                          : 'bg-white text-gray-700 hover:bg-blue-50 border border-gray-200'
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
                       <IconComponent className="w-4 h-4" />
@@ -392,7 +409,7 @@ function HeroContent() {
               </div>
             </div>
 
-            <div className="p-4 sm:p-6 overflow-visible">
+            <div className="p-6 overflow-visible">
               {selectedService !== 'activities' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-10 gap-4 mb-6">
                 <div
@@ -630,7 +647,7 @@ function HeroContent() {
                   onClick={() => router.push('/activities')}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-lg"
                 >
                   <Ticket className="w-5 h-5" />
                   Explore Activities
@@ -641,7 +658,7 @@ function HeroContent() {
                   disabled={isSearching || selectedService === 'hotels' || selectedService === 'cars'}
                   whileHover={{ scale: (selectedService === 'hotels' || selectedService === 'cars') ? 1 : 1.02 }}
                   whileTap={{ scale: (selectedService === 'hotels' || selectedService === 'cars') ? 1 : 0.98 }}
-                  className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg"
                 >
                   {isSearching ? (
                     <>
