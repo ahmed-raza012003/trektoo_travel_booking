@@ -127,6 +127,10 @@ Route::middleware('auth:sanctum')->group(function () {
         // Additional Klook routes
         Route::post('/resend-voucher/{orderId}', [KlookApiController::class, 'resendVoucher']);
         Route::get('/balance', [KlookApiController::class, 'getBalance']);
+        
+        // Test routes (for development only)
+        Route::post('/test/balance-payment', [PaymentController::class, 'testBalancePayment']);
+        Route::post('/manual-complete-payment', [PaymentController::class, 'manualCompletePayment']);
     });
 });
 
@@ -139,6 +143,9 @@ Route::post('/test/complete-flow', [StripeWebhookController::class, 'testComplet
 
 // Webhook simulation endpoint (for development/testing only)
 Route::post('/test/simulate-webhook', [StripeWebhookController::class, 'simulateWebhook']);
+
+// Quick complete payment endpoint (for development/testing only)
+Route::post('/test/quick-complete', [StripeWebhookController::class, 'quickCompletePayment']);
 
 // routes/api.php
 Route::get('/health', function () {

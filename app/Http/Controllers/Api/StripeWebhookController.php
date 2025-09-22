@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Models\Booking;
 use App\Services\Klook\KlookApiService;
 use App\Services\Payment\StripeService;
+use App\Jobs\ProcessKlookBalancePayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -96,24 +97,33 @@ class StripeWebhookController extends Controller
                 return;
             }
 
-            // Process the complete Klook flow
-            $result = $this->processKlookOrderFlow($booking, $payment);
+            // Update payment status first
+            $payment->update([
+                'status' => 'paid',
+                'paid_at' => now(),
+                'provider_response' => array_merge(
+                    $payment->provider_response ?? [],
+                    ['stripe_session' => $session->toArray()]
+                ),
+            ]);
 
-            if ($result['success']) {
-                DB::commit();
-                Log::info('Stripe Webhook - Successfully processed Klook order flow', [
+            // Dispatch job to process Klook balance payment
+            if ($booking->external_booking_id) {
+                Log::info('Stripe Webhook - Dispatching balance payment job', [
                     'payment_id' => $payment->id,
                     'booking_id' => $booking->id,
-                    'order_no' => $result['order_no']
+                    'external_booking_id' => $booking->external_booking_id
                 ]);
+
+                ProcessKlookBalancePayment::dispatch($booking->external_booking_id, $payment->id);
             } else {
-                DB::rollBack();
-                Log::error('Stripe Webhook - Failed to process Klook order flow', [
+                Log::warning('Stripe Webhook - No external booking ID found, cannot process balance payment', [
                     'payment_id' => $payment->id,
-                    'booking_id' => $booking->id,
-                    'error' => $result['error']
+                    'booking_id' => $booking->id
                 ]);
             }
+
+            DB::commit();
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -145,6 +155,18 @@ class StripeWebhookController extends Controller
             Log::info('Stripe Webhook - Updated payment status to paid', [
                 'payment_id' => $payment->id
             ]);
+
+            // Dispatch job to process Klook balance payment
+            $booking = $payment->booking;
+            if ($booking && $booking->external_booking_id) {
+                Log::info('Stripe Webhook - Dispatching balance payment job', [
+                    'payment_id' => $payment->id,
+                    'booking_id' => $booking->id,
+                    'external_booking_id' => $booking->external_booking_id
+                ]);
+
+                ProcessKlookBalancePayment::dispatch($booking->external_booking_id, $payment->id);
+            }
         }
     }
 
@@ -159,70 +181,25 @@ class StripeWebhookController extends Controller
                 'payment_id' => $payment->id
             ]);
 
-            // Step 1: Create order with Klook
-            $bookingDetails = $booking->booking_details ?? [];
+            // Check if we already have an external booking ID (order was created in frontend)
+            $orderNo = $booking->external_booking_id;
             
-            // Construct proper items array for Klook API
-            $items = [];
-            if (isset($bookingDetails['package_id']) && isset($bookingDetails['start_time'])) {
-                // Format start_time to include time if not present
-                $startTime = $bookingDetails['start_time'];
-                if (strlen($startTime) === 10) { // Only date, no time
-                    $startTime .= ' 00:00:00';
-                }
-                
-                $items[] = [
-                    'package_id' => (int) $bookingDetails['package_id'],
-                    'start_time' => $startTime,
-                    'sku_list' => [
-                        [
-                            'sku_id' => $this->getSkuIdForPackage($bookingDetails['package_id']),
-                            'count' => $bookingDetails['adult_quantity'] ?? 1,
-                            'price' => ''
-                        ]
-                    ],
-                    'booking_extra_info' => $this->getBookingExtraInfo($bookingDetails),
-                    'unit_extra_info' => []
-                ];
-            }
-
-            $orderData = [
-                'agent_order_id' => 'ORD_' . time() . '_' . $booking->id . '_' . uniqid(),
-                'contact_info' => $booking->customer_info,
-                'items' => $items,
-            ];
-
-            Log::info('Stripe Webhook - Creating Klook order', $orderData);
-
-            $klookResult = $this->klookService->createOrder($orderData);
-
-            if (isset($klookResult['error'])) {
-                Log::error('Stripe Webhook - Klook order creation failed', [
-                    'error' => $klookResult['error'],
-                    'order_data' => $orderData
-                ]);
-                return [
-                    'success' => false,
-                    'error' => 'Klook order creation failed: ' . $klookResult['error'],
-                ];
-            }
-
-            $orderNo = $klookResult['klook_order_no'] ?? $klookResult['data']['order_no'] ?? null;
             if (!$orderNo) {
-                Log::error('Stripe Webhook - No order number returned from Klook', [
-                    'klook_result' => $klookResult
+                Log::error('Stripe Webhook - No external booking ID found, cannot proceed with balance payment', [
+                    'booking_id' => $booking->id,
+                    'payment_id' => $payment->id
                 ]);
                 return [
                     'success' => false,
-                    'error' => 'No order number returned from Klook',
+                    'error' => 'No external booking ID found. Order must be created first.',
                 ];
             }
 
-            Log::info('Stripe Webhook - Klook order created successfully', [
+            Log::info('Stripe Webhook - Using existing order for balance payment', [
                 'order_no' => $orderNo
             ]);
 
-            // Step 2: Pay with Klook balance
+            // Step 1: Pay with Klook balance using existing order
             Log::info('Stripe Webhook - Paying with Klook balance', [
                 'order_no' => $orderNo
             ]);
@@ -245,7 +222,7 @@ class StripeWebhookController extends Controller
                 'pay_result' => $payResult
             ]);
 
-            // Step 3: Get updated order info
+            // Step 2: Get updated order info
             Log::info('Stripe Webhook - Getting updated order info', [
                 'order_no' => $orderNo
             ]);
@@ -265,25 +242,22 @@ class StripeWebhookController extends Controller
                 ]);
             }
 
-            // Step 4: Update booking and payment in database
+            // Step 3: Update booking and payment in database
             $booking->update([
-                'external_booking_id' => $orderNo,
-                'agent_order_id' => $orderData['agent_order_id'],
                 'status' => 'confirmed',
                 'confirmed_at' => now(),
-                'booking_details' => array_merge($booking->booking_details ?? [], [
-                    'klook_order_info' => $orderInfo,
-                    'klook_payment_result' => $payResult,
+                'external_booking_data' => array_merge($booking->external_booking_data ?? [], [
+                    'balance_payment_result' => $payResult,
+                    'confirmed_at' => now()->toISOString(),
+                    'order_info' => $orderInfo
                 ]),
             ]);
 
             $payment->update([
-                'transaction_id' => $orderNo,
                 'status' => 'paid',
                 'paid_at' => now(),
                 'provider_response' => array_merge($payment->provider_response ?? [], [
                     'stripe_session' => $payment->provider_response ?? [],
-                    'klook_order_result' => $klookResult,
                     'klook_payment_result' => $payResult,
                     'klook_order_info' => $orderInfo,
                 ]),
@@ -490,6 +464,81 @@ class StripeWebhookController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Webhook simulation failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Quick fix endpoint to complete payment for specific order
+     * This bypasses webhook and directly processes the balance payment
+     */
+    public function quickCompletePayment(Request $request)
+    {
+        $request->validate([
+            'order_id' => 'required|string',
+        ]);
+
+        try {
+            // Find booking by external_booking_id
+            $booking = Booking::where('external_booking_id', $request->order_id)->first();
+            
+            if (!$booking) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Booking not found for this order ID'
+                ], 404);
+            }
+
+            $payment = $booking->payment;
+            if (!$payment) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Payment not found for this booking'
+                ], 404);
+            }
+
+            Log::info('Quick Complete Payment - Starting', [
+                'order_id' => $request->order_id,
+                'booking_id' => $booking->id,
+                'payment_id' => $payment->id
+            ]);
+
+            DB::beginTransaction();
+
+            // Process the complete Klook order flow
+            $result = $this->processKlookOrderFlow($booking, $payment);
+
+            if ($result['success']) {
+                DB::commit();
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Payment completed successfully',
+                    'data' => [
+                        'booking_id' => $booking->id,
+                        'payment_id' => $payment->id,
+                        'order_no' => $result['order_no'],
+                        'booking_status' => $result['booking_status'],
+                        'payment_status' => $result['payment_status'],
+                    ]
+                ]);
+            } else {
+                DB::rollBack();
+                
+                return response()->json([
+                    'success' => false,
+                    'error' => $result['error']
+                ], 400);
+            }
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Quick Complete Payment - Exception: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,

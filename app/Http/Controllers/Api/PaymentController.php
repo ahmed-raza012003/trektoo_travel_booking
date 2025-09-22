@@ -353,6 +353,12 @@ class PaymentController extends BaseController
                 'booking_details' => $bookingData
             ]);
 
+            Log::info('Klook Payment Intent - Booking created with external_booking_id', [
+                'booking_id' => $booking->id,
+                'external_booking_id' => $request->order_id,
+                'agent_order_id' => $request->agent_order_id
+            ]);
+
             // Create payment record
             $payment = $this->paymentManager->createPayment($booking, [
                 'amount' => $request->amount,
@@ -384,6 +390,57 @@ class PaymentController extends BaseController
                 return $this->errorResponse('Failed to create checkout session', 400, $result['error']);
             }
 
+            // Automatically trigger balance payment after successful payment storage
+            Log::info('Klook Payment Intent - Auto-triggering balance payment', [
+                'order_id' => $request->order_id,
+                'payment_id' => $payment->id,
+                'booking_id' => $booking->id
+            ]);
+
+            // Call balance payment API immediately
+            $balancePayment = $this->klookService->payWithBalance($request->order_id);
+
+            if (isset($balancePayment['error'])) {
+                Log::warning('Klook Payment Intent - Balance payment failed, but payment was stored', [
+                    'order_id' => $request->order_id,
+                    'error' => $balancePayment['error'],
+                    'payment_id' => $payment->id
+                ]);
+                // Don't fail the entire process, just log the warning
+            } else {
+                Log::info('Klook Payment Intent - Balance payment successful', [
+                    'order_id' => $request->order_id,
+                    'balance_payment' => $balancePayment,
+                    'payment_id' => $payment->id
+                ]);
+
+                // Update booking status to confirmed
+                $booking->update([
+                    'status' => 'confirmed',
+                    'confirmed_at' => now(),
+                    'external_booking_data' => array_merge(
+                        $booking->external_booking_data ?? [],
+                        [
+                            'balance_payment_result' => $balancePayment,
+                            'auto_confirmed_at' => now()->toISOString()
+                        ]
+                    )
+                ]);
+
+                // Update payment status
+                $payment->update([
+                    'status' => 'paid',
+                    'paid_at' => now(),
+                    'provider_response' => array_merge(
+                        $payment->provider_response ?? [],
+                        [
+                            'klook_balance_payment' => $balancePayment,
+                            'auto_completion' => true
+                        ]
+                    )
+                ]);
+            }
+
             DB::commit();
 
             return $this->successResponse([
@@ -391,8 +448,10 @@ class PaymentController extends BaseController
                 'booking_id' => $booking->id,
                 'checkout_url' => $result['checkout_url'],
                 'session_id' => $result['session_id'],
-                'order_id' => $request->order_id
-            ], 'Checkout session created successfully');
+                'order_id' => $request->order_id,
+                'balance_payment' => $balancePayment,
+                'booking_status' => $booking->fresh()->status
+            ], 'Checkout session created and balance payment processed successfully');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Klook Payment Intent Creation Failed:', [
@@ -447,12 +506,24 @@ class PaymentController extends BaseController
 
                 // We still mark as paid since customer payment succeeded
                 // Klook might need manual intervention
+            } else {
+                Log::info('Klook balance payment successful', [
+                    'order_id' => $request->order_id,
+                    'payment_result' => $klookPayment
+                ]);
             }
 
             // Update booking status
             $booking->update([
                 'status' => 'confirmed',
-                'confirmed_at' => now()
+                'confirmed_at' => now(),
+                'external_booking_data' => array_merge(
+                    $booking->external_booking_data ?? [],
+                    [
+                        'balance_payment_result' => $klookPayment,
+                        'confirmed_at' => now()->toISOString()
+                    ]
+                )
             ]);
 
             // Get updated order details from Klook
@@ -472,7 +543,8 @@ class PaymentController extends BaseController
             return $this->successResponse([
                 'payment' => $payment->fresh(),
                 'booking' => $booking->fresh(),
-                'klook_order' => $updatedOrder['data'] ?? null
+                'klook_order' => $updatedOrder['data'] ?? null,
+                'balance_payment' => $klookPayment
             ], 'Payment and booking confirmed successfully');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -565,6 +637,12 @@ class PaymentController extends BaseController
 
                 DB::rollBack();
                 return $this->errorResponse('Klook balance payment failed', 400, $balancePayment['error']);
+            } else {
+                Log::info('Klook balance payment successful', [
+                    'order_id' => $request->order_id,
+                    'payment_result' => $balancePayment,
+                    'payment_id' => $payment->id
+                ]);
             }
 
             // Step 2: Get updated order details
@@ -844,5 +922,199 @@ public function downloadVoucher($bookingId): \Symfony\Component\HttpFoundation\B
         }
 
         return 99; // Default to "other"
+    }
+
+    /**
+     * Test endpoint to verify balance payment integration
+     * This is for testing purposes only
+     */
+    public function testBalancePayment(Request $request): JsonResponse
+    {
+        $request->validate([
+            'order_id' => 'required|string',
+            'payment_id' => 'required|exists:payments,id'
+        ]);
+
+        try {
+            $user = Auth::user();
+            $payment = Payment::findOrFail($request->payment_id);
+            $booking = $payment->booking;
+
+            // Verify the payment belongs to the user
+            if ($booking->user_id !== $user->id) {
+                return $this->errorResponse('Unauthorized access to payment', 403);
+            }
+
+            Log::info('Test Balance Payment - Starting test', [
+                'order_id' => $request->order_id,
+                'payment_id' => $payment->id,
+                'booking_id' => $booking->id
+            ]);
+
+            // Call balance payment API
+            $balancePayment = $this->klookService->payWithBalance($request->order_id);
+
+            if (isset($balancePayment['error'])) {
+                Log::error('Test Balance Payment - Balance payment failed', [
+                    'order_id' => $request->order_id,
+                    'error' => $balancePayment['error']
+                ]);
+
+                return $this->errorResponse('Balance payment failed', 400, $balancePayment['error']);
+            }
+
+            // Update booking status
+            $booking->update([
+                'status' => 'confirmed',
+                'confirmed_at' => now(),
+                'external_booking_data' => array_merge(
+                    $booking->external_booking_data ?? [],
+                    [
+                        'balance_payment_result' => $balancePayment,
+                        'test_confirmed_at' => now()->toISOString()
+                    ]
+                )
+            ]);
+
+            Log::info('Test Balance Payment - Success', [
+                'order_id' => $request->order_id,
+                'payment_id' => $payment->id,
+                'booking_id' => $booking->id,
+                'balance_payment' => $balancePayment
+            ]);
+
+            return $this->successResponse([
+                'booking' => $booking->fresh(),
+                'payment' => $payment->fresh(),
+                'balance_payment' => $balancePayment
+            ], 'Balance payment test completed successfully');
+
+        } catch (\Exception $e) {
+            Log::error('Test Balance Payment - Exception', [
+                'order_id' => $request->order_id,
+                'payment_id' => $request->payment_id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return $this->errorResponse('Balance payment test failed', 500, $e->getMessage());
+        }
+    }
+
+    /**
+     * Manual trigger to complete payment flow for existing orders
+     * This simulates the webhook flow for orders that weren't automatically processed
+     */
+    public function manualCompletePayment(Request $request): JsonResponse
+    {
+        $request->validate([
+            'order_id' => 'required|string'
+        ]);
+
+        try {
+            $user = Auth::user();
+            
+            // Find booking by external_booking_id
+            $booking = Booking::where('external_booking_id', $request->order_id)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if (!$booking) {
+                return $this->errorResponse('Booking not found for this order', 404);
+            }
+
+            $payment = $booking->payment;
+            if (!$payment) {
+                return $this->errorResponse('Payment not found for this booking', 404);
+            }
+
+            Log::info('Manual Complete Payment - Starting', [
+                'order_id' => $request->order_id,
+                'booking_id' => $booking->id,
+                'payment_id' => $payment->id
+            ]);
+
+            DB::beginTransaction();
+
+            // Step 1: Pay with Klook balance
+            $balancePayment = $this->klookService->payWithBalance($request->order_id);
+
+            if (isset($balancePayment['error'])) {
+                Log::error('Manual Complete Payment - Balance payment failed', [
+                    'order_id' => $request->order_id,
+                    'error' => $balancePayment['error']
+                ]);
+
+                DB::rollBack();
+                return $this->errorResponse('Balance payment failed', 400, $balancePayment['error']);
+            }
+
+            Log::info('Manual Complete Payment - Balance payment successful', [
+                'order_id' => $request->order_id,
+                'balance_payment' => $balancePayment
+            ]);
+
+            // Step 2: Get updated order details
+            $orderDetails = $this->klookService->getOrderDetail($request->order_id);
+
+            if (isset($orderDetails['error'])) {
+                Log::warning('Manual Complete Payment - Failed to get order details', [
+                    'order_id' => $request->order_id,
+                    'error' => $orderDetails['error']
+                ]);
+            }
+
+            // Step 3: Update booking and payment status
+            $booking->update([
+                'status' => 'confirmed',
+                'confirmed_at' => now(),
+                'external_booking_data' => array_merge(
+                    $booking->external_booking_data ?? [],
+                    [
+                        'balance_payment_result' => $balancePayment,
+                        'order_details' => $orderDetails['data'] ?? null,
+                        'manual_confirmed_at' => now()->toISOString()
+                    ]
+                )
+            ]);
+
+            $payment->update([
+                'status' => 'paid',
+                'paid_at' => now(),
+                'provider_response' => array_merge(
+                    $payment->provider_response ?? [],
+                    [
+                        'klook_balance_payment' => $balancePayment,
+                        'klook_order_details' => $orderDetails['data'] ?? null,
+                        'manual_completion' => true
+                    ]
+                )
+            ]);
+
+            DB::commit();
+
+            Log::info('Manual Complete Payment - Success', [
+                'order_id' => $request->order_id,
+                'booking_id' => $booking->id,
+                'payment_id' => $payment->id
+            ]);
+
+            return $this->successResponse([
+                'booking' => $booking->fresh(),
+                'payment' => $payment->fresh(),
+                'balance_payment' => $balancePayment,
+                'order_details' => $orderDetails['data'] ?? null
+            ], 'Payment flow completed successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Manual Complete Payment - Exception', [
+                'order_id' => $request->order_id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return $this->errorResponse('Failed to complete payment flow', 500, $e->getMessage());
+        }
     }
 }
