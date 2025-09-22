@@ -45,7 +45,6 @@ const ThankYouPage = () => {
   const [cancellationStatus, setCancellationStatus] = useState(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancellationInfo, setCancellationInfo] = useState(null);
-  const [otherInfoData, setOtherInfoData] = useState(null); // New state for package details
 
   // Get order ID from URL or localStorage
   const orderId = searchParams.get('order_id') || localStorage.getItem('klookOrderNo');
@@ -65,38 +64,7 @@ const ThankYouPage = () => {
     }
   }, [orderId, isInitialized, token]);
 
-  useEffect(() => {
-    // Fetch OtherInfo data for the package
-    const fetchOtherInfo = async () => {
-      try {
-        // Get package ID from localStorage or booking data
-        const storedBooking = localStorage.getItem('pendingBooking');
-        if (storedBooking) {
-          const bookingData = JSON.parse(storedBooking);
-          if (bookingData.package_id) {
-            const response = await fetch(`http://localhost:8000/api/klook/otherinfo/${bookingData.package_id}`, {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            });
-
-            if (response.ok) {
-              const result = await response.json();
-              if (result.success) {
-                setOtherInfoData(result.data);
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching OtherInfo:', error);
-      }
-    };
-
-    if (token) {
-      fetchOtherInfo();
-    }
-  }, [token]);
+  
 
   const fetchOrderDetails = async (orderId) => {
     try {
@@ -1242,9 +1210,7 @@ const ThankYouPage = () => {
                     <li>Arrive at least 15 minutes before your scheduled activity time</li>
                     <li>Bring a valid photo ID that matches the name on the booking</li>
                     <li>Contact support if you have any questions or need to make changes</li>
-                    {otherInfoData && otherInfoData.items && otherInfoData.items.length > 0 && (
-                      <li>Check your package details in the downloaded PDF for complete itinerary and inclusions</li>
-                    )}
+                    <li>Check your package details in the downloaded PDF for complete itinerary and inclusions</li>
                   </ul>
                 </div>
               </motion.div>
@@ -1252,66 +1218,7 @@ const ThankYouPage = () => {
 
             {/* Right Column - Actions & Support */}
             <div className="lg:col-span-1 space-y-8">
-              {/* Package Details Card (New) */}
-              {otherInfoData && otherInfoData.items && otherInfoData.items.length > 0 && (
-                <motion.div
-                  className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.45 }}
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900">Package Details</h3>
-                  </div>
-
-                  <div className="space-y-4">
-                    <p className="text-gray-600 text-sm">
-                      Your booking includes the following details:
-                    </p>
-
-                    {otherInfoData.items[0].inclusions && otherInfoData.items[0].inclusions.length > 0 && (
-                      <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-200">
-                        <h4 className="font-semibold text-indigo-800 mb-2">What's Included</h4>
-                        <ul className="text-sm text-indigo-700 space-y-1">
-                          {otherInfoData.items[0].inclusions.map((inclusion, index) => (
-                            <li key={index}>• {inclusion.title}: {inclusion.description}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {otherInfoData.items[0].departure_details && otherInfoData.items[0].departure_details.length > 0 && (
-                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mt-4">
-                        <h4 className="font-semibold text-blue-800 mb-2">Departure Details</h4>
-                        {otherInfoData.items[0].departure_details.map((departure, index) => (
-                          <div key={index} className="text-sm text-blue-700 mb-2">
-                            <p><strong>Time:</strong> {departure.time}</p>
-                            <p><strong>Location:</strong> {departure.location}</p>
-                            <p><strong>Address:</strong> {departure.address}</p>
-                            <p><strong>Instruction:</strong> {departure.instruction}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {otherInfoData.items[0].return_details && (
-                      <div className="bg-green-50 p-3 rounded-lg border border-green-200 mt-4">
-                        <h4 className="font-semibold text-green-800 mb-2">Return Details</h4>
-                        <div className="text-sm text-green-700">
-                          <p><strong>Time:</strong> {otherInfoData.items[0].return_details.time}</p>
-                          <p><strong>Location:</strong> {otherInfoData.items[0].return_details.location}</p>
-                          <p><strong>Address:</strong> {otherInfoData.items[0].return_details.address}</p>
-                          <p><strong>Instruction:</strong> {otherInfoData.items[0].return_details.instruction}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-
+              
               {/* Cancellation Card */}
               <motion.div
                 className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200"
@@ -1443,12 +1350,6 @@ const ThankYouPage = () => {
                     <p className="text-sm text-gray-600">Present your voucher at the activity location</p>
                   </div>
 
-                  <button
-                    onClick={() => router.push('/activities')}
-                    className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    Browse More Activities
-                  </button>
                 </div>
               </motion.div>
             </div>
