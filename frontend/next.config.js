@@ -3,6 +3,12 @@ const nextConfig = {
   // Enable React strict mode for better development experience
   reactStrictMode: true,
 
+  // FIX FOR FRAMER-MOTION: Add these configurations
+  // experimental: {
+  //   esmExternals: 'loose'
+  // },
+  transpilePackages: ['framer-motion'],
+
   // NUCLEAR OPTION: Disable image optimization completely
   images: {
     unoptimized: true,
