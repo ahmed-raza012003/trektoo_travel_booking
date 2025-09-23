@@ -30,6 +30,9 @@ import { useAuth } from '@/hooks/useAuth';
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 
+// Import your API configuration
+import { LOCAL_API_BASE } from '@/lib/api/klookApi';
+
 const ThankYouPage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -69,7 +72,7 @@ const ThankYouPage = () => {
   const fetchOrderDetails = async (orderId) => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:8000/api/klook/orders/${orderId}`, {
+      const response = await fetch(`${LOCAL_API_BASE}/klook/orders/${orderId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -97,7 +100,7 @@ const ThankYouPage = () => {
       setResendingVoucher(true);
       setResendStatus(null);
 
-      const response = await fetch(`http://localhost:8000/api/klook/orders/${orderId}/resend-voucher`, {
+      const response = await fetch(`${LOCAL_API_BASE}/klook/orders/${orderId}/resend-voucher`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -130,7 +133,7 @@ const ThankYouPage = () => {
       setCancellationStatus(null);
 
       // Using refund_reason_id = 1 as a default (change if needed)
-      const response = await fetch(`http://localhost:8000/api/klook/orders/${orderId}/cancel/apply`, {
+      const response = await fetch(`${LOCAL_API_BASE}/klook/orders/${orderId}/cancel/apply`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -172,7 +175,7 @@ const ThankYouPage = () => {
     try {
       setCancellationStatus({ loading: true, message: 'Checking cancellation status...' });
 
-      const response = await fetch(`http://localhost:8000/api/klook/orders/${orderId}/cancel/status`, {
+      const response = await fetch(`${LOCAL_API_BASE}/klook/orders/${orderId}/cancel/status`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -329,7 +332,7 @@ const ThankYouPage = () => {
       // Add company logo placeholder
       doc.setFillColor(255, 255, 255);
       doc.rect(20, 10, 40, 10, 'F');
-      doc.setTextColor(255, 255, 255);
+      doc.setTextColor(...colors.primary);
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
       doc.text('TrekToo', 25, 17);
@@ -1177,7 +1180,7 @@ const ThankYouPage = () => {
                       className="w-full py-3 border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition duration-200 flex items-center justify-center mt-4"
                     >
                       <Download className="w-4 h-4 mr-2" />
-                      Download Enhanced PDF Voucher
+                      Download Voucher
                     </button>
 
                     {resendStatus && (
