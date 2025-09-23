@@ -22,7 +22,7 @@ import {
   Ticket,
 } from 'lucide-react';
 import Link from 'next/link';
-import API_BASE from "@/lib/api/klookApi";
+import API_BASE from '@/lib/api/klookApi';
 
 const LoadingSpinner = lazy(() => import('@/components/ui/LoadingSpinner').then(m => ({ default: m.LoadingSpinner })));
 const { ActivityGridSkeleton, CardSkeleton } = require('@/components/ui/LoadingSkeleton');
@@ -55,7 +55,7 @@ const ActivitiesPage = () => {
         const minLoadingTime = new Promise(resolve => setTimeout(resolve, 500));
 
         // Build API URL with proper parameters
-        const apiUrl = new URL(`${API_BASE}/activities`);
+        const apiUrl = new URL(`${API_BASE}/klook/activities`);
         apiUrl.searchParams.append('limit', limit);
         apiUrl.searchParams.append('page', page);
         if (categoryId) {
@@ -123,7 +123,7 @@ const ActivitiesPage = () => {
         // If we have a category ID, fetch category info (optional)
         if (categoryId) {
           try {
-            const categoryRes = await fetch(`http://127.0.0.1:8000/api/klook/categories`);
+            const categoryRes = await fetch(`${API_BASE}/klook/categories`);
             if (categoryRes.ok) {
               const categoryJson = await categoryRes.json();
               let categories = [];

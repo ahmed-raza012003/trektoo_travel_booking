@@ -16,7 +16,7 @@ import {
   Percent,
   Sparkles
 } from "lucide-react";
-import { KLOOK_API_BASE, LOCAL_API_BASE } from "@/lib/api/klookApi";
+import  API_BASE  from "@/lib/api/klookApi";
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { motion, AnimatePresence } from "framer-motion";
@@ -134,7 +134,7 @@ const OrderConfirmationPage = () => {
             console.log("Creating order with payload:", orderPayload);
 
             // Use KLOOK_API_BASE for Klook API calls
-            const response = await fetch(`${KLOOK_API_BASE}/orders`, {
+            const response = await fetch(`${API_BASE}/klook/orders`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -165,7 +165,7 @@ const OrderConfirmationPage = () => {
         try {
             setLoading(true);
             // Use KLOOK_API_BASE for Klook API calls
-            const response = await fetch(`${KLOOK_API_BASE}/orders/${orderId}`);
+            const response = await fetch(`${API_BASE}/klook/orders/${orderId}`);
             const result = await response.json();
 
             if (result.success) {
@@ -214,7 +214,7 @@ const OrderConfirmationPage = () => {
                     orderData: orderData
                 });
 
-                const response = await fetch(`${LOCAL_API_BASE}/klook/payment-intent`, {
+                const response = await fetch(`${API_BASE}/klook/payment-intent`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

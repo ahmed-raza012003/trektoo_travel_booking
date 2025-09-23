@@ -90,7 +90,7 @@ const ActivityDetailPage = () => {
         const fetchActivity = async () => {
             try {
                 setError(null);
-                const res = await fetch(`${API_BASE}/activities/${id}`);
+                const res = await fetch(`${API_BASE}/klook/activities/${id}`);
                 if (!res.ok) {
                     throw new Error(`Failed to fetch activity: ${res.status}`);
                 }
@@ -128,7 +128,7 @@ const ActivityDetailPage = () => {
             const skuIdsString = currentSkuIds.join(",");
 
             const res = await fetch(
-                `${API_BASE}/schedules?sku_ids=${skuIdsString}&start_time=${encodeURIComponent(
+                `${API_BASE}/klook/schedules?sku_ids=${skuIdsString}&start_time=${encodeURIComponent(
                     formattedStart
                 )}&end_time=${encodeURIComponent(formattedEnd)}`
             );
@@ -154,7 +154,7 @@ const ActivityDetailPage = () => {
     const fetchOtherInfo = async (packageId) => {
         try {
             setLoadingOtherInfo(true);
-            const res = await fetch(`${API_BASE}/otherinfo/${packageId}`);
+            const res = await fetch(`${API_BASE}/klook/otherinfo/${packageId}`);
             const data = await res.json();
             if (data.success) {
                 setOtherInfo(data.data);

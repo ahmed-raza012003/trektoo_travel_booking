@@ -20,7 +20,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import Link from 'next/link';
-import API_BASE from "@/lib/api/klookApi";
+import API_BASE from '@/lib/api/klookApi';
 
 // Lazy load heavy components for better performance
 const LoadingSpinner = lazy(() => import('@/components/ui/LoadingSpinner').then(module => ({ default: module.LoadingSpinner })));
@@ -53,7 +53,7 @@ const ActivitiesCategoriesPage = () => {
         setIsLoading(true);
         setError(null);
 
-        const res = await fetch(`${API_BASE}/categories`, {
+        const res = await fetch(`${API_BASE}/klook/categories`, {
           signal: controller.signal,
           headers: {
             'Accept': 'application/json',
@@ -279,7 +279,7 @@ const ActivitiesCategoriesPage = () => {
             className="text-center text-white"
           >
             {/* Enhanced Title with Icons */}
-            <div className="flex items-center justify-center gap-4 mb-8">
+            <div className="flex items-center justify-center gap-4 mb-8 mt-10">
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}

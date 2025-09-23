@@ -31,7 +31,7 @@ import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 
 // Import your API configuration
-import { LOCAL_API_BASE } from '@/lib/api/klookApi';
+import API_BASE  from '@/lib/api/klookApi';
 
 const ThankYouPage = () => {
   const searchParams = useSearchParams();
@@ -72,7 +72,7 @@ const ThankYouPage = () => {
   const fetchOrderDetails = async (orderId) => {
     try {
       setLoading(true);
-      const response = await fetch(`${LOCAL_API_BASE}/klook/orders/${orderId}`, {
+      const response = await fetch(`${API_BASE}/klook/orders/${orderId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -100,7 +100,7 @@ const ThankYouPage = () => {
       setResendingVoucher(true);
       setResendStatus(null);
 
-      const response = await fetch(`${LOCAL_API_BASE}/klook/orders/${orderId}/resend-voucher`, {
+      const response = await fetch(`${API_BASE}/klook/orders/${orderId}/resend-voucher`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -133,7 +133,7 @@ const ThankYouPage = () => {
       setCancellationStatus(null);
 
       // Using refund_reason_id = 1 as a default (change if needed)
-      const response = await fetch(`${LOCAL_API_BASE}/klook/orders/${orderId}/cancel/apply`, {
+      const response = await fetch(`${API_BASE}/klook/orders/${orderId}/cancel/apply`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -175,7 +175,7 @@ const ThankYouPage = () => {
     try {
       setCancellationStatus({ loading: true, message: 'Checking cancellation status...' });
 
-      const response = await fetch(`${LOCAL_API_BASE}/klook/orders/${orderId}/cancel/status`, {
+      const response = await fetch(`${API_BASE}/klook/orders/${orderId}/cancel/status`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
