@@ -377,13 +377,25 @@ class PaymentController extends BaseController
             if ($childQuantity > 0) {
                 $description .= ", {$childQuantity} Children";
             }
-            
+
+            // $result = $this->stripeService->createCheckoutSession($payment, [
+            //     'product_name' => $activityName,
+            //     'description' => $description,
+            //     'success_url' => config('app.frontend_url', 'http://localhost:3000') . '/thankyou?session_id={CHECKOUT_SESSION_ID}&payment_id=' . $payment->id . '&order_id=' . $request->order_id,
+            //     'cancel_url' => config('app.frontend_url', 'http://localhost:3000') . '/payment/cancelled',
+            // ]);
+
+            $frontendUrl = config('app.frontend_url'); // Make sure APP_FRONTEND_URL is set in .env
+
             $result = $this->stripeService->createCheckoutSession($payment, [
                 'product_name' => $activityName,
                 'description' => $description,
-                'success_url' => config('app.frontend_url', 'http://localhost:3000') . '/thankyou?session_id={CHECKOUT_SESSION_ID}&payment_id=' . $payment->id . '&order_id=' . $request->order_id,
-                'cancel_url' => config('app.frontend_url', 'http://localhost:3000') . '/payment/cancelled',
+                'success_url' => $frontendUrl
+                    . '/thankyou?session_id={CHECKOUT_SESSION_ID}&payment_id=' . $payment->id
+                    . '&order_id=' . $request->order_id,
+                'cancel_url' => $frontendUrl . '/payment/cancelled',
             ]);
+
 
             if (!$result['success']) {
                 DB::rollBack();
@@ -582,7 +594,7 @@ class PaymentController extends BaseController
     }
 
 
-    
+
     /**
      * Complete Klook payment flow after successful Stripe payment
      */
@@ -609,12 +621,12 @@ class PaymentController extends BaseController
             // Verify Stripe payment is successful
             // First try to retrieve as payment intent ID, if that fails, try as session ID
             $stripePayment = $this->stripeService->retrievePaymentIntent($request->stripe_payment_intent_id);
-            
+
             if (!$stripePayment['success']) {
                 // If payment intent retrieval failed, try as session ID
                 $stripePayment = $this->stripeService->retrievePaymentIntentFromSession($request->stripe_payment_intent_id);
             }
-            
+
             if (!$stripePayment['success'] || $stripePayment['status'] !== 'succeeded') {
                 return $this->errorResponse('Stripe payment not completed', 400);
             }
@@ -684,7 +696,7 @@ class PaymentController extends BaseController
 
             // Step 4: Get updated order details after balance payment
             $updatedOrderDetails = $this->klookService->getOrderDetails($request->order_id);
-            
+
             if (isset($updatedOrderDetails['error'])) {
                 Log::warning('Failed to get updated order details', [
                     'order_id' => $request->order_id,
@@ -705,10 +717,12 @@ class PaymentController extends BaseController
 
             // Step 5: Resend voucher (only if order is confirmed)
             $voucherResult = null;
-            if (isset($updatedOrderDetails['data']['confirm_status']) && 
-                $updatedOrderDetails['data']['confirm_status'] === 'confirmed') {
+            if (
+                isset($updatedOrderDetails['data']['confirm_status']) &&
+                $updatedOrderDetails['data']['confirm_status'] === 'confirmed'
+            ) {
                 $voucherResult = $this->klookService->resendVoucher($request->order_id);
-                
+
                 if (isset($voucherResult['error'])) {
                     Log::warning('Voucher resend failed', [
                         'order_id' => $request->order_id,
@@ -739,7 +753,6 @@ class PaymentController extends BaseController
                 'voucher_resend' => $voucherResult['success'] ?? false,
                 'voucher_pdf_url' => $voucherPdfPath ? Storage::url($voucherPdfPath) : null
             ], 'Klook payment flow completed successfully');
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Klook payment flow failed', [
@@ -770,10 +783,10 @@ class PaymentController extends BaseController
             ];
 
             $pdf = Pdf::loadView('vouchers.klook', $voucherData);
-            
+
             $filename = 'vouchers/klook-voucher-' . $booking->id . '.pdf';
             Storage::put($filename, $pdf->output());
-            
+
             // Update booking with voucher path
             $booking->update([
                 'voucher_path' => $filename
@@ -793,24 +806,24 @@ class PaymentController extends BaseController
      * Download voucher PDF
      */
     /**
- * Download voucher PDF
- */
-public function downloadVoucher($bookingId): \Symfony\Component\HttpFoundation\BinaryFileResponse
-{
-    $booking = Booking::where('id', $bookingId)
-        ->where('user_id', Auth::id())
-        ->firstOrFail();
+     * Download voucher PDF
+     */
+    public function downloadVoucher($bookingId): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        $booking = Booking::where('id', $bookingId)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
 
-    if (!$booking->voucher_path || !Storage::exists($booking->voucher_path)) {
-        abort(404, 'Voucher not found');
+        if (!$booking->voucher_path || !Storage::exists($booking->voucher_path)) {
+            abort(404, 'Voucher not found');
+        }
+
+        return response()->download(
+            Storage::path($booking->voucher_path),
+            'trektoo-voucher-' . $booking->id . '.pdf',
+            ['Content-Type' => 'application/pdf']
+        );
     }
-
-    return response()->download(
-        Storage::path($booking->voucher_path),
-        'trektoo-voucher-' . $booking->id . '.pdf',
-        ['Content-Type' => 'application/pdf']
-    );
-}
 
     /**
      * Get Klook order cancellation status
@@ -849,7 +862,7 @@ public function downloadVoucher($bookingId): \Symfony\Component\HttpFoundation\B
             DB::beginTransaction();
 
             $user = Auth::user();
-            
+
             // Find the booking
             $booking = Booking::where('external_booking_id', $request->order_id)
                 ->where('user_id', $user->id)
@@ -883,7 +896,6 @@ public function downloadVoucher($bookingId): \Symfony\Component\HttpFoundation\B
                 'booking' => $booking->fresh(),
                 'cancellation_result' => $cancellationResult
             ], 'Cancellation applied successfully');
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Cancellation application failed', [
@@ -914,7 +926,7 @@ public function downloadVoucher($bookingId): \Symfony\Component\HttpFoundation\B
         ];
 
         $lowerReason = strtolower($reason);
-        
+
         foreach ($reasonMap as $key => $id) {
             if (str_contains($lowerReason, $key)) {
                 return $id;
@@ -988,7 +1000,6 @@ public function downloadVoucher($bookingId): \Symfony\Component\HttpFoundation\B
                 'payment' => $payment->fresh(),
                 'balance_payment' => $balancePayment
             ], 'Balance payment test completed successfully');
-
         } catch (\Exception $e) {
             Log::error('Test Balance Payment - Exception', [
                 'order_id' => $request->order_id,
@@ -1013,7 +1024,7 @@ public function downloadVoucher($bookingId): \Symfony\Component\HttpFoundation\B
 
         try {
             $user = Auth::user();
-            
+
             // Find booking by external_booking_id
             $booking = Booking::where('external_booking_id', $request->order_id)
                 ->where('user_id', $user->id)
@@ -1105,7 +1116,6 @@ public function downloadVoucher($bookingId): \Symfony\Component\HttpFoundation\B
                 'balance_payment' => $balancePayment,
                 'order_details' => $orderDetails['data'] ?? null
             ], 'Payment flow completed successfully');
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Manual Complete Payment - Exception', [
