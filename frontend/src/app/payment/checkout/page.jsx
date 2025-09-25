@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle, CreditCard, Shield, Loader, AlertCircle } from "lucide-react";
-import { LOCAL_API_BASE } from "@/lib/api/klookApi";
+import API_BASE from "@/lib/api/klookApi";
 import { useAuth } from '@/contexts/AuthContext';
 
 const PaymentCheckoutPage = () => {
@@ -45,7 +45,7 @@ const PaymentCheckoutPage = () => {
                 setPaymentData(paymentInfo);
             } else {
                 // If not in localStorage, fetch from backend
-                const response = await fetch(`${LOCAL_API_BASE}/klook/order-status/${orderId}`, {
+                const response = await fetch(`${API_BASE}/klook/order-status/${orderId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Accept': 'application/json'

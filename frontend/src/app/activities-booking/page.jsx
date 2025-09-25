@@ -324,7 +324,7 @@ const BookingPage = () => {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-            const res = await fetch(`${API_BASE}/availability/check-direct`, {
+            const res = await fetch(`${API_BASE}/klook/availability/check-direct`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(availabilityPayload),
@@ -343,7 +343,7 @@ const BookingPage = () => {
                 console.log("✅ Availability confirmed. Proceeding with booking initiation...");
 
                 // 2. Fetch otherInfo
-                const otherInfoRes = await fetch(`${API_BASE}/otherinfo/${booking.package_id}`);
+                const otherInfoRes = await fetch(`${API_BASE}/klook/otherinfo/${booking.package_id}`);
                 if (!otherInfoRes.ok) {
                     throw new Error("Failed to fetch additional booking information");
                 }
@@ -380,7 +380,7 @@ const BookingPage = () => {
                 };
 
                 // 4. Submit booking
-                const bookingRes = await fetch(`${API_BASE}/activities-booking/initiate`, {
+                const bookingRes = await fetch(`${API_BASE}/klook/activities-booking/initiate`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(bookingPayload),

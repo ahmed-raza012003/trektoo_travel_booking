@@ -3,13 +3,21 @@ const nextConfig = {
   // Enable React strict mode for better development experience
   reactStrictMode: true,
 
+  // FIX FOR FRAMER-MOTION: Add these configurations
+  // experimental: {
+  //   esmExternals: 'loose'
+  // },
+  transpilePackages: ['framer-motion'],
+
   // NUCLEAR OPTION: Disable image optimization completely
   images: {
-    unoptimized: true,
-    dangerouslyAllowSVG: true,
-    contentDispositionType: 'attachment',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-  },
+  unoptimized: true,
+  dangerouslyAllowSVG: true,
+  contentDispositionType: 'attachment',
+  contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  domains: ['v2.trektoo.com', 'v2.api.trektoo.com', 'images.unsplash.com'],
+},
+
 
   // Security headers
   async headers() {
@@ -170,7 +178,7 @@ const nextConfig = {
     // Will be available on both server and client
     staticFolder: '/static',
     apiBaseUrl:
-      process.env.NEXT_PUBLIC_API_BASE_URL || 'https://staging.trektoo.com/api',
+      process.env.NEXT_PUBLIC_API_BASE_URL || 'https://v2.api.trektoo.com/api',
   },
 };
 

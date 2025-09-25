@@ -90,7 +90,7 @@ const ActivityDetailPage = () => {
         const fetchActivity = async () => {
             try {
                 setError(null);
-                const res = await fetch(`${API_BASE}/activities/${id}`);
+                const res = await fetch(`${API_BASE}/klook/activities/${id}`);
                 if (!res.ok) {
                     throw new Error(`Failed to fetch activity: ${res.status}`);
                 }
@@ -128,7 +128,7 @@ const ActivityDetailPage = () => {
             const skuIdsString = currentSkuIds.join(",");
 
             const res = await fetch(
-                `${API_BASE}/schedules?sku_ids=${skuIdsString}&start_time=${encodeURIComponent(
+                `${API_BASE}/klook/schedules?sku_ids=${skuIdsString}&start_time=${encodeURIComponent(
                     formattedStart
                 )}&end_time=${encodeURIComponent(formattedEnd)}`
             );
@@ -154,7 +154,7 @@ const ActivityDetailPage = () => {
     const fetchOtherInfo = async (packageId) => {
         try {
             setLoadingOtherInfo(true);
-            const res = await fetch(`${API_BASE}/otherinfo/${packageId}`);
+            const res = await fetch(`${API_BASE}/klook/otherinfo/${packageId}`);
             const data = await res.json();
             if (data.success) {
                 setOtherInfo(data.data);
@@ -189,33 +189,7 @@ const ActivityDetailPage = () => {
         }));
     };
 
-    // In your ActivityDetailPage component
-    // const handleBookNow = () => {
-    //     if (!selectedSchedule) {
-    //         setError("Please select a schedule first");
-    //         return;
-    //     }
-
-    //     const bookingPayload = {
-    //         service_type: "klook",
-    //         service_id: currentPackage.package_id,
-    //         package_id: currentPackage.package_id,
-    //         schedule: {
-    //             ...selectedSchedule,
-    //             original_price: selectedSchedule.original_price, // Store original price
-    //             markup_percentage: MARKUP_PERCENTAGE, // Store markup percentage
-    //         },
-    //         adult_quantity: adultQuantity,
-    //         child_quantity: childQuantity,
-    //         language: selectedLanguage,
-    //         extra_info: bookingExtraInfo,
-    //         total_price: selectedSchedule.price * adultQuantity + selectedSchedule.price * childQuantity,
-    //         original_total_price: selectedSchedule.original_price * adultQuantity + selectedSchedule.original_price * childQuantity,
-    //     };
-
-    //     localStorage.setItem("pendingBooking", JSON.stringify(bookingPayload));
-    //     window.location.href = `/activities-booking`;
-    // };
+    
     // In your handleBookNow function in ActivityDetailPage.jsx
     const handleBookNow = () => {
         if (!selectedSchedule) {
