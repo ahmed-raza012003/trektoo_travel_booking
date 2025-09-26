@@ -21,7 +21,7 @@ class KlookApiService
 
         $this->client = new Client([
             'base_uri' => $this->baseUrl,
-            'verify'   => false, // ❌ disable SSL only in local dev
+            'verify'   => false, // disable SSL only in local dev
             'headers'  => [
                 'X-API-KEY'       => $this->apiKey,
                 'Accept-Language' => $this->language,
