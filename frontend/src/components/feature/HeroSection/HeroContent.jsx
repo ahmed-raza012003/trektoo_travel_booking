@@ -57,7 +57,7 @@ const serviceOptions = [
     label: 'Activities',
     icon: Ticket,
     available: true,
-    route: '/activities',
+    route: '/activities-categories',
     color: 'from-blue-500 to-blue-600',
     description: 'Discover amazing activities',
   },
@@ -644,7 +644,7 @@ function HeroContent() {
 
               {selectedService === 'activities' ? (
                 <motion.button
-                  onClick={() => router.push('/activities')}
+                  onClick={() => router.push('/activities-categories')}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-lg"
