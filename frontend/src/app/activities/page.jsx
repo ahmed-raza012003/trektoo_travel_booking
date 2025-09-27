@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Sparkles,
   MapPin,
@@ -29,11 +29,13 @@ const { ActivityGridSkeleton, CardSkeleton } = require('@/components/ui/LoadingS
 
 const ActivitiesPage = () => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const categoryId = searchParams.get('category_id');
-  const limit = searchParams.get('limit') || '20';
-  const page = searchParams.get('page') || '1';
+  const limit = parseInt(searchParams.get('limit') || '20');
+  const page = parseInt(searchParams.get('page') || '1');
 
   const [activitiesData, setActivitiesData] = useState([]);
+  const [totalActivities, setTotalActivities] = useState(0);
   const [categoryData, setCategoryData] = useState(null);
   const [favorites, setFavorites] = useState(new Set());
   const [viewMode, setViewMode] = useState('grid');
@@ -56,8 +58,8 @@ const ActivitiesPage = () => {
 
         // Build API URL with proper parameters
         const apiUrl = new URL(`${API_BASE}/klook/activities`);
-        apiUrl.searchParams.append('limit', limit);
-        apiUrl.searchParams.append('page', page);
+        apiUrl.searchParams.append('limit', limit.toString());
+        apiUrl.searchParams.append('page', page.toString());
         if (categoryId) {
           apiUrl.searchParams.append('category_id', categoryId);
         }
@@ -94,6 +96,18 @@ const ActivitiesPage = () => {
         }
 
         console.log("Extracted activities:", activities.length);
+
+        // Extract total count
+        let total = 0;
+        if (json?.data?.activity?.total) {
+          total = json.data.activity.total;
+        } else if (json?.data?.total) {
+          total = json.data.total;
+        } else if (json?.total) {
+          total = json.total;
+        }
+
+        setTotalActivities(total);
 
         // Enhance activities with mock data for better display
         const enhancedActivities = activities.map(activity => ({
@@ -156,6 +170,14 @@ const ActivitiesPage = () => {
     fetchData();
     return () => controller.abort();
   }, [categoryId, limit, page]);
+
+  const handlePageChange = (newPage) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', newPage.toString());
+    router.push(`/activities?${params.toString()}`);
+  };
+
+  const totalPages = Math.ceil(totalActivities / limit);
 
   const handleFavoriteToggle = useCallback((id) => {
     setFavorites(prev => {
@@ -344,8 +366,8 @@ const ActivitiesPage = () => {
               <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
             ) : (
               <p className="text-lg text-gray-500 font-medium">
-                  {sortedActivities.length} activities found
-                </p>
+                {totalActivities} activities found
+              </p>
             )}
           </motion.div>
 
@@ -650,6 +672,33 @@ const ActivitiesPage = () => {
               </div>
             )}
           </AnimatePresence>
+
+          {/* Pagination Controls */}
+          {!isLoading && totalActivities > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-center items-center gap-4 mt-12"
+            >
+              <button
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page <= 1}
+                className="px-6 py-3 bg-white border border-gray-200 rounded-xl hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl font-medium text-gray-800"
+              >
+                Previous
+              </button>
+              <span className="text-gray-600 font-medium">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page >= totalPages}
+                className="px-6 py-3 bg-white border border-gray-200 rounded-xl hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl font-medium text-gray-800"
+              >
+                Next
+              </button>
+            </motion.div>
+          )}
         </Suspense>
       </div>
     </div>
