@@ -332,7 +332,7 @@ const ActivityDetailPage = () => {
             )}
 
             {/* Hero Section */}
-            <div className="w-[90vw] mx-auto px-4 lg:px-8 py-10 bg-gradient-to-br from-blue-400 via-white to-blue-400 rounded-lg">
+            <div className="w-[90vw] mx-auto px-4 lg:px-8 py-10 bg-gradient-to-br from-blue-300 via-white to-blue-300 rounded-lg">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                     {/* Left Column: Image Gallery */}
                     <div className="space-y-4">

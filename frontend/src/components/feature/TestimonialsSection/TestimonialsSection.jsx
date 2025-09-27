@@ -209,7 +209,7 @@ function TestimonialsSection() {
             style={{ willChange: 'transform, opacity' }}
           >
             What Our{' '}
-            <span className="text-blue-500">
+            <span className="text-blue-600">
               Travelers Say
             </span>
           </motion.h2>

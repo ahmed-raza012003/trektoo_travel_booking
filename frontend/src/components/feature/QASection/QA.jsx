@@ -199,7 +199,7 @@ const AdventureVideoSection = () => {
          >
            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-6">
              Enjoy{' '}
-             <span className="text-blue-500">
+             <span className="text-blue-600">
                Real Adventure
              </span>
            </h2>

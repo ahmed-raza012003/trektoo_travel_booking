@@ -6,7 +6,7 @@ import HeroContent from './HeroContent';
 
 const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  
+
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.1,
@@ -16,18 +16,22 @@ const HeroSection = () => {
   // Premium hero background images
   const backgroundImages = [
     {
-      url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=90",
-      alt: "Majestic mountain landscape with crystal clear lake"
+      url: "https://images.unsplash.com/photo-1495017790122-c765562a8917?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      alt: "Turquoise tropical beach with palm trees and clear blue sky"
     },
     {
-      url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=90", 
-      alt: "Luxury resort pool with tropical paradise view"
+      url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
+      alt: "Glassy mountain lake surrounded by pine trees under soft blue sky"
     },
     {
-      url: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=90",
-      alt: "Pristine tropical beach with turquoise waters"
+      url: "https://images.unsplash.com/photo-1612278675615-7b093b07772d?q=80&w=1169&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      alt: "Aerial view of Maldives overwater bungalows and azure ocean"
     },
-    
+    {
+      url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
+      alt: "Endless blue ocean meeting clear sky at the horizon"
+    },
+
   ];
 
   // Auto-carousel effect
@@ -50,11 +54,10 @@ const HeroSection = () => {
         {backgroundImages.map((image, index) => (
           <div
             key={index}
-            className={`absolute inset-0 transition-all duration-2000 ease-in-out transform ${
-              index === currentSlide 
-                ? 'opacity-100 scale-100' 
+            className={`absolute inset-0 transition-all duration-2000 ease-in-out transform ${index === currentSlide
+                ? 'opacity-100 scale-100'
                 : 'opacity-0 scale-110'
-            }`}
+              }`}
           >
             <img
               src={image.url}
@@ -62,20 +65,17 @@ const HeroSection = () => {
               className="w-full h-full object-cover"
               loading={index === 0 ? "eager" : "lazy"}
             />
-            
+
             {/* Dynamic Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-black/60" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-black/20 to-black/30" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
           </div>
         ))}
       </div>
 
-      {/* Ultra-Premium Glossy Glass Layer */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.12] via-transparent to-white/[0.08]" />
-      
-      {/* Premium Glass Shine Effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.15] via-transparent to-white/[0.10] pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/[0.03] to-white/[0.05] pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] via-transparent to-white/[0.03]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.08] via-transparent to-white/[0.05] pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/[0.01] to-white/[0.03] pointer-events-none" />
 
       {/* Floating Glossy Orbs */}
       <div className="absolute top-1/4 left-1/6 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl animate-pulse opacity-60" />
@@ -111,10 +111,10 @@ const HeroSection = () => {
                 opacity="0.2"
               />
             </pattern>
-            
+
             <radialGradient id="shine-gradient" cx="50%" cy="30%">
-              <stop offset="0%" stopColor="white" stopOpacity="0.3"/>
-              <stop offset="100%" stopColor="transparent" stopOpacity="0"/>
+              <stop offset="0%" stopColor="white" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="transparent" stopOpacity="0" />
             </radialGradient>
           </defs>
           <rect width="100" height="100" fill="url(#premium-grid)" />
@@ -124,12 +124,12 @@ const HeroSection = () => {
 
       {/* Elegant Top Border Glow */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent" />
-      
+
       {/* Premium Content Container */}
       <div className="relative z-20 min-h-screen pt-24 md:pt-28 lg:pt-32 xl:pt-36">
         {/* Subtle Content Backdrop - reduced blur */}
         <div className="absolute inset-x-0 top-24 bottom-0 bg-gradient-to-b from-black/[0.25] via-black/[0.15] to-black/[0.35] pointer-events-none" />
-        
+
         <div className="relative z-30 container mx-auto px-4 pb-16">
           <div className="max-w-6xl mx-auto text-center">
             <HeroContent />
@@ -143,11 +143,10 @@ const HeroSection = () => {
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-500 backdrop-blur-md border border-white/30 ${
-              index === currentSlide
+            className={`w-3 h-3 rounded-full transition-all duration-500 backdrop-blur-md border border-white/30 ${index === currentSlide
                 ? 'bg-white/80 shadow-lg shadow-white/30 scale-110'
                 : 'bg-white/30 hover:bg-white/50'
-            }`}
+              }`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}
@@ -164,7 +163,7 @@ const HeroSection = () => {
 
       {/* Ultra-Premium Bottom Fade */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none" />
-      
+
       {/* Glossy Bottom Border */}
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
     </section>

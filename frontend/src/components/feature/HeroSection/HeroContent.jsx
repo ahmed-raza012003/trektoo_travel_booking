@@ -270,7 +270,7 @@ function HeroContent() {
             }}
           >
             Discover Your Next{' '}
-            <span className="relative text-blue-400">
+            <span className="relative text-blue-500">
               Adventure
               <svg
                 className="absolute -bottom-3 left-0 w-full h-4"
@@ -304,7 +304,7 @@ function HeroContent() {
           animate={inView ? 'visible' : 'hidden'}
           className="w-full max-w-5xl mx-auto mt-10"
         >
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+          <div className="bg-white/10 backdrop-blur-none rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
             {/* Service Tabs */}
             <div className="p-4 border-b border-white/10">
               <div className="flex flex-wrap justify-center gap-2">

@@ -56,7 +56,7 @@ const InspirationSection = () => {
 
   return (
     <section className="py-20 bg-gradient-to-br from-slate-50 to-gray-100">
-      <div className="container mx-auto px-10">
+      <div className="container mx-auto px-10 w-[80vw]">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Travel <span className="text-blue-600">Inspiration</span>
@@ -134,16 +134,7 @@ const InspirationSection = () => {
           })}
         </div>
 
-        {/* View All Button */}
-        <div className="text-center mt-16">
-          <Link
-            href="/all-deals"
-            className="inline-flex items-center px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-          >
-            View All Exclusive Offers
-            <ArrowRight className="w-5 h-5 ml-3" />
-          </Link>
-        </div>
+        
       </div>
     </section>
   );
