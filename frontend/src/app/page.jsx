@@ -1,15 +1,17 @@
 import React, { Suspense, lazy } from 'react';
 import HeroSection from '@/components/feature/HeroSection';
 import ErrorBoundary from '@/components/security/ErrorBoundary';
+import OffersSection from '@/components/feature/OffersSection/OffersSection';
 
 const AdventureVideoSection = lazy(() => import('@/components/feature/QASection/QA'));
 const FAQ = lazy(() => import('@/components/feature/FAQSection/FAQ'));
 const WhyChooseUs = lazy(() => import('@/components/feature/WhyChooseUsSection/WhyChooseUs'));
 const FeaturedDestinations = lazy(() => import('@/components/feature/FeaturedDestinationsSection/FeaturedDestinations'));
 const TestimonialsSection = lazy(() => import('@/components/feature/TestimonialsSection/TestimonialsSection'));
+const InspirationSection = lazy(() => import('@/components/feature/InspirationSection/InspirationSection'));
 
 const ComponentLoader = () => (
-  <div className="h-96 bg-gray-100 animate-pulse" />
+  <div className="h-96 bg-gray-100 animate-pulse rounded-lg" />
 );
 
 export default function HomePage() {
@@ -18,9 +20,18 @@ export default function HomePage() {
       <main className="relative overflow-hidden">
         <HeroSection />
 
-        {/* <Suspense fallback={<ComponentLoader />}> */}
-        {/*   <AdventureVideoSection /> */}
-        {/* </Suspense> */}
+        {/* Add the new Inspiration Section right after Hero */}
+        <Suspense fallback={<ComponentLoader />}>
+          <OffersSection />
+        </Suspense>
+
+        <Suspense fallback={<ComponentLoader />}>
+          <InspirationSection />
+        </Suspense>
+
+        <Suspense fallback={<ComponentLoader />}>
+          <AdventureVideoSection />
+        </Suspense>
 
         <Suspense fallback={<ComponentLoader />}>
           <WhyChooseUs />
@@ -30,9 +41,9 @@ export default function HomePage() {
           <FeaturedDestinations />
         </Suspense>
 
-        {/* <Suspense fallback={<ComponentLoader />}> */}
-        {/*   <TestimonialsSection /> */}
-        {/* </Suspense> */}
+        <Suspense fallback={<ComponentLoader />}>
+          <TestimonialsSection />
+        </Suspense>
 
         <Suspense fallback={<ComponentLoader />}>
           <FAQ />

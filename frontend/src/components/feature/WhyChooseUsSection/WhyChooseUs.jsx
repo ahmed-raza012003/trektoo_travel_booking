@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { Globe, Compass, MapPin, Star, Shield, Heart, Users, Award, CheckCircle } from 'lucide-react';
+import { Globe, Compass, MapPin } from 'lucide-react';
 
 const WhyChooseUs = () => {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
@@ -121,12 +121,16 @@ const WhyChooseUs = () => {
           {/* FeatureCard - Safety */}
           <motion.div
             variants={itemVariants}
-            className="text-center p-8 rounded-3xl bg-white transition-all duration-300 border border-gray-200 hover:border-blue-500 group shadow-2xl hover:shadow-2xl hover:shadow-blue-500/10"
+            className="text-center p-6 rounded-3xl bg-white/80 backdrop-blur-md border border-blue-100/50 hover:border-blue-200 transition-all duration-300 group shadow-xl hover:shadow-2xl hover:shadow-blue-200/20"
+            whileHover={{ scale: 1.02 }}
           >
-            <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+            <motion.div
+              className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white shadow-md hover:shadow-lg transition-all duration-300"
+              whileHover={{ rotate: 360 }}
+            >
               <Compass className="w-10 h-10" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-4 group-hover:text-blue-500 transition-colors duration-200">
+            </motion.div>
+            <h3 className="text-xl font-bold text-gray-800 mb-4 group-hover:text-blue-600 transition-colors duration-200">
               Safety First
             </h3>
             <p className="text-gray-600 leading-relaxed text-base">
@@ -139,12 +143,16 @@ const WhyChooseUs = () => {
           {/* FeatureCard - Price */}
           <motion.div
             variants={itemVariants}
-            className="text-center p-8 rounded-3xl bg-white transition-all duration-300 border border-gray-200 hover:border-blue-500 group shadow-2xl hover:shadow-2xl hover:shadow-blue-500/10"
+            className="text-center p-6 rounded-3xl bg-white/80 backdrop-blur-md border border-blue-100/50 hover:border-blue-200 transition-all duration-300 group shadow-xl hover:shadow-2xl hover:shadow-blue-200/20"
+            whileHover={{ scale: 1.02 }}
           >
-            <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+            <motion.div
+              className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white shadow-md hover:shadow-lg transition-all duration-300"
+              whileHover={{ rotate: 360 }}
+            >
               <Globe className="w-10 h-10" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-4 group-hover:text-blue-500 transition-colors duration-200">
+            </motion.div>
+            <h3 className="text-xl font-bold text-gray-800 mb-4 group-hover:text-blue-600 transition-colors duration-200">
               Best Value
             </h3>
             <p className="text-gray-600 leading-relaxed text-base">
@@ -157,12 +165,16 @@ const WhyChooseUs = () => {
           {/* FeatureCard - Experience */}
           <motion.div
             variants={itemVariants}
-            className="text-center p-8 rounded-3xl bg-white transition-all duration-300 border border-gray-200 hover:border-blue-500 group shadow-2xl hover:shadow-2xl hover:shadow-blue-500/10"
+            className="text-center p-6 rounded-3xl bg-white/80 backdrop-blur-md border border-blue-100/50 hover:border-blue-200 transition-all duration-300 group shadow-xl hover:shadow-2xl hover:shadow-blue-200/20"
+            whileHover={{ scale: 1.02 }}
           >
-            <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+            <motion.div
+              className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white shadow-md hover:shadow-lg transition-all duration-300"
+              whileHover={{ rotate: 360 }}
+            >
               <MapPin className="w-10 h-10" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-4 group-hover:text-blue-500 transition-colors duration-200">
+            </motion.div>
+            <h3 className="text-xl font-bold text-gray-800 mb-4 group-hover:text-blue-600 transition-colors duration-200">
               Local Experts
             </h3>
             <p className="text-gray-600 leading-relaxed text-base">
