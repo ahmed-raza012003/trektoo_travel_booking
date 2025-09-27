@@ -18,7 +18,7 @@ const InspirationSection = () => {
       description: "Enjoy these cool staycation promotions in Singapore",
       image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
       cta: "See activities",
-      link: "/staycations",
+      link: "/activities-categories",
       icon: Bed,
       overlayColor: "from-none-800/70 to-gray-700/70"
     },
@@ -28,7 +28,7 @@ const InspirationSection = () => {
       description: "Don't forget to check out these activities while you're here",
       image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
       cta: "See activities",
-      link: "/adventures",
+      link: "/activities-categories",
       icon: Mountain,
       overlayColor: "from-none-800/70 to-gray-700/70"
     },
