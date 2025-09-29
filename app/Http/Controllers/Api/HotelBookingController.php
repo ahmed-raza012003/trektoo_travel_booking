@@ -96,7 +96,7 @@ class HotelBookingController extends Controller
                 'check_in_date' => $result['data']['checkin'] ?? null,
                 'check_out_date' => $result['data']['checkout'] ?? null,
                 'adults' => $result['data']['adults'] ?? 1,
-                'children' => $result['data']['children'] ?? 0,
+                'children' => is_array($result['data']['children'] ?? 0) ? count($result['data']['children']) : ($result['data']['children'] ?? 0),
                 'total_price' => $request->payment_type['amount'],
                 'currency' => $request->payment_type['currency_code'],
                 'status' => 'pending',
@@ -204,68 +204,35 @@ class HotelBookingController extends Controller
             // Mark as processing
             $ratehawkOrder->markAsProcessing('Processing payment and booking confirmation');
 
-            // Create payment intent with Stripe
-            $paymentIntent = $this->stripeService->createPaymentIntent([
-                'amount' => $ratehawkOrder->total_amount * 100, // Convert to cents
-                'currency' => $ratehawkOrder->currency,
-                'payment_method' => $request->payment_method_id,
+            // Create payment record
+            $payment = Payment::create([
+                'booking_id' => $ratehawkOrder->booking_id,
+                'user_id' => $ratehawkOrder->booking->user_id,
+                'amount' => $ratehawkOrder->booking->total_price,
+                'currency' => $ratehawkOrder->booking->currency,
+                'status' => 'pending',
+                'provider' => 'stripe',
+                'ratehawk_order_id' => $ratehawkOrder->id,
+                'partner_order_id' => $request->partner_order_id,
                 'customer_email' => $ratehawkOrder->booking->customer_info['email'] ?? null,
-                'metadata' => [
-                    'booking_id' => $ratehawkOrder->booking_id,
+                'customer_name' => ($ratehawkOrder->booking->customer_info['first_name'] ?? '') . ' ' . ($ratehawkOrder->booking->customer_info['last_name'] ?? ''),
+                'hotel_payment_data' => [
                     'partner_order_id' => $request->partner_order_id,
                     'type' => 'hotel_booking'
                 ]
             ]);
 
-            if (!$paymentIntent['success']) {
-                $ratehawkOrder->markAsFailed('Payment creation failed');
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Payment failed',
-                    'error' => $paymentIntent['error']
-                ], 400);
-            }
-
-            // Create payment record
-            $payment = Payment::create([
-                'booking_id' => $ratehawkOrder->booking_id,
-                'user_id' => auth()->id(),
-                'amount' => $ratehawkOrder->total_amount,
-                'currency' => $ratehawkOrder->currency,
-                'method' => 'stripe',
-                'status' => 'pending',
-                'payment_intent_id' => $paymentIntent['data']['id'],
-                'provider' => 'stripe',
-                'customer_email' => $ratehawkOrder->booking->customer_info['email'] ?? null,
-                'customer_name' => $ratehawkOrder->booking->customer_info['first_name'] . ' ' . $ratehawkOrder->booking->customer_info['last_name'],
-                'ratehawk_order_id' => $ratehawkOrder->id,
-                'partner_order_id' => $request->partner_order_id,
+            // For testing purposes, simulate successful payment
+            $payment->update([
+                'status' => 'paid',
+                'transaction_id' => 'txn_test_' . uniqid(),
+                'paid_at' => now(),
                 'hotel_payment_data' => [
                     'rooms' => $request->rooms,
                     'upsell_data' => $request->upsell_data,
                     'user_comment' => $request->user_comment
                 ]
             ]);
-
-            // Confirm payment
-            $confirmResult = $this->stripeService->confirmPaymentIntent(
-                $paymentIntent['data']['id']
-            );
-
-            if (!$confirmResult['success']) {
-                $payment->markAsFailed($confirmResult['error']);
-                $ratehawkOrder->markAsFailed('Payment confirmation failed');
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Payment confirmation failed',
-                    'error' => $confirmResult['error']
-                ], 400);
-            }
-
-            // Update payment status
-            $payment->markAsPaid($confirmResult['data']['charge_id']);
 
             // Finish booking with Ratehawk
             $finishData = [
@@ -314,9 +281,12 @@ class HotelBookingController extends Controller
                     'message' => 'Booking completed successfully'
                 ]);
             } else {
-                // Payment succeeded but booking failed - initiate refund
-                $this->stripeService->refundPayment($payment->charge_id, $payment->amount);
-                $payment->markAsRefunded();
+                // Payment succeeded but booking failed - simulate refund
+                $payment->update([
+                    'status' => 'refunded',
+                    'refunded_at' => now(),
+                    'refund_amount' => $payment->amount
+                ]);
                 
                 $ratehawkOrder->markAsFailed('Booking confirmation failed');
                 DB::rollBack();

@@ -13,6 +13,8 @@ return [
 
     'api_key' => env('RATEHAWK_API_KEY'),
     'api_user' => env('RATEHAWK_API_USER'),
+    'username' => env('userName_ratehwak'), // Old format for testing
+    'password' => env('password_ratehwak'), // Old format for testing
     'base_url' => env('RATEHAWK_BASE_URL', 'https://api.worldota.net/api/b2b/v3'),
     
     // Commission and pricing

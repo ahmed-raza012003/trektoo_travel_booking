@@ -35,7 +35,7 @@ class HotelController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'checkin' => 'required|date|after:today',
-            'checkout' => 'required|date|after:checkin|before:' . now()->addDays(config('ratehawk.max_booking_days', 30))->format('Y-m-d'),
+            'checkout' => 'required|date|after:checkin',
             'adults' => 'required|integer|min:1|max:' . config('ratehawk.max_guests_per_room', 6),
             'children' => 'nullable|array|max:' . config('ratehawk.max_children_per_room', 4),
             'children.*' => 'integer|min:0|max:17',
@@ -64,10 +64,25 @@ class HotelController extends Controller
             ], 422);
         }
 
+        // Additional validation for maximum booking period
+        $checkin = \Carbon\Carbon::parse($request->checkin);
+        $checkout = \Carbon\Carbon::parse($request->checkout);
+        $maxDays = (int)config('ratehawk.max_booking_days', 30);
+        
+        if ($checkin->diffInDays($checkout) > $maxDays) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => [
+                    'checkout' => ["Maximum booking period is {$maxDays} days"]
+                ]
+            ], 422);
+        }
+
         try {
             $result = $this->ratehawkService->searchHotelsByRegion($request->all());
 
-            if ($result['success']) {
+            if (isset($result['success']) && $result['success'] || isset($result['status']) && $result['status'] === 'ok') {
                 return response()->json([
                     'success' => true,
                     'data' => $result['data'],
@@ -107,7 +122,7 @@ class HotelController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'checkin' => 'required|date|after:today',
-            'checkout' => 'required|date|after:checkin|before:' . now()->addDays(config('ratehawk.max_booking_days', 30))->format('Y-m-d'),
+            'checkout' => 'required|date|after:checkin',
             'adults' => 'required|integer|min:1|max:' . config('ratehawk.max_guests_per_room', 6),
             'children' => 'nullable|array|max:' . config('ratehawk.max_children_per_room', 4),
             'children.*' => 'integer|min:0|max:17',
@@ -128,10 +143,25 @@ class HotelController extends Controller
             ], 422);
         }
 
+        // Additional validation for maximum booking period
+        $checkin = \Carbon\Carbon::parse($request->checkin);
+        $checkout = \Carbon\Carbon::parse($request->checkout);
+        $maxDays = (int)config('ratehawk.max_booking_days', 30);
+        
+        if ($checkin->diffInDays($checkout) > $maxDays) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => [
+                    'checkout' => ["Maximum booking period is {$maxDays} days"]
+                ]
+            ], 422);
+        }
+
         try {
             $result = $this->ratehawkService->searchHotelsByCoordinates($request->all());
 
-            if ($result['success']) {
+            if (isset($result['success']) && $result['success'] || isset($result['status']) && $result['status'] === 'ok') {
                 return response()->json([
                     'success' => true,
                     'data' => $result['data'],
@@ -193,7 +223,7 @@ class HotelController extends Controller
                 $request->language
             );
 
-            if ($result['success']) {
+            if (isset($result['success']) && $result['success'] || isset($result['status']) && $result['status'] === 'ok') {
                 return response()->json([
                     'success' => true,
                     'data' => $result['data'],
@@ -229,7 +259,7 @@ class HotelController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'checkin' => 'required|date|after:today',
-            'checkout' => 'required|date|after:checkin|before:' . now()->addDays(config('ratehawk.max_booking_days', 30))->format('Y-m-d'),
+            'checkout' => 'required|date|after:checkin',
             'adults' => 'required|integer|min:1|max:' . config('ratehawk.max_guests_per_room', 6),
             'children' => 'nullable|array|max:' . config('ratehawk.max_children_per_room', 4),
             'children.*' => 'integer|min:0|max:17',
@@ -250,7 +280,7 @@ class HotelController extends Controller
         try {
             $result = $this->ratehawkService->getHotelPage($hotelId, $request->all());
 
-            if ($result['success']) {
+            if (isset($result['success']) && $result['success'] || isset($result['status']) && $result['status'] === 'ok') {
                 return response()->json([
                     'success' => true,
                     'data' => $result['data'],
@@ -307,7 +337,7 @@ class HotelController extends Controller
             $params = $request->only(['language', 'page', 'limit']);
             $result = $this->ratehawkService->getHotelReviews($hotelId, $params);
 
-            if ($result['success']) {
+            if (isset($result['success']) && $result['success'] || isset($result['status']) && $result['status'] === 'ok') {
                 return response()->json([
                     'success' => true,
                     'data' => $result['data'],
@@ -363,11 +393,11 @@ class HotelController extends Controller
 
         try {
             $result = $this->ratehawkService->suggestRegions(
-                $request->query,
+                $request->query('query'),
                 $request->only(['language', 'limit'])
             );
 
-            if ($result['success']) {
+            if (isset($result['success']) && $result['success'] || isset($result['status']) && $result['status'] === 'ok') {
                 return response()->json([
                     'success' => true,
                     'data' => $result['data'],
@@ -404,7 +434,7 @@ class HotelController extends Controller
         try {
             $result = $this->ratehawkService->getFilterValues($request->all());
 
-            if ($result['success']) {
+            if (isset($result['success']) && $result['success'] || isset($result['status']) && $result['status'] === 'ok') {
                 return response()->json([
                     'success' => true,
                     'data' => $result['data'],
@@ -452,7 +482,7 @@ class HotelController extends Controller
         try {
             $result = $this->ratehawkService->prebookHotel($request->hash);
 
-            if ($result['success']) {
+            if (isset($result['success']) && $result['success'] || isset($result['status']) && $result['status'] === 'ok') {
                 return response()->json([
                     'success' => true,
                     'data' => $result['data'],

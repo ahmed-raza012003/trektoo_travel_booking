@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "trektoo-travel-booking-api",
+		"_postman_id": "trektoo-travel-booking-api-complete",
 		"name": "Trektoo Travel Booking API",
-		"description": "Complete API collection for Trektoo Travel Booking with Authentication and Klook integration",
+		"description": "Complete API collection for Trektoo Travel Booking with Authentication, Klook integration, and full Ratehawk hotel booking flow",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -29,13 +29,8 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/register",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"register"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "register"]
 						},
 						"description": "Register a new user account"
 					},
@@ -61,13 +56,8 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"login"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "login"]
 						},
 						"description": "Login user and get authentication token"
 					},
@@ -89,13 +79,8 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/api/profile",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"profile"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "profile"]
 						},
 						"description": "Get authenticated user profile information"
 					},
@@ -117,84 +102,545 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/api/logout",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"logout"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "logout"]
 						},
 						"description": "Logout user and revoke authentication token"
-					},
-					"response": []
-				},
-				{
-					"name": "Forgot Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"john.doe@example.com\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/forgot-password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"forgot-password"
-							]
-						},
-						"description": "Send password reset link to user email"
-					},
-					"response": []
-				},
-				{
-					"name": "Reset Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"token\": \"reset_token_from_email\",\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"newpassword123\",\n    \"password_confirmation\": \"newpassword123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/reset-password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"reset-password"
-							]
-						},
-						"description": "Reset user password using token from email"
 					},
 					"response": []
 				}
 			],
 			"description": "Authentication endpoints for user management"
+		},
+		{
+			"name": "Ratehawk Hotels - Complete Flow",
+			"item": [
+				{
+					"name": "Hotel Search",
+					"item": [
+						{
+							"name": "Search Hotels by Region",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"checkin\": \"2026-02-15\",\n    \"checkout\": \"2026-02-17\",\n    \"adults\": 2,\n    \"children\": [8],\n    \"residency\": \"US\",\n    \"region_id\": \"region_12345\",\n    \"language\": \"en\",\n    \"currency\": \"USD\",\n    \"hotels_limit\": 50,\n    \"sort_by\": \"price\",\n    \"sort_order\": \"asc\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/hotels/search",
+									"host": ["{{base_url}}"],
+									"path": ["api", "hotels", "search"]
+								},
+								"description": "Search hotels by region ID"
+							},
+							"response": [
+								{
+									"name": "Successful Search Response",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"checkin\": \"2026-02-15\",\n    \"checkout\": \"2026-02-17\",\n    \"adults\": 2,\n    \"children\": [8],\n    \"residency\": \"US\",\n    \"region_id\": \"region_12345\",\n    \"language\": \"en\",\n    \"currency\": \"USD\",\n    \"hotels_limit\": 50,\n    \"sort_by\": \"price\",\n    \"sort_order\": \"asc\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/hotels/search",
+											"host": ["{{base_url}}"],
+											"path": ["api", "hotels", "search"]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"data\": {\n        \"hotels\": [\n            {\n                \"id\": \"hotel_12345\",\n                \"name\": \"Grand Hotel New York\",\n                \"rating\": 4.5,\n                \"price\": 150,\n                \"currency\": \"USD\",\n                \"images\": [\n                    \"https://example.com/hotel1_1.jpg\",\n                    \"https://example.com/hotel1_2.jpg\"\n                ],\n                \"amenities\": [\"wifi\", \"pool\", \"gym\", \"spa\"],\n                \"location\": {\n                    \"latitude\": 40.7589,\n                    \"longitude\": -73.9851\n                },\n                \"address\": \"123 Broadway, New York, NY 10001\",\n                \"description\": \"Luxury hotel in the heart of Manhattan\"\n            },\n            {\n                \"id\": \"hotel_67890\",\n                \"name\": \"Luxury Suites Manhattan\",\n                \"rating\": 4.8,\n                \"price\": 250,\n                \"currency\": \"USD\",\n                \"images\": [\n                    \"https://example.com/hotel2_1.jpg\",\n                    \"https://example.com/hotel2_2.jpg\"\n                ],\n                \"amenities\": [\"wifi\", \"spa\", \"gym\", \"pool\", \"restaurant\"],\n                \"location\": {\n                    \"latitude\": 40.7505,\n                    \"longitude\": -73.9934\n                },\n                \"address\": \"456 5th Ave, New York, NY 10018\",\n                \"description\": \"Premium suites with city views\"\n            }\n        ],\n        \"pagination\": {\n            \"total\": 2,\n            \"page\": 1,\n            \"per_page\": 50,\n            \"total_pages\": 1\n        }\n    },\n    \"message\": \"Hotels found successfully\",\n    \"meta\": {\n        \"total_hotels\": 2,\n        \"search_params\": {\n            \"checkin\": \"2026-02-15\",\n            \"checkout\": \"2026-02-17\",\n            \"adults\": 2,\n            \"children\": [8],\n            \"residency\": \"US\",\n            \"region_id\": \"region_12345\"\n        }\n    }\n}"
+								}
+							]
+						},
+						{
+							"name": "Search Hotels by Coordinates",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"checkin\": \"2026-02-15\",\n    \"checkout\": \"2026-02-17\",\n    \"adults\": 2,\n    \"children\": [8],\n    \"residency\": \"US\",\n    \"latitude\": 40.7128,\n    \"longitude\": -74.0060,\n    \"radius\": 10,\n    \"language\": \"en\",\n    \"currency\": \"USD\",\n    \"hotels_limit\": 50,\n    \"sort_by\": \"price\",\n    \"sort_order\": \"asc\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/hotels/search/coordinates",
+									"host": ["{{base_url}}"],
+									"path": ["api", "hotels", "search", "coordinates"]
+								},
+								"description": "Search hotels by latitude/longitude coordinates"
+							},
+							"response": []
+						},
+						{
+							"name": "Suggest Regions",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/hotels/suggest?query=New York&language=en&limit=10",
+									"host": ["{{base_url}}"],
+									"path": ["api", "hotels", "suggest"],
+									"query": [
+										{
+											"key": "query",
+											"value": "New York",
+											"description": "Search query for regions"
+										},
+										{
+											"key": "language",
+											"value": "en",
+											"description": "Language code"
+										},
+										{
+											"key": "limit",
+											"value": "10",
+											"description": "Maximum results"
+										}
+									]
+								},
+								"description": "Get region suggestions for search"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Filter Values",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/hotels/filters",
+									"host": ["{{base_url}}"],
+									"path": ["api", "hotels", "filters"]
+								},
+								"description": "Get available filter values for hotel search"
+							},
+							"response": []
+						}
+					],
+					"description": "Hotel search and discovery endpoints"
+				},
+				{
+					"name": "Hotel Information",
+					"item": [
+						{
+							"name": "Get Hotel Details",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/hotels/hotel_12345/details?language=en",
+									"host": ["{{base_url}}"],
+									"path": ["api", "hotels", "hotel_12345", "details"],
+									"query": [
+										{
+											"key": "language",
+											"value": "en",
+											"description": "Language code"
+										}
+									]
+								},
+								"description": "Get detailed hotel information"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Hotel Page with Rooms",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/hotels/hotel_12345/page?checkin=2026-02-15&checkout=2026-02-17&adults=2&children=1&residency=US",
+									"host": ["{{base_url}}"],
+									"path": ["api", "hotels", "hotel_12345", "page"],
+									"query": [
+										{
+											"key": "checkin",
+											"value": "2026-02-15",
+											"description": "Check-in date (Y-m-d)"
+										},
+										{
+											"key": "checkout",
+											"value": "2026-02-17",
+											"description": "Check-out date (Y-m-d)"
+										},
+										{
+											"key": "adults",
+											"value": "2",
+											"description": "Number of adults"
+										},
+										{
+											"key": "children",
+											"value": "1",
+											"description": "Number of children"
+										},
+										{
+											"key": "residency",
+											"value": "US",
+											"description": "Country code"
+										}
+									]
+								},
+								"description": "Get hotel page with available rooms and pricing"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Hotel Reviews",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/hotels/hotel_12345/reviews?language=en&page=1&limit=10",
+									"host": ["{{base_url}}"],
+									"path": ["api", "hotels", "hotel_12345", "reviews"],
+									"query": [
+										{
+											"key": "language",
+											"value": "en",
+											"description": "Language code"
+										},
+										{
+											"key": "page",
+											"value": "1",
+											"description": "Page number"
+										},
+										{
+											"key": "limit",
+											"value": "10",
+											"description": "Reviews per page"
+										}
+									]
+								},
+								"description": "Get hotel reviews and ratings"
+							},
+							"response": []
+						}
+					],
+					"description": "Hotel information and details endpoints"
+				},
+				{
+					"name": "Booking Flow",
+					"item": [
+						{
+							"name": "Prebook Hotel",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"hash\": \"booking_hash_from_hotel_page_response\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/hotels/prebook",
+									"host": ["{{base_url}}"],
+									"path": ["api", "hotels", "prebook"]
+								},
+								"description": "Prebook hotel to get final pricing and availability"
+							},
+							"response": []
+						},
+						{
+							"name": "Create Booking Form",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"book_hash\": \"booking_hash_from_prebook_response\",\n    \"user_info\": {\n        \"email\": \"john.doe@example.com\",\n        \"phone\": \"+1234567890\",\n        \"first_name\": \"John\",\n        \"last_name\": \"Doe\"\n    },\n    \"payment_type\": {\n        \"type\": \"deposit\",\n        \"amount\": 150.00,\n        \"currency_code\": \"USD\"\n    },\n    \"language\": \"en\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/hotels/bookings/create-form",
+									"host": ["{{base_url}}"],
+									"path": ["api", "hotels", "bookings", "create-form"]
+								},
+								"description": "Create booking form with user information"
+							},
+							"response": []
+						},
+						{
+							"name": "Finish Booking",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"partner_order_id\": \"THB-ABC12345-1234567890\",\n    \"payment_method_id\": \"pm_card_visa\",\n    \"rooms\": [\n        {\n            \"guests\": [\n                {\n                    \"first_name\": \"John\",\n                    \"last_name\": \"Doe\",\n                    \"is_child\": false\n                },\n                {\n                    \"first_name\": \"Jane\",\n                    \"last_name\": \"Doe\",\n                    \"is_child\": true,\n                    \"age\": 8\n                }\n            ]\n        }\n    ],\n    \"upsell_data\": [],\n    \"user_comment\": \"Ground floor room preferred\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/hotels/bookings/finish",
+									"host": ["{{base_url}}"],
+									"path": ["api", "hotels", "bookings", "finish"]
+								},
+								"description": "Complete the hotel booking with payment"
+							},
+							"response": []
+						}
+					],
+					"description": "Complete hotel booking flow endpoints"
+				},
+				{
+					"name": "Booking Management",
+					"item": [
+						{
+							"name": "Get Booking Status",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/hotels/bookings/THB-ABC12345-1234567890/status",
+									"host": ["{{base_url}}"],
+									"path": ["api", "hotels", "bookings", "THB-ABC12345-1234567890", "status"]
+								},
+								"description": "Get current status of a hotel booking"
+							},
+							"response": []
+						},
+						{
+							"name": "Cancel Booking",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"reason\": \"Change of plans\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/hotels/bookings/THB-ABC12345-1234567890/cancel",
+									"host": ["{{base_url}}"],
+									"path": ["api", "hotels", "bookings", "THB-ABC12345-1234567890", "cancel"]
+								},
+								"description": "Cancel a hotel booking"
+							},
+							"response": []
+						},
+						{
+							"name": "Get User Hotel Bookings",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/hotels/bookings?per_page=15&status=confirmed",
+									"host": ["{{base_url}}"],
+									"path": ["api", "hotels", "bookings"],
+									"query": [
+										{
+											"key": "per_page",
+											"value": "15",
+											"description": "Results per page"
+										},
+										{
+											"key": "status",
+											"value": "confirmed",
+											"description": "Filter by booking status"
+										}
+									]
+								},
+								"description": "Get user's hotel bookings list"
+							},
+							"response": []
+						}
+					],
+					"description": "Hotel booking management endpoints"
+				},
+				{
+					"name": "Webhooks (Testing)",
+					"item": [
+						{
+							"name": "Booking Status Webhook",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "X-Ratehawk-Signature",
+										"value": "webhook_signature_if_configured"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"partner_order_id\": \"THB-ABC12345-1234567890\",\n    \"status\": \"confirmed\",\n    \"message\": \"Booking confirmed successfully\",\n    \"timestamp\": \"2025-01-20T10:30:00Z\",\n    \"ratehawk_order_id\": \"RH123456789\",\n    \"booking_reference\": \"BR789012345\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/webhooks/ratehawk/booking-status",
+									"host": ["{{base_url}}"],
+									"path": ["api", "webhooks", "ratehawk", "booking-status"]
+								},
+								"description": "Simulate Ratehawk booking status webhook"
+							},
+							"response": []
+						},
+						{
+							"name": "Booking Changes Webhook",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "X-Ratehawk-Signature",
+										"value": "webhook_signature_if_configured"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"partner_order_id\": \"THB-ABC12345-1234567890\",\n    \"change_type\": \"price_change\",\n    \"old_price\": 150.00,\n    \"new_price\": 140.00,\n    \"currency\": \"USD\",\n    \"message\": \"Price updated due to promotion\",\n    \"timestamp\": \"2025-01-20T10:30:00Z\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/webhooks/ratehawk/booking-changes",
+									"host": ["{{base_url}}"],
+									"path": ["api", "webhooks", "ratehawk", "booking-changes"]
+								},
+								"description": "Simulate Ratehawk booking changes webhook"
+							},
+							"response": []
+						}
+					],
+					"description": "Webhook endpoints for testing Ratehawk integration"
+				}
+			],
+			"description": "Complete Ratehawk hotel booking integration with search, booking, and management endpoints"
 		},
 		{
 			"name": "Klook API",
@@ -214,68 +660,10 @@
 								],
 								"url": {
 									"raw": "{{base_url}}/api/klook/test",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"test"
-									]
+									"host": ["{{base_url}}"],
+									"path": ["api", "klook", "test"]
 								},
 								"description": "Test all Klook API endpoints"
-							},
-							"response": []
-						},
-						{
-							"name": "Test Categories",
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/api/klook/test/categories",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"test",
-										"categories"
-									]
-								},
-								"description": "Test categories endpoint"
-							},
-							"response": []
-						},
-						{
-							"name": "Test Activities",
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/api/klook/test/activities",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"test",
-										"activities"
-									]
-								},
-								"description": "Test activities endpoint"
 							},
 							"response": []
 						}
@@ -297,14 +685,8 @@
 								],
 								"url": {
 									"raw": "{{base_url}}/api/klook/categories",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"categories"
-									]
+									"host": ["{{base_url}}"],
+									"path": ["api", "klook", "categories"]
 								},
 								"description": "Get all activity categories"
 							},
@@ -328,14 +710,8 @@
 								],
 								"url": {
 									"raw": "{{base_url}}/api/klook/activities?limit=10&page=1",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"activities"
-									],
+									"host": ["{{base_url}}"],
+									"path": ["api", "klook", "activities"],
 									"query": [
 										{
 											"key": "limit",
@@ -346,24 +722,6 @@
 											"key": "page",
 											"value": "1",
 											"description": "Page number"
-										},
-										{
-											"key": "city_ids",
-											"value": "",
-											"description": "Comma-separated city IDs",
-											"disabled": true
-										},
-										{
-											"key": "country_ids",
-											"value": "",
-											"description": "Comma-separated country IDs",
-											"disabled": true
-										},
-										{
-											"key": "category_ids",
-											"value": "",
-											"description": "Comma-separated category IDs",
-											"disabled": true
 										}
 									]
 								},
@@ -383,15 +741,8 @@
 								],
 								"url": {
 									"raw": "{{base_url}}/api/klook/activities/19",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"activities",
-										"19"
-									]
+									"host": ["{{base_url}}"],
+									"path": ["api", "klook", "activities", "19"]
 								},
 								"description": "Get specific activity details"
 							},
@@ -399,106 +750,6 @@
 						}
 					],
 					"description": "Activity management endpoints"
-				},
-				{
-					"name": "Schedules & Pricing",
-					"item": [
-						{
-							"name": "Get Schedules",
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/api/klook/schedules?sku_ids=123,456&start_time=2025-09-20&end_time=2025-09-25",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"schedules"
-									],
-									"query": [
-										{
-											"key": "sku_ids",
-											"value": "123,456",
-											"description": "SKU IDs (comma-separated)"
-										},
-										{
-											"key": "start_time",
-											"value": "2025-09-20",
-											"description": "Start date (Y-m-d)"
-										},
-										{
-											"key": "end_time",
-											"value": "2025-09-25",
-											"description": "End date (Y-m-d)"
-										}
-									]
-								},
-								"description": "Get price/inventory schedules"
-							},
-							"response": []
-						},
-						{
-							"name": "Get Minimum Selling Price",
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/api/klook/msp/123",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"msp",
-										"123"
-									]
-								},
-								"description": "Get minimum selling price for product"
-							},
-							"response": []
-						},
-						{
-							"name": "Get Other Info",
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/api/klook/otherinfo/123",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"otherinfo",
-										"123"
-									]
-								},
-								"description": "Get additional product information"
-							},
-							"response": []
-						}
-					],
-					"description": "Schedule and pricing endpoints"
 				},
 				{
 					"name": "Orders & Booking",
@@ -523,85 +774,10 @@
 								},
 								"url": {
 									"raw": "{{base_url}}/api/klook/availability/check",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"availability",
-										"check"
-									]
+									"host": ["{{base_url}}"],
+									"path": ["api", "klook", "availability", "check"]
 								},
 								"description": "Check availability for booking"
-							},
-							"response": []
-						},
-						{
-							"name": "Check Availability Direct",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									},
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "[\n    {\n        \"package_id\": 123,\n        \"start_time\": \"2025-09-20 10:00:00\",\n        \"sku_list\": [\n            {\n                \"sku_id\": 456,\n                \"count\": 2,\n                \"price\": \"50.00\"\n            }\n        ]\n    }\n]"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/klook/availability/check-direct",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"availability",
-										"check-direct"
-									]
-								},
-								"description": "Direct availability check with price comparison"
-							},
-							"response": []
-						},
-						{
-							"name": "Validate Order",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									},
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"agent_order_id\": \"ORD_1234567890_1234\",\n    \"contact_info\": {\n        \"country\": \"US\",\n        \"email\": \"customer@example.com\",\n        \"first_name\": \"John\",\n        \"family_name\": \"Doe\",\n        \"mobile\": \"+1234567890\"\n    },\n    \"items\": [\n        {\n            \"package_id\": 123,\n            \"start_time\": \"2025-09-20 10:00:00\",\n            \"sku_list\": [\n                {\n                    \"sku_id\": 456,\n                    \"count\": 2,\n                    \"price\": \"50.00\"\n                }\n            ]\n        }\n    ]\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/klook/orders/validate",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"orders",
-										"validate"
-									]
-								},
-								"description": "Validate order before creation"
 							},
 							"response": []
 						},
@@ -625,320 +801,15 @@
 								},
 								"url": {
 									"raw": "{{base_url}}/api/klook/orders",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"orders"
-									]
+									"host": ["{{base_url}}"],
+									"path": ["api", "klook", "orders"]
 								},
 								"description": "Create new order"
-							},
-							"response": []
-						},
-						{
-							"name": "Get Order Detail",
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/api/klook/orders/ORD123456",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"orders",
-										"ORD123456"
-									]
-								},
-								"description": "Get order details"
-							},
-							"response": []
-						},
-						{
-							"name": "Initiate Booking",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									},
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"customer_info\": {\n        \"country\": \"US\",\n        \"email\": \"customer@example.com\",\n        \"first_name\": \"John\",\n        \"last_name\": \"Doe\",\n        \"phone\": \"+1234567890\"\n    },\n    \"booking_details\": {\n        \"package_id\": 123,\n        \"adult_quantity\": 2,\n        \"child_quantity\": 0,\n        \"schedule\": {\n            \"start_time\": \"2025-09-20 10:00:00\",\n            \"sku_id\": 456\n        },\n        \"extra_info\": {\n            \"booking_extra_info\": [],\n            \"unit_extra_info\": []\n        }\n    },\n    \"terms_accepted\": true\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/klook/activities-booking/initiate",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"activities-booking",
-										"initiate"
-									]
-								},
-								"description": "Initiate booking process"
-							},
-							"response": []
-						},
-						{
-							"name": "Complete Checkout",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									},
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"package_id\": 123,\n    \"start_time\": \"2025-09-20 10:00:00\",\n    \"sku_list\": [\n        {\n            \"sku_id\": 456,\n            \"count\": 2\n        }\n    ],\n    \"agent_order_id\": \"ORD_1234567890_1234\",\n    \"contact_info\": {\n        \"country\": \"US\",\n        \"email\": \"customer@example.com\",\n        \"first_name\": \"John\",\n        \"family_name\": \"Doe\",\n        \"mobile\": \"+1234567890\"\n    },\n    \"items\": [\n        {\n            \"package_id\": 123,\n            \"start_time\": \"2025-09-20 10:00:00\",\n            \"sku_list\": [\n                {\n                    \"sku_id\": 456,\n                    \"count\": 2,\n                    \"price\": \"50.00\"\n                }\n            ]\n        }\n    ]\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/klook/activity/checkout",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"activity",
-										"checkout"
-									]
-								},
-								"description": "Complete checkout process without database"
 							},
 							"response": []
 						}
 					],
 					"description": "Order and booking management endpoints"
-				},
-				{
-					"name": "Payment & Balance",
-					"item": [
-						{
-							"name": "Pay with Balance",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/api/klook/pay/balance/ORD123456",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"pay",
-										"balance",
-										"ORD123456"
-									]
-								},
-								"description": "Pay order using account balance"
-							},
-							"response": []
-						},
-						{
-							"name": "Get Balance",
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/api/klook/balance",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"balance"
-									]
-								},
-								"description": "Get account balance"
-							},
-							"response": []
-						}
-					],
-					"description": "Payment and balance management endpoints"
-				},
-				{
-					"name": "Booking Management",
-					"item": [
-						{
-							"name": "Get Bookings",
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/api/klook/bookings?order=created:desc",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"bookings"
-									],
-									"query": [
-										{
-											"key": "create_start",
-											"value": "",
-											"description": "Start date (Y-m-d H:i:s)",
-											"disabled": true
-										},
-										{
-											"key": "create_end",
-											"value": "",
-											"description": "End date (Y-m-d H:i:s)",
-											"disabled": true
-										},
-										{
-											"key": "order",
-											"value": "created:desc",
-											"description": "Sort order (created:asc, created:desc)"
-										}
-									]
-								},
-								"description": "Get bookings list"
-							},
-							"response": []
-						},
-						{
-							"name": "Resend Voucher",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/api/klook/orders/ORD123456/resend-voucher",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"orders",
-										"ORD123456",
-										"resend-voucher"
-									]
-								},
-								"description": "Resend voucher for confirmed order"
-							},
-							"response": []
-						}
-					],
-					"description": "Booking management endpoints"
-				},
-				{
-					"name": "Order Cancellation",
-					"item": [
-						{
-							"name": "Apply Order Cancellation",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									},
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"refund_reason_id\": 1\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/klook/orders/ORD123456/cancel/apply",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"orders",
-										"ORD123456",
-										"cancel",
-										"apply"
-									]
-								},
-								"description": "Apply for order cancellation"
-							},
-							"response": []
-						},
-						{
-							"name": "Get Cancellation Status",
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Accept",
-										"value": "application/json"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/api/klook/orders/ORD123456/cancel/status",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"klook",
-										"orders",
-										"ORD123456",
-										"cancel",
-										"status"
-									]
-								},
-								"description": "Get order cancellation status"
-							},
-							"response": []
-						}
-					],
-					"description": "Order cancellation endpoints"
 				}
 			],
 			"description": "Klook API integration endpoints"
@@ -962,13 +833,8 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/api/bookings?status=pending&type=activity",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"bookings"
-							],
+							"host": ["{{base_url}}"],
+							"path": ["api", "bookings"],
 							"query": [
 								{
 									"key": "status",
@@ -1002,14 +868,8 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/api/bookings/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"bookings",
-								"1"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "bookings", "1"]
 						},
 						"description": "Get specific booking details"
 					},
@@ -1039,13 +899,8 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/bookings",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"bookings"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "bookings"]
 						},
 						"description": "Create a new booking"
 					},
@@ -1075,15 +930,8 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/bookings/1/complete",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"bookings",
-								"1",
-								"complete"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "bookings", "1", "complete"]
 						},
 						"description": "Complete booking with payment"
 					},
@@ -1113,45 +961,10 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/bookings/1/cancel",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"bookings",
-								"1",
-								"cancel"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "bookings", "1", "cancel"]
 						},
 						"description": "Cancel a booking"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Booking Statistics",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{auth_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/bookings-statistics",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"bookings-statistics"
-							]
-						},
-						"description": "Get user's booking statistics"
 					},
 					"response": []
 				}
@@ -1177,13 +990,8 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/api/payments?status=paid&provider=stripe",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"payments"
-							],
+							"host": ["{{base_url}}"],
+							"path": ["api", "payments"],
 							"query": [
 								{
 									"key": "status",
@@ -1198,35 +1006,6 @@
 							]
 						},
 						"description": "Get user's payments with optional filters"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Payment Details",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{auth_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/payments/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"payments",
-								"1"
-							]
-						},
-						"description": "Get specific payment details"
 					},
 					"response": []
 				},
@@ -1254,14 +1033,8 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/payments/create-intent",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"payments",
-								"create-intent"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "payments", "create-intent"]
 						},
 						"description": "Create Stripe payment intent"
 					},
@@ -1291,14 +1064,8 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/payments/confirm",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"payments",
-								"confirm"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "payments", "confirm"]
 						},
 						"description": "Confirm payment with payment intent ID"
 					},
@@ -1328,45 +1095,10 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/payments/1/refund",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"payments",
-								"1",
-								"refund"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "payments", "1", "refund"]
 						},
 						"description": "Create refund for payment"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Payment Methods",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{auth_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/payment-methods",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"payment-methods"
-							]
-						},
-						"description": "Get available payment methods"
 					},
 					"response": []
 				},
@@ -1386,48 +1118,40 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/api/stripe-key",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"stripe-key"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "stripe-key"]
 						},
 						"description": "Get Stripe publishable key"
 					},
 					"response": []
-				},
+				}
+			],
+			"description": "Payment processing endpoints"
+		},
+		{
+			"name": "System",
+			"item": [
 				{
-					"name": "Get Payment Statistics",
+					"name": "Health Check",
 					"request": {
 						"method": "GET",
 						"header": [
 							{
 								"key": "Accept",
 								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{auth_token}}"
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/payments-statistics",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"payments-statistics"
-							]
+							"raw": "{{base_url}}/api/health",
+							"host": ["{{base_url}}"],
+							"path": ["api", "health"]
 						},
-						"description": "Get user's payment statistics"
+						"description": "Check system health and status"
 					},
 					"response": []
 				}
 			],
-			"description": "Payment processing endpoints"
+			"description": "System health and status endpoints"
 		}
 	],
 	"event": [
@@ -1454,12 +1178,44 @@
 		{
 			"key": "base_url",
 			"value": "http://localhost:8000",
-			"type": "string"
+			"type": "string",
+			"description": "Base URL for the API"
 		},
 		{
 			"key": "auth_token",
 			"value": "",
-			"type": "string"
+			"type": "string",
+			"description": "Authentication token for protected endpoints"
+		},
+		{
+			"key": "ratehawk_region_id",
+			"value": "region_12345",
+			"type": "string",
+			"description": "Sample Ratehawk region ID for testing"
+		},
+		{
+			"key": "ratehawk_hotel_id",
+			"value": "12345",
+			"type": "string",
+			"description": "Sample Ratehawk hotel ID for testing"
+		},
+		{
+			"key": "partner_order_id",
+			"value": "THB-ABC12345-1234567890",
+			"type": "string",
+			"description": "Sample partner order ID for testing"
+		},
+		{
+			"key": "booking_hash",
+			"value": "booking_hash_from_hotel_page_response",
+			"type": "string",
+			"description": "Booking hash from hotel page response"
+		},
+		{
+			"key": "book_hash",
+			"value": "booking_hash_from_prebook_response",
+			"type": "string",
+			"description": "Book hash from prebook response"
 		}
 	]
 }

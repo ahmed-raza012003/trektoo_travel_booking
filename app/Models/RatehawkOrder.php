@@ -196,7 +196,7 @@ class RatehawkOrder extends Model
 
     public function setExpiry(int $minutes = null): void
     {
-        $expiryMinutes = $minutes ?? config('ratehawk.booking_expiry_minutes', 30);
+        $expiryMinutes = $minutes ?? (int)config('ratehawk.booking_expiry_minutes', 30);
         
         $this->update([
             'expires_at' => now()->addMinutes($expiryMinutes)
