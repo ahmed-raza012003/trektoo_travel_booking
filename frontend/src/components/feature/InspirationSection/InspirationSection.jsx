@@ -56,7 +56,7 @@ const InspirationSection = () => {
 
   return (
     <section className="py-20 bg-gradient-to-br from-slate-50 to-gray-100">
-      <div className="container mx-auto px-10 w-[80vw]">
+      <div className="container mx-auto px-10 w-[90vw]">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Travel <span className="text-blue-600">Inspiration</span>

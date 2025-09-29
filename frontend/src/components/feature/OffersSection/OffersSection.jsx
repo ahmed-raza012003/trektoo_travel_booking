@@ -33,7 +33,7 @@ const offers = [
 const OffersSection = () => {
     return (
         <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto rounded-xl">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Offers for you</h2>
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">Offers for you</h1>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {offers.map((offer) => (
                     <motion.div

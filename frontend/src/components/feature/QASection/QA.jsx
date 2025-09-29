@@ -1,83 +1,37 @@
 'use client';
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 
 const VideoSection = () => {
   return (
     <motion.div
-      className="relative w-full pt-[56.25%] rounded-3xl overflow-hidden shadow-2xl"
+      className="relative w-full pt-[55%] rounded-3xl overflow-hidden shadow-2xl"
       initial={{ opacity: 0, y: 50, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-      whileHover={{ 
+      whileHover={{
         scale: 1.02,
         boxShadow: "0 25px 50px -12px rgba(59, 130, 246, 0.25)",
         transition: { duration: 0.3, ease: "easeOut" }
       }}
-      style={{ willChange: 'transform, opacity' }}
     >
-      {/* YouTube Video Embed */}
-      <iframe
-        className="absolute top-0 left-0 w-full h-full rounded-3xl"
-        src="https://www.youtube.com/embed/278IRQ6HSi4?si=-ITT0DEL4dU3Sx11&autoplay=0&rel=0&modestbranding=1"
-        title="Trektoo Adventure Video"
-        frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowFullScreen
+      {/* Video */}
+      <video
+        className="absolute top-0 left-0 w-full h-full rounded-3xl object-cover"
+        src="/images/banner.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
       />
-      
-      {/* Enhanced overlay with gradient */}
-      <motion.div 
-        className="absolute inset-0 bg-gradient-to-t from-blue-900/20 via-transparent to-transparent pointer-events-none"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1, delay: 0.5 }}
-      />
-      
-      {/* Enhanced decorative elements */}
-      <motion.div 
-        className="absolute top-4 right-4 w-3 h-3 bg-blue-500 rounded-full"
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.8 }}
-        style={{ willChange: 'transform, opacity' }}
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [1, 0.7, 1],
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <motion.div 
-        className="absolute bottom-4 left-4 w-2 h-2 bg-blue-400 rounded-full"
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.6, delay: 1.0 }}
-        style={{ willChange: 'transform, opacity' }}
-        animate={{
-          scale: [1, 1.3, 1],
-          opacity: [0.7, 1, 0.7],
-        }}
-        transition={{
-          duration: 2.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 0.5
-        }}
-      />
+
+      {/* Overlay gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-blue-900/20 via-transparent to-transparent pointer-events-none" />
     </motion.div>
   );
 };
-
-VideoSection.propTypes = {};
-
-
 
 const AdventureVideoSection = () => {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
@@ -90,151 +44,74 @@ const AdventureVideoSection = () => {
     },
   };
 
-  const headerVariants = {
-    hidden: { opacity: 0, y: -30, scale: 0.95 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      scale: 1,
-      transition: { 
-        duration: 0.8, 
-        ease: [0.25, 0.46, 0.45, 0.94],
-        type: "spring",
-        stiffness: 100
-      }
-    },
-  };
-
-  const descriptionVariants = {
-    hidden: { opacity: 0, y: 20, scale: 0.98 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      scale: 1,
-      transition: { 
-        duration: 0.8, 
-        delay: 0.2,
-        ease: [0.25, 0.46, 0.45, 0.94]
-      }
-    },
-  };
+  // Enhanced floating box config with blue and purple colors only
+  const floatingBoxes = [
+    { size: 20, color: "bg-blue-500/30", duration: 8, delay: 0, left: 8 },
+    { size: 24, color: "bg-indigo-500/25", duration: 10, delay: 2, left: 18 },
+    { size: 16, color: "bg-purple-500/35", duration: 7, delay: 1, left: 28 },
+    { size: 28, color: "bg-blue-400/20", duration: 12, delay: 3, left: 38 },
+    { size: 18, color: "bg-indigo-400/30", duration: 9, delay: 1.5, left: 48 },
+    { size: 22, color: "bg-purple-400/25", duration: 11, delay: 2.5, left: 58 },
+    { size: 14, color: "bg-blue-300/35", duration: 6, delay: 4, left: 68 },
+    { size: 26, color: "bg-blue-600/20", duration: 13, delay: 0.8, left: 78 },
+    { size: 20, color: "bg-violet-500/30", duration: 8.5, delay: 3.2, left: 88 },
+  ];
 
   return (
     <motion.section
       ref={ref}
-      className="py-20 bg-gradient-to-br from-blue-50 via-white to-indigo-50 relative overflow-hidden"
+      className="py-12 md:py-16 bg-gradient-to-br from-blue-50 via-white to-indigo-50 relative overflow-hidden min-h-screen"
       variants={sectionVariants}
       initial="hidden"
       animate={inView ? 'visible' : 'hidden'}
-      aria-labelledby="qa-section-heading"
     >
-      {/* Enhanced background with animated elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Animated gradient circles */}
-        <motion.div
-          className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.6, 0.3],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div
-          className="absolute bottom-20 right-10 w-40 h-40 bg-gradient-to-r from-indigo-400/20 to-blue-400/20 rounded-full blur-3xl"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.6, 0.3, 0.6],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2
-          }}
-        />
-        
-        {/* Floating particles */}
-        <motion.div
-          className="absolute top-1/4 right-1/4 w-2 h-2 bg-blue-400 rounded-full"
-          animate={{
-            y: [0, -20, 0],
-            opacity: [0.5, 1, 0.5],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div
-          className="absolute bottom-1/3 left-1/3 w-1.5 h-1.5 bg-indigo-400 rounded-full"
-          animate={{
-            y: [0, 15, 0],
-            opacity: [0.3, 0.8, 0.3],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1
-          }}
-        />
-        
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 opacity-[0.02]" style={{
-          backgroundImage: `linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px)`,
-          backgroundSize: '50px 50px'
-        }}></div>
+      {/* Enhanced floating animated shapes (desktop only) */}
+      <div className="absolute inset-0 hidden md:block pointer-events-none">
+        {floatingBoxes.map((box, idx) => (
+          <motion.div
+            key={idx}
+            className={`absolute ${box.color} rounded-2xl shadow-lg`}
+            style={{
+              width: `${box.size}px`,
+              height: `${box.size}px`,
+              left: `${box.left}%`,
+              bottom: '-50px', // Start below the viewport
+            }}
+            animate={{ 
+              y: [0, -window.innerHeight - 100], // Move from bottom to completely off-screen at top
+              opacity: [0, 0.8, 0.8, 0],
+              rotate: [0, 360],
+              scale: [0.8, 1, 1, 0.8]
+            }}
+            transition={{
+              duration: box.duration,
+              repeat: Infinity,
+              ease: "linear",
+              delay: box.delay,
+              times: [0, 0.1, 0.9, 1] // Opacity timing: fade in quick, stay visible, fade out quick
+            }}
+          />
+        ))}
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                 {/* Enhanced Header Section */}
-         <motion.div
-           className="text-center mb-16"
-           variants={headerVariants}
-         >
-           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-6">
-             Enjoy{' '}
-             <span className="text-blue-600">
-               Real Adventure
-             </span>
-           </h2>
-           
-           <motion.p 
-             className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed"
-             variants={descriptionVariants}
-           >
-             Discover authentic experiences and get answers to your travel questions. 
-             Let us guide you through every step of your adventure.
-           </motion.p>
-         </motion.div>
+        {/* Heading */}
+        <motion.div className="text-center mb-10 md:mb-16">
+          <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
+            Enjoy <span className="text-blue-600">Real Adventure</span>
+          </h2>
+          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
+            Discover authentic experiences and let Trektoo guide you through every step of your journey.
+          </p>
+        </motion.div>
 
-        {/* Enhanced Video Container */}
-        <motion.div
-          className="max-w-5xl mx-auto"
-          variants={sectionVariants}
-          initial="hidden"
-          animate="visible"
-        >
-                     {/* Video Section with enhanced wrapper */}
-           <motion.div 
-             variants={sectionVariants}
-             className="relative"
-           >
-             <VideoSection />
-           </motion.div>
-
-          
+        {/* Video */}
+        <motion.div className="max-w-4xl mx-auto">
+          <VideoSection />
         </motion.div>
       </div>
     </motion.section>
   );
 };
-
-AdventureVideoSection.propTypes = {};
 
 export default AdventureVideoSection;

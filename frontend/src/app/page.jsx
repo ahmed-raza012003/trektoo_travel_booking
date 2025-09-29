@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import HeroSection from '@/components/feature/HeroSection';
 import ErrorBoundary from '@/components/security/ErrorBoundary';
 import OffersSection from '@/components/feature/OffersSection/OffersSection';
+import Banner from '@/components/feature/Banner/Banner';
 
 const AdventureVideoSection = lazy(() => import('@/components/feature/QASection/QA'));
 const FAQ = lazy(() => import('@/components/feature/FAQSection/FAQ'));
@@ -20,7 +21,14 @@ export default function HomePage() {
       <main className="relative overflow-hidden">
         <HeroSection />
 
+        
         {/* Add the new Inspiration Section right after Hero */}
+
+        <Suspense fallback={<ComponentLoader />}>
+          <Banner />
+        </Suspense>
+
+
         <Suspense fallback={<ComponentLoader />}>
           <OffersSection />
         </Suspense>
@@ -41,9 +49,9 @@ export default function HomePage() {
           <FeaturedDestinations />
         </Suspense>
 
-        <Suspense fallback={<ComponentLoader />}>
+        {/* <Suspense fallback={<ComponentLoader />}>
           <TestimonialsSection />
-        </Suspense>
+        </Suspense> */}
 
         <Suspense fallback={<ComponentLoader />}>
           <FAQ />
