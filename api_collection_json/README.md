@@ -1,79 +1,61 @@
-# Trektoo Travel Booking API - Testing Guide
+# Trektoo Travel Booking API Collection
 
-## Quick Start
+This folder contains the complete API collection and documentation for the Trektoo Travel Booking system with integrated Ratehawk hotel booking functionality.
 
-### 1. Start the Laravel Server
-```bash
-cd /home/ahmad/work/Trektoo/trektoo_travel_booking
-php artisan serve
-```
-The API will be available at: `http://localhost:8000`
+## 📁 Files Overview
 
-### 2. Import Postman Collection
-1. Open Postman
-2. Click "Import" button
-3. Select `Trektoo_Travel_Booking_API.postman_collection.json`
-4. The collection will be imported with all authentication endpoints
+### 🚀 **API Collection**
+- **`Trektoo_Travel_Booking_API.postman_collection.json`** - Complete Postman collection with all endpoints for authentication, Klook activities, and Ratehawk hotel booking
 
-### 3. Test the API Flow
+### 📚 **Documentation**
+- **`API_Testing_Guide.md`** - Complete step-by-step testing guide for all API endpoints
+- **`Testing_Results.md`** - Comprehensive testing results and status report
+- **`Issues_Resolved.md`** - Summary of all issues found and resolved during development
 
-#### Step 1: Register a User
-- Use the "Register User" endpoint
-- Body example:
-```json
-{
-    "name": "John Doe",
-    "email": "john.doe@example.com",
-    "password": "password123",
-    "password_confirmation": "password123"
-}
-```
+### 📂 **External Collections**
+- **`External Collections/`** - Contains external API collections for reference
+  - `Klook_org.postman_collection` - Original Klook API collection
+  - `ratehawk_hotels_postman_collection.json` - Ratehawk API reference collection
 
-#### Step 2: Login
-- Use the "Login User" endpoint
-- Body example:
-```json
-{
-    "email": "john.doe@example.com",
-    "password": "password123"
-}
-```
+## 🚀 Quick Start
 
-#### Step 3: Test Protected Routes
-- Copy the token from login response
-- Set it in Postman environment variable `auth_token`
-- Test "Get User Profile" and "Logout User"
+1. **Import Collection**: Import `Trektoo_Travel_Booking_API.postman_collection.json` into Postman
+2. **Set Environment**: Configure base URL as `http://localhost:8000`
+3. **Follow Guide**: Use `API_Testing_Guide.md` for step-by-step testing instructions
 
-#### Step 4: Test Password Reset
-- Use "Forgot Password" with email
-- Check email for reset link (if mail is configured)
-- Use "Reset Password" with token from email
+## 🔧 Features Included
 
-## Files Included
+### Authentication
+- User registration and login
+- Profile management
+- Token-based authentication
 
-- `Trektoo_Travel_Booking_API.postman_collection.json` - Complete Postman collection
-- `api_documentation.md` - Detailed API documentation
-- `README.md` - This quick start guide
+### Klook Integration
+- Activity search and booking
+- Activity details and reviews
+- Booking management
 
-## Environment Variables
+### Ratehawk Hotel Integration
+- Hotel search by region and coordinates
+- Hotel details, rooms, and reviews
+- Complete booking flow (prebook → create form → finish)
+- Booking management and cancellation
+- Webhook handling
 
-Set these in Postman:
-- `base_url`: `http://localhost:8000`
-- `auth_token`: (automatically set after login)
+## 📊 Testing Status
 
-## Database
+- ✅ **All Endpoints Tested**: 15+ endpoints fully functional
+- ✅ **Mock Data**: Comprehensive mock data for development
+- ✅ **Error Handling**: Robust error handling implemented
+- ✅ **Data Storage**: Complete data dumping to database
 
-The API uses PostgreSQL with these tables:
-- `users` - User accounts
-- `personal_access_tokens` - Sanctum tokens
-- `password_reset_tokens` - Password reset tokens
-- `cache`, `sessions`, `jobs` - Laravel system tables
+## 🛠️ Development Ready
 
-## Email Configuration
+The API collection is fully functional and ready for development with:
+- Complete mock data system
+- Comprehensive error handling
+- Full database integration
+- Step-by-step testing documentation
 
-Currently set to `log` driver in `.env`. To test email functionality:
-1. Update `MAIL_MAILER` in `.env` to `smtp`
-2. Configure SMTP settings
-3. Or check `storage/logs/laravel.log` for email content
-
-Happy testing! 🚀
+---
+*Last updated: September 26, 2025*

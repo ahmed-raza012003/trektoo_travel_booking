@@ -6,6 +6,9 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\StripeWebhookController;
 use App\Http\Controllers\Api\Klook\KlookApiController;
 use App\Http\Controllers\Api\Klook\KlookTestController;
+use App\Http\Controllers\Api\HotelController;
+use App\Http\Controllers\Api\HotelBookingController;
+use App\Http\Controllers\Api\RatehawkWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -144,8 +147,37 @@ Route::post('/test/complete-flow', [StripeWebhookController::class, 'testComplet
 // Webhook simulation endpoint (for development/testing only)
 Route::post('/test/simulate-webhook', [StripeWebhookController::class, 'simulateWebhook']);
 
-// Quick complete payment endpoint (for development/testing only)
-Route::post('/test/quick-complete', [StripeWebhookController::class, 'quickCompletePayment']);
+// Hotel (Ratehawk) API routes
+Route::prefix('hotels')->group(function () {
+    // Public hotel search and information endpoints
+    Route::post('/search', [HotelController::class, 'search']);
+    Route::post('/search/coordinates', [HotelController::class, 'searchByCoordinates']);
+    Route::get('/suggest', [HotelController::class, 'suggestRegions']);
+    Route::get('/filters', [HotelController::class, 'getFilterValues']);
+    Route::get('/{hotelId}/details', [HotelController::class, 'getHotelDetails']);
+    Route::get('/{hotelId}/page', [HotelController::class, 'getHotelPage']);
+    Route::get('/{hotelId}/reviews', [HotelController::class, 'getHotelReviews']);
+    Route::post('/prebook', [HotelController::class, 'prebook']);
+    
+    // Authenticated booking endpoints
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::prefix('bookings')->group(function () {
+            Route::post('/create-form', [HotelBookingController::class, 'createBookingForm']);
+            Route::post('/finish', [HotelBookingController::class, 'finishBooking']);
+            Route::get('/{partnerOrderId}/status', [HotelBookingController::class, 'getBookingStatus']);
+            Route::post('/{partnerOrderId}/cancel', [HotelBookingController::class, 'cancelBooking']);
+            Route::get('/', [HotelBookingController::class, 'getUserBookings']);
+        });
+    });
+});
+
+// Ratehawk webhook endpoints (no authentication required)
+Route::prefix('webhooks')->group(function () {
+    Route::prefix('ratehawk')->group(function () {
+        Route::post('/booking-status', [RatehawkWebhookController::class, 'handleBookingStatus']);
+        Route::post('/booking-changes', [RatehawkWebhookController::class, 'handleBookingChanges']);
+    });
+});
 
 // routes/api.php
 Route::get('/health', function () {

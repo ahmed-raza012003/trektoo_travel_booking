@@ -31,6 +31,9 @@ class Payment extends Model
         'processing_fee',
         'refund_amount',
         'failure_reason',
+        'ratehawk_order_id',
+        'partner_order_id',
+        'hotel_payment_data',
         'paid_at',
         'failed_at',
         'refunded_at',
@@ -39,6 +42,7 @@ class Payment extends Model
     protected $casts = [
         'provider_response' => 'array',
         'payment_method_details' => 'array',
+        'hotel_payment_data' => 'array',
         'amount' => 'decimal:2',
         'processing_fee' => 'decimal:2',
         'refund_amount' => 'decimal:2',
@@ -187,5 +191,29 @@ class Payment extends Model
     public function getRefundableAmountAttribute(): float
     {
         return $this->amount - $this->refund_amount;
+    }
+
+    /**
+     * Scope for hotel payments.
+     */
+    public function scopeHotelPayments($query)
+    {
+        return $query->whereNotNull('ratehawk_order_id');
+    }
+
+    /**
+     * Check if this is a hotel payment.
+     */
+    public function isHotelPayment(): bool
+    {
+        return !is_null($this->ratehawk_order_id);
+    }
+
+    /**
+     * Get ratehawk order for this payment.
+     */
+    public function ratehawkOrder(): BelongsTo
+    {
+        return $this->belongsTo(RatehawkOrder::class, 'ratehawk_order_id');
     }
 }
