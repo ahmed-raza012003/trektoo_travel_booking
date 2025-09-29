@@ -1,47 +1,74 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import Logo from '@/components/ui/Custom/Logo';
-import SearchInput from '@/components/ui/Custom/SearchInput';
-import { useAuth } from '@/hooks/useAuth';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import DropdownMenu from './DropdownMenu';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import Logo from "@/components/ui/Custom/Logo";
+import SearchInput from "@/components/ui/Custom/SearchInput";
+import { useAuth } from "@/hooks/useAuth";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import DropdownMenu from "./DropdownMenu";
+import { ChevronDown } from "lucide-react";
+import KlookDropdown from "@/components/feature/KlookDropdown/KlookDropdown";
+import { MobileKlookDropdown } from "@/components/feature/KlookDropdown/KlookDropdown";
 
 const dropdownItems = {
   exploreTrektoo: [
-    { href: '/hotels-list', label: 'Hotels', key: 'hotels-main' },
-    { href: '/tours', label: 'Tours & Experiences', key: 'tours-main' },
+    { href: "/hotels-list", label: "Hotels", key: "hotels-main" },
+    { href: "/tours", label: "Tours & Experiences", key: "tours-main" },
     {
-      href: '/attractions',
-      label: 'Attraction Tickets',
-      key: 'attractions-main',
+      href: "/attractions",
+      label: "Attraction Tickets",
+      key: "attractions-main",
     },
-    { href: '/transport', label: 'Transport', key: 'transport-main' },
-    { href: '/car-rentals', label: 'Car Rentals', key: 'cars-main' },
+    { href: "/transport", label: "Transport", key: "transport-main" },
+    { href: "/car-rentals", label: "Car Rentals", key: "cars-main" },
   ],
+};
+
+// Desktop Explore TrekToo Dropdown
+const ExploreDropdown = ({ items }) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button className="flex items-center gap-1 text-gray-800 hover:text-blue-600 transition-colors font-medium text-sm md:text-base uppercase tracking-wide py-2 px-3 focus:outline-none">
+        Explore TrekToo <ChevronDown size={16} />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 p-2 z-50">
+          {items.map((item) => (
+            <Link
+              key={item.key}
+              href={item.href}
+              className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [topOffset, setTopOffset] = useState('top-10');
-  const [isLoggingOut, setIsLoggingOut] = useState(false); // New state for loading
-  const {
-    user,
-    logout,
-    isAuthenticated,
-    authSuccess,
-    authError,
-    clearMessages,
-  } = useAuth();
+  const [topOffset, setTopOffset] = useState("top-10");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { user, logout, isAuthenticated, authSuccess, authError, clearMessages } =
+    useAuth();
   const router = useRouter();
 
   // Keep navbar always at top-10 to stick with topbar
   useEffect(() => {
-    setTopOffset('top-10');
+    setTopOffset("top-10");
   }, []);
 
   // Clear messages when profile dropdown closes
@@ -49,16 +76,13 @@ const Navbar = () => {
     if (!isProfileOpen) clearMessages();
   }, [isProfileOpen, clearMessages]);
 
-  // No need for storage event listener anymore - context handles state updates automatically
-
   const handleLogout = async () => {
-    if (isLoggingOut) return; // Prevent multiple logout attempts
-
+    if (isLoggingOut) return;
     setIsLoggingOut(true);
     try {
       await logout();
     } catch (error) {
-      console.error('Logout failed in Navbar:', error.message);
+      console.error("Logout failed in Navbar:", error.message);
     } finally {
       setIsProfileOpen(false);
       setIsLoggingOut(false);
@@ -72,7 +96,8 @@ const Navbar = () => {
     >
       {(authSuccess || authError) && (
         <div
-          className={`absolute top-full left-0 right-0 z-30 ${authSuccess ? 'bg-green-500' : 'bg-red-500'} text-white text-center py-1`}
+          className={`absolute top-full left-0 right-0 z-30 ${authSuccess ? "bg-green-500" : "bg-red-500"
+            } text-white text-center py-1`}
         >
           {authSuccess || authError}
         </div>
@@ -88,31 +113,20 @@ const Navbar = () => {
           {/* Right side */}
           <div className="flex items-center gap-1 md:gap-3">
             {/* Desktop Menu */}
-            <div className="hidden lg:flex items-center space-x-2">
-              <button
-                onClick={() =>
-                  toast.error('Coming Soon!', {
-                    duration: 3000,
-                    position: 'top-center',
-                    style: {
-                      background: '#ef4444',
-                      color: '#fff',
-                      fontSize: '16px',
-                      padding: '12px 24px',
-                      borderRadius: '8px',
-                    },
-                  })
-                }
-                className="text-gray-800 hover:text-blue-600 transition-colors font-medium text-sm md:text-base uppercase tracking-wide py-2 px-3 focus:outline-none"
-              >
-                Explore TrekToo
-              </button>
+            {/* <div className="hidden lg:flex items-center space-x-2">
+              <ExploreDropdown items={dropdownItems.exploreTrektoo} />
               <span className="h-6 border-l border-gray-300 mx-2"></span>
+            </div> */}
 
-              {/* Palestine Flag */}
-              {/* <div className="hidden md:block">
-                <PalestineFlag />
-              </div> */}
+            {/* Desktop Menu */}
+            <div className="hidden lg:flex items-center space-x-2">
+              <KlookDropdown />
+              <span className="h-6 border-l border-gray-300 mx-2"></span>
+            </div>
+
+            {/* Mobile Menu - Add this in your mobile menu section */}
+            <div className="lg:hidden">
+              <MobileKlookDropdown />
             </div>
 
             {/* Search */}
@@ -123,9 +137,7 @@ const Navbar = () => {
             {/* Profile */}
             <div className="relative">
               <button
-                onClick={() =>
-                  !isLoggingOut && setIsProfileOpen(!isProfileOpen)
-                }
+                onClick={() => !isLoggingOut && setIsProfileOpen(!isProfileOpen)}
                 disabled={isLoggingOut}
                 className="p-1.5 rounded-full text-gray-800 hover:bg-blue-100 transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Profile menu"
@@ -136,6 +148,7 @@ const Navbar = () => {
                     width={24}
                     height={24}
                     className="rounded-full"
+                    alt="Profile"
                   />
                 ) : (
                   <svg
@@ -166,7 +179,7 @@ const Navbar = () => {
                     <>
                       <div className="px-3 py-2 border-b">
                         <p className="text-sm font-medium text-gray-900">
-                          {user?.display_name || 'Welcome'}
+                          {user?.display_name || "Welcome"}
                         </p>
                         <p className="text-xs text-gray-500 truncate">
                           {user?.email}
@@ -184,7 +197,7 @@ const Navbar = () => {
                         disabled={isLoggingOut}
                         className="block w-full text-left px-3 py-2 text-sm text-gray-900 hover:bg-blue-100 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {isLoggingOut ? 'Logging out...' : 'Logout'}
+                        {isLoggingOut ? "Logging out..." : "Logout"}
                       </button>
                     </>
                   ) : (
@@ -209,7 +222,7 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* Mobile Toggle Button */}
+            {/* Mobile Toggle */}
             <button
               className="lg:hidden p-1.5 text-gray-800 hover:text-blue-600 transition-colors z-30 relative"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -237,22 +250,18 @@ const Navbar = () => {
         {isMobileMenuOpen && (
           <div
             className="lg:hidden bg-white border border-gray-200 rounded-lg shadow-lg fixed left-0 right-0 max-h-[calc(100vh-5.5rem)] overflow-y-auto z-20"
-            style={{ top: '5.5rem' }}
+            style={{ top: "5.5rem" }}
           >
             <div className="px-3 py-4 space-y-3">
               <div className="sm:hidden mb-3">
                 <SearchInput />
               </div>
+
               <DropdownMenu
                 title="Explore TrekToo"
                 items={dropdownItems.exploreTrektoo}
                 onItemClick={() => setIsMobileMenuOpen(false)}
               />
-
-              {/* Mobile Palestine Flag */}
-              {/* <div className="md:hidden py-2">
-                <PalestineFlag />
-              </div> */}
 
               <div className="pt-2 border-t border-gray-200">
                 {isAuthenticated ? (
@@ -269,7 +278,7 @@ const Navbar = () => {
                       disabled={isLoggingOut}
                       className="block w-full text-left text-gray-800 hover:text-blue-600 font-medium text-sm uppercase tracking-wide py-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isLoggingOut ? 'Logging out...' : 'Logout'}
+                      {isLoggingOut ? "Logging out..." : "Logout"}
                     </button>
                   </>
                 ) : (

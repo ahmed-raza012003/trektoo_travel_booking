@@ -7,18 +7,13 @@ import {
   Sparkles,
   MapPin,
   Star,
-  Users,
   Clock,
   Grid,
   List,
   Heart,
-  Eye,
-  Filter,
-  SortAsc,
   Calendar,
   DollarSign,
   Award,
-  Navigation,
   Ticket,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -31,10 +26,12 @@ const ActivitiesPage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const categoryId = searchParams.get('category_id');
-  const limit = parseInt(searchParams.get('limit') || '20');
   const page = parseInt(searchParams.get('page') || '1');
+  const itemsPerPage = 20; // Show 20 activities per page
 
-  const [activitiesData, setActivitiesData] = useState([]);
+  const [allActivities, setAllActivities] = useState([]); // Store ALL activities
+  const [filteredActivities, setFilteredActivities] = useState([]); // Filtered activities
+  const [currentPageActivities, setCurrentPageActivities] = useState([]); // Activities for current page
   const [totalActivities, setTotalActivities] = useState(0);
   const [categoryData, setCategoryData] = useState(null);
   const [favorites, setFavorites] = useState(new Set());
@@ -44,117 +41,95 @@ const ActivitiesPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch activities and category data
+  // Fetch ALL activities and categories
   useEffect(() => {
     const controller = new AbortController();
 
-    const fetchData = async () => {
+    const fetchAllActivities = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        
-        // Add minimum loading time to prevent flash of empty state
-        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 500));
 
-        // Build API URL with proper parameters
-        const apiUrl = new URL(`${API_BASE}/klook/activities`);
-        apiUrl.searchParams.append('limit', limit.toString());
-        apiUrl.searchParams.append('page', page.toString());
-        if (categoryId) {
-          apiUrl.searchParams.append('category_id', categoryId);
-        }
+        console.log('🔍 DEBUG - Category ID from URL:', categoryId);
 
-        console.log('Fetching activities from:', apiUrl.toString());
-
-        // Wait for both API call and minimum loading time
-        const [res] = await Promise.all([
-          fetch(apiUrl.toString(), {
+        // Fetch ALL activities with a high limit
+        const [activitiesRes, categoriesRes] = await Promise.all([
+          fetch(`${API_BASE}/klook/activities?limit=100`, { // Increased limit to get more activities
             signal: controller.signal,
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
             },
           }),
-          minLoadingTime
+          fetch(`${API_BASE}/klook/categories`, {
+            signal: controller.signal,
+          })
         ]);
 
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const json = await res.json();
+        if (!activitiesRes.ok) throw new Error(`HTTP error! status: ${activitiesRes.status}`);
+        
+        const activitiesJson = await activitiesRes.json();
+        const categoriesJson = await categoriesRes.json();
 
-        console.log("Activities API Response:", json);
+        console.log("🔍 DEBUG - Activities API Response:", activitiesJson);
+        console.log("🔍 DEBUG - Categories API Response:", categoriesJson);
 
-        // Extract activities data with multiple fallbacks
+        // Extract ALL activities data
         let activities = [];
-        if (json?.success && json?.data?.activity?.activity_list && Array.isArray(json.data.activity.activity_list)) {
-          activities = json.data.activity.activity_list;
-        } else if (json?.data?.activities && Array.isArray(json.data.activities)) {
-          activities = json.data.activities;
-        } else if (json?.activities && Array.isArray(json.activities)) {
-          activities = json.activities;
-        } else if (Array.isArray(json)) {
-          activities = json;
+        if (activitiesJson?.success && activitiesJson?.data?.activity?.activity_list && Array.isArray(activitiesJson.data.activity.activity_list)) {
+          activities = activitiesJson.data.activity.activity_list;
         }
 
-        console.log("Extracted activities:", activities.length);
+        console.log("🔍 DEBUG - Found ALL activities:", activities.length);
+        setAllActivities(activities);
 
-        // Extract total count
-        let total = 0;
-        if (json?.data?.activity?.total) {
-          total = json.data.activity.total;
-        } else if (json?.data?.total) {
-          total = json.data.total;
-        } else if (json?.total) {
-          total = json.total;
-        }
-
-        setTotalActivities(total);
-
-        // Enhance activities with mock data for better display
-        const enhancedActivities = activities.map(activity => ({
-          ...activity,
-          // Ensure required fields exist
-          activity_id: activity.activity_id || activity.id || Math.random().toString(36),
-          title: activity.title || activity.name || 'Untitled Activity',
-          sub_title: activity.sub_title || activity.description || 'Amazing experience awaits',
-          price: activity.price || (Math.floor(Math.random() * 200) + 50),
-          currency: activity.currency || 'USD',
-          rating: activity.rating || (Math.random() * 1.5 + 3.5).toFixed(1),
-          review_count: activity.review_count || Math.floor(Math.random() * 500) + 10,
-          duration: activity.duration || `${Math.floor(Math.random() * 8) + 1} hours`,
-          location: activity.location || 'Various Locations',
-          image: activity.image || `/images/activities/${activity.activity_id || 'default'}.jpg`,
-          highlights: activity.highlights || [
-            'Professional guide included',
-            'Small group experience',
-            'Instant confirmation',
-            'Free cancellation available'
-          ],
-          available_dates: activity.available_dates || ['Today', 'Tomorrow', 'This Weekend'],
-        }));
-
-        setActivitiesData(enhancedActivities);
-
-        // If we have a category ID, fetch category info (optional)
+        // Get categories for filtering
+        const allCategories = categoriesJson?.data?.categories || [];
+        
+        // FILTER ACTIVITIES BY CATEGORY
+        let finalFilteredActivities = activities;
+        
         if (categoryId) {
-          try {
-            const categoryRes = await fetch(`${API_BASE}/klook/categories`);
-            if (categoryRes.ok) {
-              const categoryJson = await categoryRes.json();
-              let categories = [];
-              if (categoryJson?.success && categoryJson?.data?.categories) {
-                categories = categoryJson.data.categories;
-              }
-              const foundCategory = categories.find(cat => cat.id == categoryId);
-              if (foundCategory) {
-                setCategoryData(foundCategory);
-              }
+          console.log("🔍 DEBUG - Filtering activities for category ID:", categoryId);
+          
+          // Find the target category
+          const targetCategory = allCategories.find(cat => cat.id == categoryId);
+          
+          if (targetCategory) {
+            console.log("🔍 DEBUG - Found target category:", targetCategory.name);
+            setCategoryData(targetCategory);
+
+            // Get ALL valid sub-category IDs from this category
+            let validCategoryIds = [];
+            
+            if (targetCategory.sub_category) {
+              targetCategory.sub_category.forEach(sub => {
+                validCategoryIds.push(sub.id); // Add sub-category ID
+                
+                // Also add leaf category IDs if they exist
+                if (sub.leaf_category) {
+                  sub.leaf_category.forEach(leaf => {
+                    validCategoryIds.push(leaf.id);
+                  });
+                }
+              });
             }
-          } catch (err) {
-            console.log('Could not fetch category data:', err);
+
+            console.log("🔍 DEBUG - Valid category IDs for filtering:", validCategoryIds);
+
+            // Filter ALL activities by these category IDs
+            finalFilteredActivities = activities.filter(activity =>
+              validCategoryIds.includes(parseInt(activity.category_id))
+            );
+
+            console.log("🔍 DEBUG - After filtering ALL activities:", finalFilteredActivities.length, "activities");
+          } else {
+            console.log("🔍 DEBUG - Category not found:", categoryId);
           }
         }
 
-        // Only set loading to false after successful data fetch
+        setFilteredActivities(finalFilteredActivities);
+        setTotalActivities(finalFilteredActivities.length);
         setIsLoading(false);
 
       } catch (err) {
@@ -162,14 +137,47 @@ const ActivitiesPage = () => {
           console.error('Error fetching activities:', err);
           setError(`Failed to load activities: ${err.message}`);
         }
-        // Set loading to false even on error so user can see error state
         setIsLoading(false);
       }
     };
 
-    fetchData();
+    fetchAllActivities();
     return () => controller.abort();
-  }, [categoryId, limit, page]);
+  }, [categoryId]); // Only re-fetch when category changes
+
+  // Paginate filtered activities when page changes
+  useEffect(() => {
+    if (filteredActivities.length > 0) {
+      const startIndex = (page - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const paginatedActivities = filteredActivities.slice(startIndex, endIndex);
+      
+      // Enhance activities with mock data for better display
+      const enhancedActivities = paginatedActivities.map(activity => ({
+        ...activity,
+        // Ensure required fields exist
+        activity_id: activity.activity_id || activity.id || Math.random().toString(36),
+        title: activity.title || activity.name || 'Untitled Activity',
+        sub_title: activity.sub_title || activity.description || 'Amazing experience awaits',
+        price: activity.price || (Math.floor(Math.random() * 200) + 50),
+        currency: activity.currency || 'USD',
+        rating: activity.rating || (Math.random() * 1.5 + 3.5).toFixed(1),
+        review_count: activity.review_count || Math.floor(Math.random() * 500) + 10,
+        duration: activity.duration || `${Math.floor(Math.random() * 8) + 1} hours`,
+        location: activity.location || 'Various Locations',
+        image: activity.image || `/images/activities/${activity.activity_id || 'default'}.jpg`,
+        highlights: activity.highlights || [
+          'Professional guide included',
+          'Small group experience',
+          'Instant confirmation',
+          'Free cancellation available'
+        ],
+        available_dates: activity.available_dates || ['Today', 'Tomorrow', 'This Weekend'],
+      }));
+
+      setCurrentPageActivities(enhancedActivities);
+    }
+  }, [filteredActivities, page]);
 
   const handlePageChange = (newPage) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -177,7 +185,7 @@ const ActivitiesPage = () => {
     router.push(`/activities?${params.toString()}`);
   };
 
-  const totalPages = Math.ceil(totalActivities / limit);
+  const totalPages = Math.ceil(totalActivities / itemsPerPage);
 
   const handleFavoriteToggle = useCallback((id) => {
     setFavorites(prev => {
@@ -203,7 +211,7 @@ const ActivitiesPage = () => {
 
   // Sort activities based on selected criteria
   const sortedActivities = React.useMemo(() => {
-    const sorted = [...activitiesData];
+    const sorted = [...currentPageActivities];
     switch (sortBy) {
       case 'price_low':
         return sorted.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
@@ -215,11 +223,11 @@ const ActivitiesPage = () => {
         return sorted.sort((a, b) => b.review_count - a.review_count);
       case 'popular':
       default:
-        return sorted; // Keep original order for popular
+        return sorted;
     }
-  }, [activitiesData, sortBy]);
+  }, [currentPageActivities, sortBy]);
 
-  // Animation variants matching landing page
+  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -233,18 +241,6 @@ const ActivitiesPage = () => {
 
   const itemVariants = {
     hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        ease: 'easeOut',
-      },
-    },
-  };
-
-  const headerVariants = {
-    hidden: { opacity: 0, y: -30 },
     visible: {
       opacity: 1,
       y: 0,
@@ -275,7 +271,7 @@ const ActivitiesPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden">
-      {/* Background Pattern - Matching Landing Page */}
+      {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <svg
           className="w-full h-full"
@@ -301,28 +297,20 @@ const ActivitiesPage = () => {
         </svg>
       </div>
 
-      {/* Decorative Elements - Matching Landing Page */}
+      {/* Decorative Elements */}
       <div className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full blur-xl"></div>
       <div className="absolute bottom-20 right-10 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full blur-xl"></div>
-      <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-gradient-to-br from-blue-300/10 to-blue-500/10 rounded-full blur-lg"></div>
 
-      {/* Enhanced Header Section */}
+      {/* Header Section */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 pt-40">
-          <motion.div
+        <motion.div
           variants={containerVariants}
-            initial="hidden"
-            animate="visible"
+          initial="hidden"
+          animate="visible"
           className="text-center mb-16"
         >
           <motion.div variants={itemVariants}>
-            <h1
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 leading-tight mb-6"
-              style={{
-                fontFamily:
-                  "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
-                letterSpacing: '-0.02em',
-              }}
-            >
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 leading-tight mb-6">
               Discover Amazing{' '}
               <span className="text-blue-500 relative">
                 Activities
@@ -340,62 +328,66 @@ const ActivitiesPage = () => {
                   />
                 </svg>
               </span>
-                </h1>
+            </h1>
           </motion.div>
           <motion.div variants={itemVariants}>
             {isLoading ? (
               <div className="h-8 bg-gray-200 rounded animate-pulse max-w-4xl mx-auto"></div>
             ) : (
               <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
-                {categoryData?.description || 'Create unforgettable memories with our curated selection of amazing experiences'}
+                {categoryData?.name 
+                  ? `Explore ${totalActivities} activities in ${categoryData.name}`
+                  : 'Create unforgettable memories with our curated selection of amazing experiences'
+                }
               </p>
             )}
           </motion.div>
         </motion.div>
 
-        {/* Controls Section - Single Line */}
+        {/* Controls Section */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
           className="flex flex-col lg:flex-row gap-4 lg:gap-6 justify-between items-center mb-12"
         >
-          {/* Left side - Activities count */}
+          {/* Activities count */}
           <motion.div variants={itemVariants}>
             {isLoading ? (
               <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
             ) : (
               <p className="text-lg text-gray-500 font-medium">
                 {totalActivities} activities found
+                {categoryData && ` in ${categoryData.name}`}
               </p>
             )}
           </motion.div>
 
-          {/* Right side - Controls */}
+          {/* Controls */}
           <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 items-center">
-                {/* View Mode Toggle */}
+            {/* View Mode Toggle */}
             <div className="flex bg-white rounded-3xl p-2 border border-gray-200 shadow-lg">
-                  <button
-                    onClick={() => setViewMode('grid')}
+              <button
+                onClick={() => setViewMode('grid')}
                 className={`p-3 rounded-2xl transition-all ${viewMode === 'grid'
                   ? 'bg-blue-500 text-white shadow-lg'
                   : 'text-gray-600 hover:bg-blue-50'
-                      }`}
-                  >
-                    <Grid className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
+                  }`}
+              >
+                <Grid className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
                 className={`p-3 rounded-2xl transition-all ${viewMode === 'list'
                   ? 'bg-blue-500 text-white shadow-lg'
                   : 'text-gray-600 hover:bg-blue-50'
-                      }`}
-                  >
-                    <List className="h-5 w-5" />
-                  </button>
-                </div>
+                  }`}
+              >
+                <List className="h-5 w-5" />
+              </button>
+            </div>
 
-            {/* Custom Sort Dropdown */}
+            {/* Sort Dropdown */}
             <div className="relative" data-sort-dropdown>
               <button
                 onClick={() => setIsSortOpen(!isSortOpen)}
@@ -414,93 +406,36 @@ const ActivitiesPage = () => {
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
-              {/* Dropdown Menu */}
-              <div
-                className={`absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl py-2 z-50 border border-blue-100 transition-all duration-200 ease-in-out ${
-                  isSortOpen ? 'block' : 'hidden'
-                }`}
-                role="menu"
-              >
-                <button
-                  onClick={() => {
-                    setSortBy('popular');
-                    setIsSortOpen(false);
-                  }}
-                  className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                    sortBy === 'popular' 
-                      ? 'bg-blue-100 text-blue-600 font-medium' 
-                      : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
-                  }`}
-                  role="menuitem"
-                >
-                  Most Popular
-                </button>
-                <button
-                  onClick={() => {
-                    setSortBy('rating');
-                    setIsSortOpen(false);
-                  }}
-                  className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                    sortBy === 'rating' 
-                      ? 'bg-blue-100 text-blue-600 font-medium' 
-                      : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
-                  }`}
-                  role="menuitem"
-                >
-                  Highest Rated
-                </button>
-                <button
-                  onClick={() => {
-                    setSortBy('price_low');
-                    setIsSortOpen(false);
-                  }}
-                  className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                    sortBy === 'price_low' 
-                      ? 'bg-blue-100 text-blue-600 font-medium' 
-                      : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
-                  }`}
-                  role="menuitem"
-                >
-                  Price: Low to High
-                </button>
-                <button
-                  onClick={() => {
-                    setSortBy('price_high');
-                    setIsSortOpen(false);
-                  }}
-                  className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                    sortBy === 'price_high' 
-                      ? 'bg-blue-100 text-blue-600 font-medium' 
-                      : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
-                  }`}
-                  role="menuitem"
-                >
-                  Price: High to Low
-                </button>
-                <button
-                  onClick={() => {
-                    setSortBy('reviews');
-                    setIsSortOpen(false);
-                  }}
-                  className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                    sortBy === 'reviews' 
-                      ? 'bg-blue-100 text-blue-600 font-medium' 
-                      : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
-                  }`}
-                  role="menuitem"
-                >
-                  Most Reviews
-                </button>
-              </div>
+              {isSortOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl py-2 z-50 border border-blue-100">
+                  {[
+                    { value: 'popular', label: 'Most Popular' },
+                    { value: 'rating', label: 'Highest Rated' },
+                    { value: 'price_low', label: 'Price: Low to High' },
+                    { value: 'price_high', label: 'Price: High to Low' },
+                    { value: 'reviews', label: 'Most Reviews' },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setSortBy(option.value);
+                        setIsSortOpen(false);
+                      }}
+                      className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                        sortBy === option.value 
+                          ? 'bg-blue-100 text-blue-600 font-medium' 
+                          : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </motion.div>
         </motion.div>
@@ -516,16 +451,7 @@ const ActivitiesPage = () => {
               ) : (
                 <div className="space-y-6">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-row h-64">
-                      <div className="w-64 flex-shrink-0 h-64 bg-gray-200 animate-pulse"></div>
-                      <div className="p-6 flex-1 space-y-3">
-                        <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
-                        <div className="h-3 bg-gray-200 rounded animate-pulse w-1/2"></div>
-                        <div className="h-3 bg-gray-200 rounded animate-pulse w-1/3"></div>
-                        <div className="h-3 bg-gray-200 rounded animate-pulse w-1/4"></div>
-                        <div className="h-10 bg-gray-200 rounded-xl animate-pulse w-full mt-4"></div>
-                      </div>
-                    </div>
+                    <CardSkeleton key={i} />
                   ))}
                 </div>
               )}
@@ -561,19 +487,19 @@ const ActivitiesPage = () => {
                       </div>
 
                       {/* Favorite Button */}
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => handleFavoriteToggle(activity.activity_id)}
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => handleFavoriteToggle(activity.activity_id)}
                         className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200/50 hover:bg-white transition-all shadow-lg"
-                    >
-                      <Heart
+                      >
+                        <Heart
                           className={`h-4 w-4 transition-colors ${favorites.has(activity.activity_id)
-                          ? 'text-red-500 fill-current'
-                          : 'text-gray-400'
-                          }`}
-                      />
-                    </motion.button>
+                            ? 'text-red-500 fill-current'
+                            : 'text-gray-400'
+                            }`}
+                        />
+                      </motion.button>
 
                       {/* Rating Badge */}
                       <div className="absolute top-3 left-3">
@@ -660,7 +586,7 @@ const ActivitiesPage = () => {
                     ? `No activities found in ${categoryData.name} category.`
                     : "No activities match your current filters."}
                 </p>
-                <Link href="/categories">
+                <Link href="/activities-categories">
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
