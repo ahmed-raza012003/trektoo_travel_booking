@@ -74,6 +74,26 @@ const CategoriesPage = () => {
     total: 0
   });
 
+  // Filter function to exclude abandoned categories
+  const filterAbandonedCategories = useCallback((categories) => {
+    return categories.map(category => ({
+      ...category,
+      sub_category: category.sub_category?.map(subCategory => ({
+        ...subCategory,
+        leaf_category: subCategory.leaf_category?.filter(leafCategory => 
+          !leafCategory.name.toLowerCase().includes('abandoned') &&
+          !leafCategory.name.toLowerCase().includes('do not use')
+        )
+      })).filter(subCategory => 
+        !subCategory.name.toLowerCase().includes('abandoned') &&
+        !subCategory.name.toLowerCase().includes('do not use')
+      )
+    })).filter(category => 
+      !category.name.toLowerCase().includes('abandoned') &&
+      !category.name.toLowerCase().includes('do not use')
+    );
+  }, []);
+
   // Calculate category statistics
   const calculateStats = useCallback((categories) => {
     let mainCount = categories.length;
@@ -137,11 +157,14 @@ const CategoriesPage = () => {
           categories = json;
         }
 
+        // Filter out abandoned categories
+        const filteredCategories = filterAbandonedCategories(categories);
+
         // Calculate statistics
-        const categoryStats = calculateStats(categories);
+        const categoryStats = calculateStats(filteredCategories);
         setStats(categoryStats);
 
-        setCategoriesData(categories);
+        setCategoriesData(filteredCategories);
         setIsLoading(false);
 
       } catch (err) {
@@ -155,7 +178,7 @@ const CategoriesPage = () => {
 
     fetchData();
     return () => controller.abort();
-  }, [limit, page, calculateStats]);
+  }, [limit, page, calculateStats, filterAbandonedCategories]);
 
   const handleSubCategoryClick = (categoryId) => {
     router.push(`/activities?category_id=${categoryId}`);
@@ -387,7 +410,10 @@ const CategoriesPage = () => {
                               className="w-full flex items-center gap-3 p-4 text-left text-gray-700 hover:bg-gray-50 transition-colors"
                             >
                               <IconComponent size={20} className="flex-shrink-0 text-blue-500" />
-                              <span className="text-sm font-medium flex-1">{category.name}</span>
+                              <div className="flex-1">
+                                <span className="text-sm font-medium block">{category.name}</span>
+                                <span className="text-xs text-gray-500">ID: {category.id}</span>
+                              </div>
                               {category.sub_category && category.sub_category.length > 0 && (
                                 <ChevronDown
                                   size={16}
@@ -403,25 +429,34 @@ const CategoriesPage = () => {
                                 <div className="p-4 space-y-4">
                                   {category.sub_category.map((subCategory) => (
                                     <div key={subCategory.id}>
-                                      <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
-                                        {subCategory.name}
-                                      </h4>
+                                      <div className="mb-2">
+                                        <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                          {subCategory.name}
+                                        </h4>
+                                        <span className="text-xs text-gray-400">ID: {subCategory.id}</span>
+                                      </div>
                                       <div className="space-y-1">
                                         {subCategory.leaf_category?.map((leafCategory) => (
                                           <button
                                             key={leafCategory.id}
                                             onClick={() => handleSubCategoryClick(leafCategory.id)}
-                                            className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-white rounded-lg transition-colors"
+                                            className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-white rounded-lg transition-colors group"
                                           >
-                                            {leafCategory.name}
+                                            <div className="flex justify-between items-center">
+                                              <span>{leafCategory.name}</span>
+                                              <span className="text-xs text-gray-400 group-hover:text-blue-400">ID: {leafCategory.id}</span>
+                                            </div>
                                           </button>
                                         ))}
                                         {(!subCategory.leaf_category || subCategory.leaf_category.length === 0) && (
                                           <button
                                             onClick={() => handleSubCategoryClick(subCategory.id)}
-                                            className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-white rounded-lg transition-colors"
+                                            className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-white rounded-lg transition-colors group"
                                           >
-                                            Explore {subCategory.name}
+                                            <div className="flex justify-between items-center">
+                                              <span>Explore {subCategory.name}</span>
+                                              <span className="text-xs text-gray-400 group-hover:text-blue-400">ID: {subCategory.id}</span>
+                                            </div>
                                           </button>
                                         )}
                                       </div>
@@ -451,7 +486,10 @@ const CategoriesPage = () => {
                             className="w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left text-gray-700 hover:bg-gray-50"
                           >
                             <IconComponent size={18} className="flex-shrink-0 text-blue-500" />
-                            <span className="text-sm font-medium flex-1">{category.name}</span>
+                            <div className="flex-1">
+                              <span className="text-sm font-medium block">{category.name}</span>
+                              <span className="text-xs text-gray-500">ID: {category.id}</span>
+                            </div>
                             {category.sub_category && category.sub_category.length > 0 && (
                               <ChevronDown
                                 size={14}
@@ -467,25 +505,34 @@ const CategoriesPage = () => {
                             <div className="ml-6 mt-1 space-y-2 pb-2">
                               {category.sub_category.map((subCategory) => (
                                 <div key={subCategory.id}>
-                                  <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">
-                                    {subCategory.name}
-                                  </h4>
+                                  <div className="mb-1">
+                                    <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                      {subCategory.name}
+                                    </h4>
+                                    <span className="text-xs text-gray-400">ID: {subCategory.id}</span>
+                                  </div>
                                   <div className="space-y-1">
                                     {subCategory.leaf_category?.map((leafCategory) => (
                                       <button
                                         key={leafCategory.id}
                                         onClick={() => handleSubCategoryClick(leafCategory.id)}
-                                        className="w-full text-left px-2 py-1 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                        className="w-full text-left px-2 py-1 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors group"
                                       >
-                                        {leafCategory.name}
+                                        <div className="flex justify-between items-center">
+                                          <span className="flex-1 pr-2">{leafCategory.name}</span>
+                                          <span className="text-xs text-gray-400 group-hover:text-blue-400 flex-shrink-0">ID: {leafCategory.id}</span>
+                                        </div>
                                       </button>
                                     ))}
                                     {(!subCategory.leaf_category || subCategory.leaf_category.length === 0) && (
                                       <button
                                         onClick={() => handleSubCategoryClick(subCategory.id)}
-                                        className="w-full text-left px-2 py-1 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                        className="w-full text-left px-2 py-1 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors group"
                                       >
-                                        Explore {subCategory.name}
+                                        <div className="flex justify-between items-center">
+                                          <span className="flex-1 pr-2">Explore {subCategory.name}</span>
+                                          <span className="text-xs text-gray-400 group-hover:text-blue-400 flex-shrink-0">ID: {subCategory.id}</span>
+                                        </div>
                                       </button>
                                     )}
                                   </div>

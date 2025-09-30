@@ -15,6 +15,10 @@ import {
   DollarSign,
   Award,
   Ticket,
+  Search,
+  Filter,
+  X,
+  ChevronDown,
 } from 'lucide-react';
 import Link from 'next/link';
 import API_BASE from '@/lib/api/klookApi';
@@ -26,6 +30,7 @@ const ActivitiesPage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const categoryId = searchParams.get('category_id');
+  const searchParam = searchParams.get('search') || '';
   const page = parseInt(searchParams.get('page') || '1');
   const itemsPerPage = 20; // Show 20 activities per page
 
@@ -34,103 +39,127 @@ const ActivitiesPage = () => {
   const [currentPageActivities, setCurrentPageActivities] = useState([]); // Activities for current page
   const [totalActivities, setTotalActivities] = useState(0);
   const [categoryData, setCategoryData] = useState(null);
+  const [allCategories, setAllCategories] = useState([]); // Store all categories for filter
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState(categoryId || ''); // Category filter state
+  const [searchQuery, setSearchQuery] = useState(searchParam); // Search functionality
   const [favorites, setFavorites] = useState(new Set());
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('popular');
   const [isSortOpen, setIsSortOpen] = useState(false);
+  const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState(null);
+  const [hasInitialData, setHasInitialData] = useState(false);
+  const [currentBatch, setCurrentBatch] = useState(1);
+  const [hasMoreActivities, setHasMoreActivities] = useState(true);
+  const [totalAvailableActivities, setTotalAvailableActivities] = useState(0);
 
-  // Fetch ALL activities and categories
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const fetchAllActivities = async () => {
+  // Optimized fetch function - show initial results quickly, then load more in background
+  const fetchActivitiesOptimized = async (controller) => {
       try {
         setIsLoading(true);
         setError(null);
+      setLoadingProgress(0);
 
-        console.log('🔍 DEBUG - Category ID from URL:', categoryId);
+      // First, fetch categories
+      const categoriesRes = await fetch(`${API_BASE}/klook/categories`, {
+        signal: controller.signal,
+      });
+      
+      if (!categoriesRes.ok) throw new Error(`Categories fetch failed: ${categoriesRes.status}`);
+      const categoriesJson = await categoriesRes.json();
+      const categories = categoriesJson?.data?.categories || [];
+      setAllCategories(categories);
 
-        // Fetch ALL activities with a high limit
-        const [activitiesRes, categoriesRes] = await Promise.all([
-          fetch(`${API_BASE}/klook/activities?limit=100`, { // Increased limit to get more activities
+      // Get first batch to show initial results quickly
+      const firstBatchRes = await fetch(`${API_BASE}/klook/activities?limit=100&page=1`, {
             signal: controller.signal,
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
             },
-          }),
-          fetch(`${API_BASE}/klook/categories`, {
+      });
+
+      if (!firstBatchRes.ok) throw new Error(`Activities fetch failed: ${firstBatchRes.status}`);
+      const firstBatch = await firstBatchRes.json();
+      
+      if (!firstBatch?.success || !firstBatch?.data?.activity?.activity_list) {
+        throw new Error('Invalid API response format');
+      }
+
+      const totalCount = firstBatch.data.activity.total || 0;
+      const limit = 100;
+      const totalPages = Math.ceil(totalCount / limit);
+      
+      console.log(`🔍 DEBUG - Total activities: ${totalCount}, Pages needed: ${totalPages}`);
+      setTotalAvailableActivities(totalCount);
+
+      // Show initial results immediately
+      let allActivitiesData = [...firstBatch.data.activity.activity_list];
+      setAllActivities(allActivitiesData);
+      setHasInitialData(true);
+      setIsLoading(false); // Allow user to see and interact with first 100 activities
+      setCurrentBatch(1);
+      
+      // Check if there are more activities to load
+      setHasMoreActivities(totalPages > 1);
+
+      // Load initial batch in background (5 pages = 500 activities for fast initial experience)
+      const initialBatchSize = Math.min(totalPages, 5);
+      setLoadingProgress(Math.round((1 / initialBatchSize) * 100));
+      
+      for (let currentPage = 2; currentPage <= initialBatchSize; currentPage++) {
+        if (controller.signal.aborted) break;
+
+        setIsLoadingMore(true);
+        const pageRes = await fetch(`${API_BASE}/klook/activities?limit=100&page=${currentPage}`, {
             signal: controller.signal,
-          })
-        ]);
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
 
-        if (!activitiesRes.ok) throw new Error(`HTTP error! status: ${activitiesRes.status}`);
-        
-        const activitiesJson = await activitiesRes.json();
-        const categoriesJson = await categoriesRes.json();
-
-        console.log("🔍 DEBUG - Activities API Response:", activitiesJson);
-        console.log("🔍 DEBUG - Categories API Response:", categoriesJson);
-
-        // Extract ALL activities data
-        let activities = [];
-        if (activitiesJson?.success && activitiesJson?.data?.activity?.activity_list && Array.isArray(activitiesJson.data.activity.activity_list)) {
-          activities = activitiesJson.data.activity.activity_list;
-        }
-
-        console.log("🔍 DEBUG - Found ALL activities:", activities.length);
-        setAllActivities(activities);
-
-        // Get categories for filtering
-        const allCategories = categoriesJson?.data?.categories || [];
-        
-        // FILTER ACTIVITIES BY CATEGORY
-        let finalFilteredActivities = activities;
-        
-        if (categoryId) {
-          console.log("🔍 DEBUG - Filtering activities for category ID:", categoryId);
-          
-          // Find the target category
-          const targetCategory = allCategories.find(cat => cat.id == categoryId);
-          
-          if (targetCategory) {
-            console.log("🔍 DEBUG - Found target category:", targetCategory.name);
-            setCategoryData(targetCategory);
-
-            // Get ALL valid sub-category IDs from this category
-            let validCategoryIds = [];
-            
-            if (targetCategory.sub_category) {
-              targetCategory.sub_category.forEach(sub => {
-                validCategoryIds.push(sub.id); // Add sub-category ID
-                
-                // Also add leaf category IDs if they exist
-                if (sub.leaf_category) {
-                  sub.leaf_category.forEach(leaf => {
-                    validCategoryIds.push(leaf.id);
-                  });
-                }
-              });
-            }
-
-            console.log("🔍 DEBUG - Valid category IDs for filtering:", validCategoryIds);
-
-            // Filter ALL activities by these category IDs
-            finalFilteredActivities = activities.filter(activity =>
-              validCategoryIds.includes(parseInt(activity.category_id))
-            );
-
-            console.log("🔍 DEBUG - After filtering ALL activities:", finalFilteredActivities.length, "activities");
-          } else {
-            console.log("🔍 DEBUG - Category not found:", categoryId);
+        if (pageRes.ok) {
+          const pageData = await pageRes.json();
+          if (pageData?.success && pageData?.data?.activity?.activity_list) {
+            allActivitiesData = [...allActivitiesData, ...pageData.data.activity.activity_list];
+            setAllActivities(allActivitiesData);
+            setLoadingProgress(Math.round((currentPage / initialBatchSize) * 100));
           }
         }
 
-        setFilteredActivities(finalFilteredActivities);
-        setTotalActivities(finalFilteredActivities.length);
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      console.log(`🔍 DEBUG - Loaded initial ${allActivitiesData.length} activities`);
+      setIsLoadingMore(false);
+      setLoadingProgress(100);
+      setCurrentBatch(initialBatchSize);
+      setHasMoreActivities(initialBatchSize < totalPages);
+
+      return { activities: allActivitiesData, categories };
+
+    } catch (err) {
+      setIsLoadingMore(false);
         setIsLoading(false);
+      throw err;
+    }
+  };
+
+  // Fetch activities and categories with optimized loading
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const initializeData = async () => {
+      try {
+        const { activities, categories } = await fetchActivitiesOptimized(controller);
+        
+        // Apply initial filtering (this will happen after first 100 activities are loaded)
+        applyFilters(activities, categories, selectedCategoryFilter, searchQuery);
 
       } catch (err) {
         if (err.name !== 'AbortError') {
@@ -141,9 +170,96 @@ const ActivitiesPage = () => {
       }
     };
 
-    fetchAllActivities();
+    initializeData();
     return () => controller.abort();
-  }, [categoryId]); // Only re-fetch when category changes
+  }, []); // Only run once on mount
+
+  // Apply filters function with loading state
+  const applyFilters = useCallback((activities, categories, categoryFilter, search) => {
+    console.log('🔍 DEBUG - Filter inputs:', { categoryFilter, search, activitiesCount: activities.length });
+    
+    // Show filter loading for better UX
+    setIsFilterLoading(true);
+    
+    // Use setTimeout to allow UI to update with loading state
+    setTimeout(() => {
+      let filtered = [...activities];
+
+      // Apply category filter
+      if (categoryFilter) {
+        const targetCategory = categories.find(cat => cat.id == categoryFilter);
+          
+          if (targetCategory) {
+            setCategoryData(targetCategory);
+
+            // Get ALL valid sub-category IDs from this category
+          let validCategoryIds = [parseInt(categoryFilter)]; // Include main category ID
+            
+            if (targetCategory.sub_category) {
+              targetCategory.sub_category.forEach(sub => {
+              validCategoryIds.push(sub.id);
+                
+                if (sub.leaf_category) {
+                  sub.leaf_category.forEach(leaf => {
+                    validCategoryIds.push(leaf.id);
+                  });
+                }
+              });
+            }
+
+          console.log('🔍 DEBUG - Valid category IDs:', validCategoryIds);
+          filtered = filtered.filter(activity =>
+              validCategoryIds.includes(parseInt(activity.category_id))
+            );
+          console.log('🔍 DEBUG - After category filter:', filtered.length);
+        }
+          } else {
+        setCategoryData(null);
+      }
+
+      // Apply search filter
+      if (search.trim()) {
+        const searchLower = search.toLowerCase();
+        const beforeSearchCount = filtered.length;
+        filtered = filtered.filter(activity =>
+          activity.title?.toLowerCase().includes(searchLower) ||
+          activity.sub_title?.toLowerCase().includes(searchLower)
+        );
+        console.log('🔍 DEBUG - Search filter applied:', {
+          searchTerm: search,
+          before: beforeSearchCount,
+          after: filtered.length
+        });
+      }
+
+      console.log('🔍 DEBUG - Final filtered count:', filtered.length);
+      setFilteredActivities(filtered);
+      setTotalActivities(filtered.length);
+      setIsFilterLoading(false);
+    }, 10); // Small delay to show loading state
+  }, []);
+
+  // Initialize filters from URL parameters
+  useEffect(() => {
+    if (categoryId && categoryId !== selectedCategoryFilter) {
+      setSelectedCategoryFilter(categoryId);
+    }
+    if (searchParam !== searchQuery) {
+      setSearchQuery(searchParam);
+    }
+  }, [categoryId, selectedCategoryFilter, searchParam, searchQuery]);
+
+  // Re-apply filters when category or search changes
+  useEffect(() => {
+    if (allActivities.length > 0) {
+      console.log('🔍 DEBUG - Applying filters:', {
+        categoryFilter: selectedCategoryFilter,
+        searchQuery: searchQuery,
+        totalActivities: allActivities.length
+      });
+      applyFilters(allActivities, allCategories, selectedCategoryFilter, searchQuery);
+    }
+  }, [selectedCategoryFilter, searchQuery, allActivities, allCategories, applyFilters]);
 
   // Paginate filtered activities when page changes
   useEffect(() => {
@@ -185,6 +301,113 @@ const ActivitiesPage = () => {
     router.push(`/activities?${params.toString()}`);
   };
 
+  const handleCategoryFilterChange = (categoryId) => {
+    setSelectedCategoryFilter(categoryId);
+    const params = new URLSearchParams(searchParams.toString());
+    if (categoryId) {
+      params.set('category_id', categoryId);
+    } else {
+      params.delete('category_id');
+    }
+    params.set('page', '1'); // Reset to first page
+    router.push(`/activities?${params.toString()}`);
+    setIsCategoryFilterOpen(false);
+  };
+
+  // Debounced URL update to avoid excessive navigation
+  const [urlUpdateTimeout, setUrlUpdateTimeout] = useState(null);
+
+  const handleSearchChange = (query) => {
+    // Update search query immediately for instant filtering
+    setSearchQuery(query);
+    
+    // Clear existing timeout
+    if (urlUpdateTimeout) {
+      clearTimeout(urlUpdateTimeout);
+    }
+    
+    // Set new timeout for URL update (but filtering happens immediately)
+    const newTimeout = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (query.trim()) {
+        params.set('search', query);
+      } else {
+        params.delete('search');
+      }
+      params.set('page', '1'); // Reset to first page
+      router.replace(`/activities?${params.toString()}`); // Use replace to avoid history pollution
+    }, 500); // 500ms delay for URL update
+    
+    setUrlUpdateTimeout(newTimeout);
+  };
+
+  const clearAllFilters = () => {
+    // Clear URL update timeout if active
+    if (urlUpdateTimeout) {
+      clearTimeout(urlUpdateTimeout);
+      setUrlUpdateTimeout(null);
+    }
+    setSelectedCategoryFilter('');
+    setSearchQuery('');
+    router.push('/activities');
+  };
+
+  // Load more activities function
+  const loadMoreActivities = async () => {
+    if (isLoadingMore || !hasMoreActivities) return;
+
+    try {
+      setIsLoadingMore(true);
+      const batchSize = 10; // Load 10 pages (1000 activities) at a time
+      const startPage = currentBatch + 1;
+      const endPage = Math.min(startPage + batchSize - 1, Math.ceil(totalAvailableActivities / 100));
+      
+      console.log(`🔍 DEBUG - Loading more: pages ${startPage} to ${endPage}`);
+
+      let newActivities = [];
+      for (let page = startPage; page <= endPage; page++) {
+        const response = await fetch(`${API_BASE}/klook/activities?limit=100&page=${page}`, {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.success && data?.data?.activity?.activity_list) {
+            newActivities = [...newActivities, ...data.data.activity.activity_list];
+          }
+        }
+
+        // Small delay to prevent overwhelming the API
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      // Update activities
+      const updatedActivities = [...allActivities, ...newActivities];
+      setAllActivities(updatedActivities);
+      setCurrentBatch(endPage);
+      setHasMoreActivities(endPage < Math.ceil(totalAvailableActivities / 100));
+
+      console.log(`🔍 DEBUG - Loaded ${newActivities.length} more activities. Total: ${updatedActivities.length}`);
+
+    } catch (error) {
+      console.error('Error loading more activities:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (urlUpdateTimeout) {
+        clearTimeout(urlUpdateTimeout);
+      }
+    };
+  }, [urlUpdateTimeout]);
+
   const totalPages = Math.ceil(totalActivities / itemsPerPage);
 
   const handleFavoriteToggle = useCallback((id) => {
@@ -195,19 +418,22 @@ const ActivitiesPage = () => {
     });
   }, []);
 
-  // Handle click outside for sort dropdown
+  // Handle click outside for dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isSortOpen && !event.target.closest('[data-sort-dropdown]')) {
         setIsSortOpen(false);
       }
+      if (isCategoryFilterOpen && !event.target.closest('[data-category-filter]')) {
+        setIsCategoryFilterOpen(false);
+      }
     };
 
-    if (isSortOpen) {
+    if (isSortOpen || isCategoryFilterOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [isSortOpen]);
+  }, [isSortOpen, isCategoryFilterOpen]);
 
   // Sort activities based on selected criteria
   const sortedActivities = React.useMemo(() => {
@@ -332,14 +558,157 @@ const ActivitiesPage = () => {
           </motion.div>
           <motion.div variants={itemVariants}>
             {isLoading ? (
+              <div className="space-y-4">
               <div className="h-8 bg-gray-200 rounded animate-pulse max-w-4xl mx-auto"></div>
+                <div className="max-w-md mx-auto">
+                  <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+                    <span>Loading initial activities...</span>
+                    <span>Please wait</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-blue-500 h-2 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
             ) : (
+              <div className="space-y-4">
               <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
                 {categoryData?.name 
                   ? `Explore ${totalActivities} activities in ${categoryData.name}`
-                  : 'Create unforgettable memories with our curated selection of amazing experiences'
+                    : `Discover ${totalActivities} amazing experiences from our curated collection`
                 }
               </p>
+                {isLoadingMore && (
+                  <div className="max-w-md mx-auto">
+                    <div className="flex items-center justify-between text-sm text-blue-600 mb-2">
+                      <span>Loading more activities in background...</span>
+                      <span>{loadingProgress}%</span>
+                    </div>
+                    <div className="w-full bg-blue-100 rounded-full h-1">
+                      <div 
+                        className="bg-blue-500 h-1 rounded-full transition-all duration-300"
+                        style={{ width: `${loadingProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.div>
+        </motion.div>
+
+        {/* Search and Filter Section */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="mb-8"
+        >
+          <motion.div variants={itemVariants} className="max-w-4xl mx-auto">
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+              {/* Search Bar */}
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search activities..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-lg text-gray-800 placeholder-gray-500"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => handleSearchChange('')}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <X className="h-4 w-4 text-gray-400" />
+                  </button>
+                )}
+              </div>
+
+              {/* Category Filter */}
+              <div className="relative" data-category-filter>
+                <button
+                  onClick={() => setIsCategoryFilterOpen(!isCategoryFilterOpen)}
+                  className="flex items-center gap-2 bg-white border border-gray-200 rounded-2xl px-6 py-4 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap"
+                >
+                  <Filter className="h-5 w-5" />
+                  <span className="font-medium">
+                    {selectedCategoryFilter && categoryData?.name 
+                      ? categoryData.name 
+                      : 'All Categories'}
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${isCategoryFilterOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {isCategoryFilterOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl py-2 z-50 border border-blue-100 max-h-96 overflow-y-auto">
+                    <button
+                      onClick={() => handleCategoryFilterChange('')}
+                      className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                        !selectedCategoryFilter 
+                          ? 'bg-blue-100 text-blue-600 font-medium' 
+                          : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
+                      }`}
+                    >
+                      All Categories
+                    </button>
+                    {allCategories.map((category) => (
+                      <button
+                        key={category.id}
+                        onClick={() => handleCategoryFilterChange(category.id.toString())}
+                        className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                          selectedCategoryFilter === category.id.toString()
+                            ? 'bg-blue-100 text-blue-600 font-medium' 
+                            : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span>{category.name}</span>
+                          <span className="text-xs text-gray-500">ID: {category.id}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Active Filters */}
+            {(selectedCategoryFilter || searchQuery) && (
+              <div className="flex items-center gap-2 mt-4 flex-wrap">
+                <span className="text-sm text-gray-600 font-medium">Active filters:</span>
+                {selectedCategoryFilter && categoryData && (
+                  <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                    <span>{categoryData.name}</span>
+                    <button
+                      onClick={() => handleCategoryFilterChange('')}
+                      className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+                {searchQuery && (
+                  <div className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+                    <span>"{searchQuery}"</span>
+                    <button
+                      onClick={() => handleSearchChange('')}
+                      className="ml-1 hover:bg-green-200 rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+                <button
+                  onClick={clearAllFilters}
+                  className="text-sm text-gray-500 hover:text-gray-700 underline"
+                >
+                  Clear all
+                </button>
+              </div>
             )}
           </motion.div>
         </motion.div>
@@ -356,10 +725,32 @@ const ActivitiesPage = () => {
             {isLoading ? (
               <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
             ) : (
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col">
               <p className="text-lg text-gray-500 font-medium">
                 {totalActivities} activities found
                 {categoryData && ` in ${categoryData.name}`}
-              </p>
+                    {searchQuery && ` for "${searchQuery}"`}
+                  </p>
+                  {totalAvailableActivities > 0 && (
+                    <p className="text-sm text-gray-400">
+                      Loaded {allActivities.length} of {totalAvailableActivities.toLocaleString()} total activities
+                    </p>
+                  )}
+                </div>
+                {isFilterLoading && (
+                  <div className="flex items-center gap-2 text-sm text-blue-600">
+                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Filtering...</span>
+                  </div>
+                )}
+                {isLoadingMore && (
+                  <div className="flex items-center gap-2 text-sm text-green-600">
+                    <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Loading more...</span>
+                  </div>
+                )}
+              </div>
             )}
           </motion.div>
 
@@ -455,6 +846,18 @@ const ActivitiesPage = () => {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Filter Loading Overlay */}
+          {isFilterLoading && !isLoading && (
+            <div className="relative">
+              <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-20 flex items-center justify-center rounded-2xl">
+                <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-full shadow-lg">
+                  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-blue-600 font-medium">Applying filters...</span>
+                </div>
+              </div>
             </div>
           )}
 
@@ -623,6 +1026,62 @@ const ActivitiesPage = () => {
               >
                 Next
               </button>
+            </motion.div>
+          )}
+
+          {/* Load More Activities Button */}
+          {!isLoading && hasMoreActivities && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center gap-4 mt-8"
+            >
+              <div className="text-center">
+                <p className="text-gray-600 mb-2">
+                  Showing {allActivities.length} of {totalAvailableActivities.toLocaleString()} activities
+                </p>
+                <div className="w-64 bg-gray-200 rounded-full h-2 mx-auto">
+                  <div 
+                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${(allActivities.length / totalAvailableActivities) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={loadMoreActivities}
+                disabled={isLoadingMore}
+                className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl hover:from-blue-600 hover:to-blue-700 transition-all font-bold text-lg shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Loading More Activities...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Load More Activities</span>
+                    <span className="bg-white/20 px-2 py-1 rounded-full text-sm">+1,000</span>
+                  </>
+                )}
+              </motion.button>
+            </motion.div>
+          )}
+
+          {/* All Activities Loaded Message */}
+          {!isLoading && !hasMoreActivities && totalAvailableActivities > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center mt-8 p-6 bg-green-50 rounded-2xl border border-green-200"
+            >
+              <div className="flex items-center justify-center gap-2 text-green-700 font-medium">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span>All {allActivities.length.toLocaleString()} activities loaded!</span>
+              </div>
             </motion.div>
           )}
         </Suspense>
