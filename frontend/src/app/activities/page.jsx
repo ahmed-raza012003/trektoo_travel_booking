@@ -41,24 +41,23 @@ const ActivitiesPage = () => {
   const [categoryData, setCategoryData] = useState(null);
   const [allCategories, setAllCategories] = useState([]); // Store all categories for filter
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState(categoryId || ''); // Category filter state
-  const [searchQuery, setSearchQuery] = useState(searchParam); // Search functionality
+  const [searchQuery, setSearchQuery] = useState(searchParam); // Search input value
+  const [activeSearchQuery, setActiveSearchQuery] = useState(searchParam); // Actual search term used in filtering
   const [favorites, setFavorites] = useState(new Set());
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('popular');
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState(null);
   const [hasInitialData, setHasInitialData] = useState(false);
-  const [currentBatch, setCurrentBatch] = useState(1);
-  const [hasMoreActivities, setHasMoreActivities] = useState(true);
   const [totalAvailableActivities, setTotalAvailableActivities] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
 
-  // Optimized fetch function - show initial results quickly, then load more in background
-  const fetchActivitiesOptimized = async (controller) => {
+  // Fast database fetch function - get all activities at once
+  const fetchActivitiesFromDatabase = async (controller) => {
       try {
         setIsLoading(true);
         setError(null);
@@ -74,8 +73,8 @@ const ActivitiesPage = () => {
       const categories = categoriesJson?.data?.categories || [];
       setAllCategories(categories);
 
-      // Get first batch to show initial results quickly
-      const firstBatchRes = await fetch(`${API_BASE}/klook/activities?limit=100&page=1`, {
+      // Fetch all activities from database (fast!)
+      const activitiesRes = await fetch(`${API_BASE}/klook/activities?limit=2000`, {
             signal: controller.signal,
             headers: {
               'Accept': 'application/json',
@@ -83,82 +82,43 @@ const ActivitiesPage = () => {
             },
       });
 
-      if (!firstBatchRes.ok) throw new Error(`Activities fetch failed: ${firstBatchRes.status}`);
-      const firstBatch = await firstBatchRes.json();
+      if (!activitiesRes.ok) throw new Error(`Activities fetch failed: ${activitiesRes.status}`);
+      const activitiesData = await activitiesRes.json();
       
-      if (!firstBatch?.success || !firstBatch?.data?.activity?.activity_list) {
+      console.log('🔍 DEBUG - API Response:', activitiesData);
+      
+      if (!activitiesData?.success || !activitiesData?.data?.activity?.activity_list) {
+        console.error('❌ Invalid API response format:', activitiesData);
         throw new Error('Invalid API response format');
       }
 
-      const totalCount = firstBatch.data.activity.total || 0;
-      const limit = 100;
-      const totalPages = Math.ceil(totalCount / limit);
+      const allActivitiesData = activitiesData.data.activity.activity_list;
+      const totalCount = activitiesData.data.activity.total || allActivitiesData.length;
       
-      console.log(`🔍 DEBUG - Total activities: ${totalCount}, Pages needed: ${totalPages}`);
+      console.log(`🚀 Database loaded: ${allActivitiesData.length} activities instantly!`);
       setTotalAvailableActivities(totalCount);
-
-      // Show initial results immediately
-      let allActivitiesData = [...firstBatch.data.activity.activity_list];
       setAllActivities(allActivitiesData);
       setHasInitialData(true);
-      setIsLoading(false); // Allow user to see and interact with first 100 activities
-      setCurrentBatch(1);
-      
-      // Check if there are more activities to load
-      setHasMoreActivities(totalPages > 1);
-
-      // Load initial batch in background (5 pages = 500 activities for fast initial experience)
-      const initialBatchSize = Math.min(totalPages, 5);
-      setLoadingProgress(Math.round((1 / initialBatchSize) * 100));
-      
-      for (let currentPage = 2; currentPage <= initialBatchSize; currentPage++) {
-        if (controller.signal.aborted) break;
-
-        setIsLoadingMore(true);
-        const pageRes = await fetch(`${API_BASE}/klook/activities?limit=100&page=${currentPage}`, {
-            signal: controller.signal,
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (pageRes.ok) {
-          const pageData = await pageRes.json();
-          if (pageData?.success && pageData?.data?.activity?.activity_list) {
-            allActivitiesData = [...allActivitiesData, ...pageData.data.activity.activity_list];
-            setAllActivities(allActivitiesData);
-            setLoadingProgress(Math.round((currentPage / initialBatchSize) * 100));
-          }
-        }
-
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
-
-      console.log(`🔍 DEBUG - Loaded initial ${allActivitiesData.length} activities`);
-      setIsLoadingMore(false);
+      setIsLoading(false);
       setLoadingProgress(100);
-      setCurrentBatch(initialBatchSize);
-      setHasMoreActivities(initialBatchSize < totalPages);
 
       return { activities: allActivitiesData, categories };
 
     } catch (err) {
-      setIsLoadingMore(false);
-        setIsLoading(false);
+      setIsLoading(false);
       throw err;
     }
   };
 
-  // Fetch activities and categories with optimized loading
+  // Fetch activities and categories from database
   useEffect(() => {
     const controller = new AbortController();
 
     const initializeData = async () => {
       try {
-        const { activities, categories } = await fetchActivitiesOptimized(controller);
+        const { activities, categories } = await fetchActivitiesFromDatabase(controller);
         
-        // Apply initial filtering (this will happen after first 100 activities are loaded)
+        // Apply initial filtering immediately
         applyFilters(activities, categories, selectedCategoryFilter, searchQuery);
 
       } catch (err) {
@@ -174,69 +134,73 @@ const ActivitiesPage = () => {
     return () => controller.abort();
   }, []); // Only run once on mount
 
-  // Apply filters function with loading state
+  // Enhanced filters function with instant search
   const applyFilters = useCallback((activities, categories, categoryFilter, search) => {
     console.log('🔍 DEBUG - Filter inputs:', { categoryFilter, search, activitiesCount: activities.length });
     
-    // Show filter loading for better UX
-    setIsFilterLoading(true);
-    
-    // Use setTimeout to allow UI to update with loading state
-    setTimeout(() => {
-      let filtered = [...activities];
+    let filtered = [...activities];
 
-      // Apply category filter
-      if (categoryFilter) {
-        const targetCategory = categories.find(cat => cat.id == categoryFilter);
+    // Apply category filter
+    if (categoryFilter) {
+      const targetCategory = categories.find(cat => cat.id == categoryFilter);
+        
+      if (targetCategory) {
+        setCategoryData(targetCategory);
+
+        // Get ALL valid sub-category IDs from this category
+        let validCategoryIds = [parseInt(categoryFilter)]; // Include main category ID
           
-          if (targetCategory) {
-            setCategoryData(targetCategory);
-
-            // Get ALL valid sub-category IDs from this category
-          let validCategoryIds = [parseInt(categoryFilter)]; // Include main category ID
-            
-            if (targetCategory.sub_category) {
-              targetCategory.sub_category.forEach(sub => {
-              validCategoryIds.push(sub.id);
-                
-                if (sub.leaf_category) {
-                  sub.leaf_category.forEach(leaf => {
-                    validCategoryIds.push(leaf.id);
-                  });
-                }
+        if (targetCategory.sub_category) {
+          targetCategory.sub_category.forEach(sub => {
+            validCategoryIds.push(sub.id);
+              
+            if (sub.leaf_category) {
+              sub.leaf_category.forEach(leaf => {
+                validCategoryIds.push(leaf.id);
               });
             }
-
-          console.log('🔍 DEBUG - Valid category IDs:', validCategoryIds);
-          filtered = filtered.filter(activity =>
-              validCategoryIds.includes(parseInt(activity.category_id))
-            );
-          console.log('🔍 DEBUG - After category filter:', filtered.length);
+          });
         }
-          } else {
-        setCategoryData(null);
-      }
 
-      // Apply search filter
-      if (search.trim()) {
-        const searchLower = search.toLowerCase();
-        const beforeSearchCount = filtered.length;
+        console.log('🔍 DEBUG - Valid category IDs:', validCategoryIds);
         filtered = filtered.filter(activity =>
-          activity.title?.toLowerCase().includes(searchLower) ||
-          activity.sub_title?.toLowerCase().includes(searchLower)
-        );
-        console.log('🔍 DEBUG - Search filter applied:', {
-          searchTerm: search,
-          before: beforeSearchCount,
-          after: filtered.length
-        });
+            validCategoryIds.includes(parseInt(activity.category_id))
+          );
+        console.log('🔍 DEBUG - After category filter:', filtered.length);
       }
+    } else {
+      setCategoryData(null);
+    }
 
-      console.log('🔍 DEBUG - Final filtered count:', filtered.length);
-      setFilteredActivities(filtered);
-      setTotalActivities(filtered.length);
-      setIsFilterLoading(false);
-    }, 10); // Small delay to show loading state
+    // Enhanced search filter with multiple fields
+    if (search.trim()) {
+      const searchLower = search.toLowerCase();
+      const searchTerms = searchLower.split(' ').filter(term => term.length > 0);
+      const beforeSearchCount = filtered.length;
+      
+      filtered = filtered.filter(activity => {
+        const searchableText = [
+          activity.title,
+          activity.sub_title,
+          activity.location,
+          // Add more searchable fields if available
+        ].join(' ').toLowerCase();
+        
+        // Check if all search terms are found in the searchable text
+        return searchTerms.every(term => searchableText.includes(term));
+      });
+      
+      console.log('🔍 DEBUG - Enhanced search filter applied:', {
+        searchTerm: search,
+        searchTerms: searchTerms,
+        before: beforeSearchCount,
+        after: filtered.length
+      });
+    }
+
+    console.log('🔍 DEBUG - Final filtered count:', filtered.length);
+    setFilteredActivities(filtered);
+    setTotalActivities(filtered.length);
   }, []);
 
   // Initialize filters from URL parameters
@@ -246,20 +210,20 @@ const ActivitiesPage = () => {
     }
     if (searchParam !== searchQuery) {
       setSearchQuery(searchParam);
+      setActiveSearchQuery(searchParam);
     }
-  }, [categoryId, selectedCategoryFilter, searchParam, searchQuery]);
+  }, [categoryId, selectedCategoryFilter, searchParam]);
 
-  // Re-apply filters when category or search changes
+  // Re-apply filters when category changes (but NOT when search changes)
   useEffect(() => {
     if (allActivities.length > 0) {
       console.log('🔍 DEBUG - Applying filters:', {
         categoryFilter: selectedCategoryFilter,
-        searchQuery: searchQuery,
         totalActivities: allActivities.length
       });
-      applyFilters(allActivities, allCategories, selectedCategoryFilter, searchQuery);
+      applyFilters(allActivities, allCategories, selectedCategoryFilter, activeSearchQuery);
     }
-  }, [selectedCategoryFilter, searchQuery, allActivities, allCategories, applyFilters]);
+  }, [selectedCategoryFilter, allActivities, allCategories, applyFilters, activeSearchQuery]);
 
   // Paginate filtered activities when page changes
   useEffect(() => {
@@ -314,99 +278,73 @@ const ActivitiesPage = () => {
     setIsCategoryFilterOpen(false);
   };
 
-  // Debounced URL update to avoid excessive navigation
-  const [urlUpdateTimeout, setUrlUpdateTimeout] = useState(null);
 
+  // Simple search that only works on submit
   const handleSearchChange = (query) => {
-    // Update search query immediately for instant filtering
     setSearchQuery(query);
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
     
-    // Clear existing timeout
-    if (urlUpdateTimeout) {
-      clearTimeout(urlUpdateTimeout);
-    }
+    // Show searching indicator
+    setIsSearching(true);
     
-    // Set new timeout for URL update (but filtering happens immediately)
-    const newTimeout = setTimeout(() => {
+    // Set the active search query (this will trigger the useEffect to apply filters)
+    setActiveSearchQuery(searchQuery);
+    
+    // Execute search immediately
+    setTimeout(() => {
+      if (allActivities.length > 0) {
+        applyFilters(allActivities, allCategories, selectedCategoryFilter, searchQuery);
+      }
+      
+      // Hide searching indicator
+      setIsSearching(false);
+      
+      // Update URL
       const params = new URLSearchParams(searchParams.toString());
-      if (query.trim()) {
-        params.set('search', query);
+      if (searchQuery.trim()) {
+        params.set('search', searchQuery);
       } else {
         params.delete('search');
       }
-      params.set('page', '1'); // Reset to first page
-      router.replace(`/activities?${params.toString()}`); // Use replace to avoid history pollution
-    }, 500); // 500ms delay for URL update
-    
-    setUrlUpdateTimeout(newTimeout);
+      params.set('page', '1');
+      router.replace(`/activities?${params.toString()}`);
+    }, 300); // Small delay for visual feedback
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setActiveSearchQuery('');
+    // Apply filters immediately to clear search results
+    if (allActivities.length > 0) {
+      applyFilters(allActivities, allCategories, selectedCategoryFilter, '');
+    }
+    // Update URL
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('search');
+    params.set('page', '1');
+    router.replace(`/activities?${params.toString()}`);
   };
 
   const clearAllFilters = () => {
-    // Clear URL update timeout if active
-    if (urlUpdateTimeout) {
-      clearTimeout(urlUpdateTimeout);
-      setUrlUpdateTimeout(null);
-    }
     setSelectedCategoryFilter('');
     setSearchQuery('');
+    setActiveSearchQuery('');
+    setSortBy('default');
+    setCurrentPage(1);
+    
+    // Apply filters immediately (this will clear search)
+    if (allActivities.length > 0) {
+      applyFilters(allActivities, allCategories, '', '');
+    }
+    
     router.push('/activities');
   };
 
-  // Load more activities function
-  const loadMoreActivities = async () => {
-    if (isLoadingMore || !hasMoreActivities) return;
+  // No need for load more function - all data loaded from database
 
-    try {
-      setIsLoadingMore(true);
-      const batchSize = 10; // Load 10 pages (1000 activities) at a time
-      const startPage = currentBatch + 1;
-      const endPage = Math.min(startPage + batchSize - 1, Math.ceil(totalAvailableActivities / 100));
-      
-      console.log(`🔍 DEBUG - Loading more: pages ${startPage} to ${endPage}`);
-
-      let newActivities = [];
-      for (let page = startPage; page <= endPage; page++) {
-        const response = await fetch(`${API_BASE}/klook/activities?limit=100&page=${page}`, {
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data?.success && data?.data?.activity?.activity_list) {
-            newActivities = [...newActivities, ...data.data.activity.activity_list];
-          }
-        }
-
-        // Small delay to prevent overwhelming the API
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
-
-      // Update activities
-      const updatedActivities = [...allActivities, ...newActivities];
-      setAllActivities(updatedActivities);
-      setCurrentBatch(endPage);
-      setHasMoreActivities(endPage < Math.ceil(totalAvailableActivities / 100));
-
-      console.log(`🔍 DEBUG - Loaded ${newActivities.length} more activities. Total: ${updatedActivities.length}`);
-
-    } catch (error) {
-      console.error('Error loading more activities:', error);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (urlUpdateTimeout) {
-        clearTimeout(urlUpdateTimeout);
-      }
-    };
-  }, [urlUpdateTimeout]);
 
   const totalPages = Math.ceil(totalActivities / itemsPerPage);
 
@@ -575,13 +513,15 @@ const ActivitiesPage = () => {
               <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
                 {categoryData?.name 
                   ? `Explore ${totalActivities} activities in ${categoryData.name}`
+                    : searchQuery
+                    ? `Found ${totalActivities} activities matching "${searchQuery}"`
                     : `Discover ${totalActivities} amazing experiences from our curated collection`
                 }
               </p>
-                {isLoadingMore && (
+                {isLoading && (
                   <div className="max-w-md mx-auto">
                     <div className="flex items-center justify-between text-sm text-blue-600 mb-2">
-                      <span>Loading more activities in background...</span>
+                      <span>Loading activities from database...</span>
                       <span>{loadingProgress}%</span>
                     </div>
                     <div className="w-full bg-blue-100 rounded-full h-1">
@@ -606,25 +546,44 @@ const ActivitiesPage = () => {
         >
           <motion.div variants={itemVariants} className="max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row gap-4 items-center">
-              {/* Search Bar */}
-              <div className="relative flex-1 w-full">
+              {/* Simple Search Bar */}
+              <form onSubmit={handleSearchSubmit} className="relative flex-1 w-full">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search activities..."
+                  placeholder="Search activities... (press Enter to search)"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-lg text-gray-800 placeholder-gray-500"
+                  className="w-full pl-12 pr-20 py-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-lg text-gray-800 placeholder-gray-500"
                 />
-                {searchQuery && (
-                  <button
-                    onClick={() => handleSearchChange('')}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <X className="h-4 w-4 text-gray-400" />
-                  </button>
+                {isSearching && (
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                    <span className="text-sm text-gray-500 hidden sm:block">Searching...</span>
+                  </div>
                 )}
-              </div>
+                {!isSearching && (
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={handleClearSearch}
+                        className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                        title="Clear search"
+                      >
+                        <X className="h-4 w-4 text-gray-400" />
+                      </button>
+                    )}
+                    <button
+                      type="submit"
+                      className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-colors"
+                      title="Search"
+                    >
+                      <Search className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </form>
 
               {/* Category Filter */}
               <div className="relative" data-category-filter>
@@ -693,9 +652,21 @@ const ActivitiesPage = () => {
                 )}
                 {searchQuery && (
                   <div className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
-                    <span>"{searchQuery}"</span>
+                    <span>"{searchQuery}" ({totalActivities} results)</span>
                     <button
-                      onClick={() => handleSearchChange('')}
+                      onClick={() => {
+                        setSearchQuery('');
+                        setActiveSearchQuery('');
+                        // Apply filters immediately to clear search results
+                        if (allActivities.length > 0) {
+                          applyFilters(allActivities, allCategories, selectedCategoryFilter, '');
+                        }
+                        // Update URL
+                        const params = new URLSearchParams(searchParams.toString());
+                        params.delete('search');
+                        params.set('page', '1');
+                        router.replace(`/activities?${params.toString()}`);
+                      }}
                       className="ml-1 hover:bg-green-200 rounded-full p-0.5"
                     >
                       <X className="h-3 w-3" />
@@ -734,7 +705,7 @@ const ActivitiesPage = () => {
                   </p>
                   {totalAvailableActivities > 0 && (
                     <p className="text-sm text-gray-400">
-                      Loaded {allActivities.length} of {totalAvailableActivities.toLocaleString()} total activities
+                      {allActivities.length.toLocaleString()} activities loaded instantly from database
                     </p>
                   )}
                 </div>
@@ -742,12 +713,6 @@ const ActivitiesPage = () => {
                   <div className="flex items-center gap-2 text-sm text-blue-600">
                     <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                     <span>Filtering...</span>
-                  </div>
-                )}
-                {isLoadingMore && (
-                  <div className="flex items-center gap-2 text-sm text-green-600">
-                    <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                    <span>Loading more...</span>
                   </div>
                 )}
               </div>
@@ -1029,48 +994,8 @@ const ActivitiesPage = () => {
             </motion.div>
           )}
 
-          {/* Load More Activities Button */}
-          {!isLoading && hasMoreActivities && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col items-center gap-4 mt-8"
-            >
-              <div className="text-center">
-                <p className="text-gray-600 mb-2">
-                  Showing {allActivities.length} of {totalAvailableActivities.toLocaleString()} activities
-                </p>
-                <div className="w-64 bg-gray-200 rounded-full h-2 mx-auto">
-                  <div 
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(allActivities.length / totalAvailableActivities) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={loadMoreActivities}
-                disabled={isLoadingMore}
-                className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl hover:from-blue-600 hover:to-blue-700 transition-all font-bold text-lg shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoadingMore ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Loading More Activities...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Load More Activities</span>
-                    <span className="bg-white/20 px-2 py-1 rounded-full text-sm">+1,000</span>
-                  </>
-                )}
-              </motion.button>
-            </motion.div>
-          )}
-
-          {/* All Activities Loaded Message */}
-          {!isLoading && !hasMoreActivities && totalAvailableActivities > 0 && (
+          {/* Database Performance Message */}
+          {!isLoading && totalAvailableActivities > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1080,7 +1005,7 @@ const ActivitiesPage = () => {
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span>All {allActivities.length.toLocaleString()} activities loaded!</span>
+                <span>All {allActivities.length.toLocaleString()} activities loaded instantly from database!</span>
               </div>
             </motion.div>
           )}

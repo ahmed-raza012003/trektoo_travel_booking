@@ -5,6 +5,7 @@ namespace App\Services\Klook;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
+use App\Models\Activity;
 
 class KlookApiService
 {
@@ -409,5 +410,120 @@ class KlookApiService
             Log::error("Klook API Error - Order Cancellation Status: " . $e->getMessage());
             return ['error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Get activities from database with filters
+     */
+    public function getActivitiesFromDatabase($params = [])
+    {
+        try {
+            $query = Activity::query();
+
+            // Apply filters
+            if (isset($params['category_id']) && $params['category_id']) {
+                $query->byCategory($params['category_id']);
+            }
+
+            if (isset($params['search']) && $params['search']) {
+                $query->search($params['search']);
+            }
+
+            if (isset($params['city_id']) && $params['city_id']) {
+                $query->byCity($params['city_id']);
+            }
+
+            if (isset($params['country_id']) && $params['country_id']) {
+                $query->byCountry($params['country_id']);
+            }
+
+            // Pagination
+            $page = $params['page'] ?? 1;
+            $limit = $params['limit'] ?? 100; // Allow higher limits for database queries
+            $offset = ($page - 1) * $limit;
+
+            $total = $query->count();
+            $activities = $query->skip($offset)->take($limit)->get();
+
+            // Format response to match API structure
+            $formattedActivities = $activities->map(function ($activity) {
+                return [
+                    'activity_id' => $activity->activity_id,
+                    'title' => $activity->title,
+                    'sub_title' => $activity->sub_title,
+                    'supported_languages' => $activity->supported_languages ?? [],
+                    'city_id' => $activity->city_id,
+                    'country_id' => $activity->country_id,
+                    'category_id' => $activity->category_id,
+                    'price' => $activity->price,
+                    'currency' => $activity->currency,
+                    'vat_price' => $activity->vat_price,
+                ];
+            })->toArray();
+
+            return [
+                'success' => true,
+                'data' => [
+                    'success' => true,
+                    'activity' => [
+                        'total' => $total,
+                        'page' => $page,
+                        'limit' => $limit,
+                        'has_next' => ($offset + $limit) < $total,
+                        'activity_list' => $formattedActivities
+                    ]
+                ]
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Database Error - Activities: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Failed to fetch activities from database',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get total count of activities in database
+     */
+    public function getActivitiesCount()
+    {
+        try {
+            return Activity::count();
+        } catch (\Exception $e) {
+            Log::error('Database Error - Activities Count: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Check if database has activities data
+     */
+    public function hasActivitiesData()
+    {
+        return $this->getActivitiesCount() > 0;
+    }
+
+    /**
+     * Get activities with fallback to API if database is empty
+     */
+    public function getActivitiesWithFallback($params = [])
+    {
+        // If database has data, use it
+        if ($this->hasActivitiesData()) {
+            $this->info('📊 Using database data for activities');
+            return $this->getActivitiesFromDatabase($params);
+        }
+
+        // Otherwise, fallback to API
+        $this->info('🌐 Database empty, falling back to API');
+        return $this->getActivities($params);
+    }
+
+    private function info($message)
+    {
+        Log::info($message);
     }
 }

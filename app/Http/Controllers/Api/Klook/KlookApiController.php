@@ -41,13 +41,14 @@ class KlookApiController extends BaseController
     }
 
     /**
-     * Get activities with filters
+     * Get activities with filters (uses database with API fallback)
      */
     public function getActivities(Request $request): JsonResponse
     {
-        $params = $request->only(['limit', 'page', 'city_ids', 'country_ids', 'category_ids']);
+        $params = $request->only(['limit', 'page', 'city_ids', 'country_ids', 'category_ids', 'category_id', 'search']);
 
-        $result = $this->klookService->getActivities($params);
+        // Use database with API fallback
+        $result = $this->klookService->getActivitiesWithFallback($params);
 
         if (isset($result['error'])) {
             return response()->json([
@@ -57,10 +58,7 @@ class KlookApiController extends BaseController
             ], 500);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => $result
-        ]);
+        return response()->json($result);
     }
 
     /**
