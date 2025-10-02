@@ -225,6 +225,13 @@ const ThankYouPage = () => {
         } else {
           throw new Error(result.error || 'Failed to get cancellation status');
         }
+      } else if (response.status === 500) {
+        // Handle 500 error specifically
+        setCancellationStatus({
+          success: false,
+          message: 'You have not applied for cancellation yet.'
+        });
+        setCancellationInfo(null);
       } else {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -232,7 +239,7 @@ const ThankYouPage = () => {
       console.error('Cancellation status error:', error);
       setCancellationStatus({
         success: false,
-        message: error.message
+        message: error.message.includes('500') ? 'You have not applied for cancellation yet.' : error.message
       });
     }
   };
@@ -382,14 +389,7 @@ const ThankYouPage = () => {
 
       let currentY = 60;
 
-      // Booking Status
-      doc.setFillColor(...colors.success);
-      doc.rect(20, currentY, 170, 8, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`✓ BOOKING ${booking.status.toUpperCase()}`, 25, currentY + 5);
-      currentY += 15;
+      // Removed booking status section
 
       // Activity Information
       currentY = addSectionHeader('ACTIVITY INFORMATION', currentY);
@@ -459,53 +459,17 @@ const ThankYouPage = () => {
       doc.setFontSize(11);
       doc.setTextColor(...colors.text);
 
-      // Payment breakdown using database data
-      const originalAmount = parseFloat(booking.original_amount) || 0;
-      const markupAmount = parseFloat(booking.markup_amount) || 0;
-      const markupPercentage = parseFloat(booking.markup_percentage) || 0;
+      // Payment Information - Simplified
       const totalPrice = parseFloat(booking.total_price) || 0;
-
-      if (originalAmount > 0) {
-        doc.text('Original Amount:', 20, currentY);
-        doc.text(`${originalAmount.toFixed(2)} ${booking.currency}`, 120, currentY, { align: 'right' });
-        currentY += 8;
-
-        if (markupAmount > 0) {
-          doc.text(`Markup (${markupPercentage}%):`, 20, currentY);
-          doc.text(`+${markupAmount.toFixed(2)} ${booking.currency}`, 120, currentY, { align: 'right' });
-          currentY += 8;
-        }
-      } else {
-        doc.text('Total Amount:', 20, currentY);
-        doc.text(`${totalPrice.toFixed(2)} ${booking.currency}`, 120, currentY, { align: 'right' });
-        currentY += 8;
-      }
-
-      doc.setDrawColor(...colors.border);
-      doc.setLineWidth(0.5);
-      doc.line(20, currentY, 190, currentY);
-      currentY += 8;
+      const totalPaid = payment ? parseFloat(payment.amount) || 0 : totalPrice;
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
       doc.text('Total Paid:', 20, currentY);
       doc.setTextColor(...colors.success);
-      const totalPaid = payment ? parseFloat(payment.amount) || 0 : totalPrice;
       doc.text(`${totalPaid.toFixed(2)} ${booking.currency}`, 120, currentY, { align: 'right' });
       doc.setTextColor(...colors.text);
       currentY += 15;
-
-      // Payment Details
-      if (payment) {
-        doc.setFontSize(10);
-        doc.setTextColor(...colors.text);
-        doc.text(`Payment Method: ${payment.method || 'Unknown'}`, 20, currentY);
-        currentY += 6;
-        doc.text(`Transaction ID: ${payment.transaction_id || 'N/A'}`, 20, currentY);
-        currentY += 6;
-        doc.text(`Payment Status: ${payment.status}`, 20, currentY);
-        currentY += 10;
-      }
 
       // Passenger Information
       currentY = addSectionHeader('PASSENGER INFORMATION', currentY, colors.warning);
@@ -646,39 +610,7 @@ const ThankYouPage = () => {
         });
         currentY += 5;
 
-      // Important Information
-      currentY = addSectionHeader('IMPORTANT INFORMATION', currentY, colors.danger);
-      
-      const importantInfo = [
-        '• Please bring a printed copy of this confirmation or show it on your mobile device',
-        '• Arrive at least 15 minutes before your scheduled activity time',
-        '• Bring a valid photo ID that matches the name on the booking',
-        '• Present your voucher code at the activity location',
-        '• Contact support if you have any questions or need to make changes'
-      ];
-
-      importantInfo.forEach(info => {
-        currentY = checkPageBreak(currentY, 10);
-        doc.text(info, 20, currentY);
-        currentY += 7;
-      });
-      currentY += 5;
-
-      // Contact Information
-      currentY = addSectionHeader('CONTACT INFORMATION', currentY, colors.secondary);
-      
-      const contactDetails = [
-        'Email: support@trektoo.com',
-        'Phone: +1 (555) 123-4567',
-        'Website: www.trektoo.com',
-        'Business Hours: Monday - Friday, 9:00 AM - 6:00 PM'
-      ];
-
-      contactDetails.forEach(contact => {
-          currentY = checkPageBreak(currentY, 10);
-        doc.text(contact, 20, currentY);
-        currentY += 7;
-      });
+      // Removed Important Information and Contact Information sections
 
       addPageFooter(2, 2);
 
@@ -1084,21 +1016,44 @@ const ThankYouPage = () => {
                   </p>
 
                   <div className="space-y-3">
-                    <button
-                      onClick={() => setShowCancelConfirm(true)}
-                      className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-xl transition-all duration-300 flex items-center justify-center"
-                    >
-                      <XCircle className="w-5 h-5 mr-2" />
-                      Cancel Booking
-                    </button>
+                    {/* Cancel Booking Button - Only show if order is confirmed */}
+                    {orderData?.confirm_status === 'confirmed' && (
+                      <button
+                        onClick={() => setShowCancelConfirm(true)}
+                        className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-xl transition-all duration-300 flex items-center justify-center"
+                      >
+                        <XCircle className="w-5 h-5 mr-2" />
+                        Cancel Booking
+                      </button>
+                    )}
 
-                    <button
-                      onClick={getCancellationStatus}
-                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 rounded-xl transition-all duration-300 flex items-center justify-center"
-                    >
-                      <RefreshCw className="w-5 h-5 mr-2" />
-                      Check Cancellation Status
-                    </button>
+                    {/* Check Cancellation Status Button - Only show if order is confirmed */}
+                    {orderData?.confirm_status === 'confirmed' && (
+                      <button
+                        onClick={getCancellationStatus}
+                        className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 rounded-xl transition-all duration-300 flex items-center justify-center"
+                      >
+                        <RefreshCw className="w-5 h-5 mr-2" />
+                        Check Cancellation Status
+                      </button>
+                    )}
+
+                    {/* Show message when order is not confirmed */}
+                    {orderData?.confirm_status !== 'confirmed' && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                            <Clock className="w-4 h-4 text-yellow-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-yellow-800">Cancellation Not Available</h4>
+                            <p className="text-sm text-yellow-700 mt-1">
+                              Cancellation options are only available for confirmed bookings.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {cancellationStatus && (
