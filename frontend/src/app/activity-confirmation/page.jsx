@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
   CheckCircle, 
@@ -35,6 +35,14 @@ const OrderConfirmationPage = () => {
     const [bookerInfo, setBookerInfo] = useState(null);
     const [bookingSummary, setBookingSummary] = useState(null);
     const [markupRate] = useState(0.15);
+    const [isFloating, setIsFloating] = useState(false);
+    const [floatingTop, setFloatingTop] = useState(0);
+    const [elementHeight, setElementHeight] = useState(0);
+    
+    // Refs for floating behavior
+    const priceSummaryRef = useRef(null);
+    const priceSummaryContainerRef = useRef(null);
+    const originalPositionRef = useRef(null);
 
     useEffect(() => {
         // Redirect to login if not authenticated
@@ -83,6 +91,69 @@ const OrderConfirmationPage = () => {
             setLoading(false);
         }
     }, [isAuthenticated, authLoading, router]);
+
+    // Floating payment summary behavior
+    useEffect(() => {
+        const handleScroll = () => {
+            if (typeof window === 'undefined' || window.innerWidth < 1024) {
+                setIsFloating(false);
+                return;
+            }
+
+            if (priceSummaryContainerRef.current && priceSummaryRef.current) {
+                const container = priceSummaryContainerRef.current;
+                const element = priceSummaryRef.current;
+                
+                // Get the original position if not stored
+                if (!originalPositionRef.current) {
+                    const containerRect = container.getBoundingClientRect();
+                    const elementRect = element.getBoundingClientRect();
+                    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    originalPositionRef.current = {
+                        top: containerRect.top + scrollTop,
+                        left: containerRect.left,
+                        width: containerRect.width
+                    };
+                    setElementHeight(elementRect.height);
+                }
+                
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const originalTop = originalPositionRef.current.top;
+                const offset = 120; // Space for navbar + some margin
+                
+                // Check if we should start floating
+                const shouldFloat = scrollTop + offset > originalTop;
+                
+                if (shouldFloat) {
+                    setIsFloating(true);
+                    setFloatingTop(offset);
+                } else {
+                    setIsFloating(false);
+                    setFloatingTop(0);
+                }
+            }
+        };
+        
+        const handleResize = () => {
+            // Reset original position on resize
+            originalPositionRef.current = null;
+            setIsFloating(false);
+            setTimeout(handleScroll, 100); // Delay to allow layout to settle
+        };
+        
+        if (typeof window !== 'undefined') {
+            window.addEventListener('scroll', handleScroll, { passive: true });
+            window.addEventListener('resize', handleResize);
+            handleScroll();
+        }
+        
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('scroll', handleScroll);
+                window.removeEventListener('resize', handleResize);
+            }
+        };
+    }, []);
 
     const createKlookOrder = async (bookingPayload, existingAgentOrderId = null) => {
         try {
@@ -728,19 +799,56 @@ const OrderConfirmationPage = () => {
                             </div>
 
                             {/* Right Column - Price Summary */}
-                            <div className="lg:col-span-1">
-                                <div className="sticky top-32">
+                            <div className="lg:col-span-1" ref={priceSummaryContainerRef}>
+                                {/* Placeholder to maintain layout when floating */}
+                                {isFloating && (
+                                    <div style={{ height: `${elementHeight}px`, width: '100%' }} />
+                                )}
+                                
+                                <div 
+                                    ref={priceSummaryRef}
+                                    className={`transition-all duration-300 ${
+                                        isFloating ? 'fixed z-50' : 'relative'
+                                    }`}
+                                    style={{
+                                        top: isFloating ? `${floatingTop}px` : 'auto',
+                                        right: isFloating ? '2rem' : 'auto',
+                                        width: isFloating ? '320px' : 'auto',
+                                        maxWidth: isFloating ? '320px' : 'none'
+                                    }}
+                                >
                                     <motion.div 
-                                        className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200"
+                                        className={`bg-white rounded-2xl p-8 shadow-lg lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto transition-all duration-300 hover:shadow-xl ${
+                                            isFloating ? 'shadow-2xl border-0 ring-2 ring-blue-200' : 'border border-gray-200'
+                                        }`}
                                         initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.5 }}
+                                        animate={{ 
+                                            opacity: 1, 
+                                            y: 0,
+                                            scale: isFloating ? 1.02 : 1
+                                        }}
+                                        transition={{ 
+                                            delay: 0.5,
+                                            scale: { duration: 0.2 }
+                                        }}
                                     >
-                                        <div className="flex items-center gap-3 mb-6">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
                                                 <CreditCard className="w-5 h-5 text-white" />
                                             </div>
                                             <h3 className="text-xl font-bold text-gray-900">Payment Summary</h3>
+                                            </div>
+                                            {isFloating && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, scale: 0.8 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    className="hidden lg:flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium"
+                                                >
+                                                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                                    Following
+                                                </motion.div>
+                                            )}
                                         </div>
 
                                         <div className="space-y-4 mb-6">
@@ -791,9 +899,16 @@ const OrderConfirmationPage = () => {
 
                                         <motion.button
                                             onClick={handleProceedToPayment}
-                                            className="w-full mt-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3"
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
+                                            className={`w-full mt-6 py-4 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3 ${
+                                                isFloating 
+                                                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-xl hover:shadow-2xl'
+                                                    : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
+                                            }`}
+                                            whileHover={!loading ? { scale: 1.02 } : {}}
+                                            whileTap={!loading ? { scale: 0.98 } : {}}
+                                            animate={isFloating ? { 
+                                                boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.5)"
+                                            } : {}}
                                         >
                                             <Shield className="w-5 h-5" />
                                             Proceed to Payment
