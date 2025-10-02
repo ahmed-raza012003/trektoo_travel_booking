@@ -89,6 +89,20 @@ const ActivityDetailPage = () => {
     const MARKUP_PERCENTAGE = 0.15;
     const applyMarkup = (price) => price * (1 + MARKUP_PERCENTAGE);
 
+    // Helper function to check if there are any available time slots
+    const hasAvailableTimeSlots = (schedules) => {
+        if (!schedules || schedules.length === 0) return false;
+        
+        return schedules.some(sku => 
+            sku.calendars && 
+            sku.calendars.length > 0 && 
+            sku.calendars.some(cal => 
+                cal.calendars && 
+                cal.calendars.length > 0
+            )
+        );
+    };
+
     const allowsChildren = currentPackage?.package_name?.toLowerCase().includes('child') ||
         currentPackage?.section_info?.some(section =>
             section.groups?.some(group =>
@@ -602,91 +616,111 @@ const ActivityDetailPage = () => {
                                 </div>
                             )}
 
-                            {scheduleData?.schedules?.length > 0 && (
+                            {scheduleData && (
                                 <div className="mt-12 mb-12">
                                     <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3 mb-8">
                                         <Calendar className="w-6 h-6 text-blue-600" />
                                         Available Schedules
                                     </h3>
-                                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full">
-                                                <thead className="bg-gray-50 border-b border-gray-200">
-                                                    <tr>
-                                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Option</th>
-                                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date & Time</th>
-                                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Availability</th>
-                                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Price</th>
-                                                        <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Select</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-200">
-                                                    {scheduleData.schedules.map((sku, skuIdx) =>
-                                                        sku.calendars?.map((cal, calIdx) =>
-                                                            cal.calendars?.map((slot, slotIdx) => {
-                                                                const isSelected = selectedSchedule?.sku_id === sku.sku_id && selectedSchedule?.start_time === slot.start_time;
-                                                                return (
-                                                                    <tr key={`${sku.sku_id}-${slotIdx}`} className={`hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50' : ''}`}>
-                                                                        <td className="px-6 py-4">
-                                                                            <div className="flex items-center gap-3">
-                                                                                <Badge className="w-4 h-4 text-blue-600" />
-                                                                                <div>
-                                                                                    <p className="text-sm font-medium text-gray-900">SKU: {sku.sku_id}</p>
-                                                                                    <p className="text-xs text-gray-500">{sku.currency}</p>
+                                    
+                                    {hasAvailableTimeSlots(scheduleData.schedules) ? (
+                                        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full">
+                                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                                        <tr>
+                                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Option</th>
+                                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date & Time</th>
+                                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Availability</th>
+                                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Price</th>
+                                                            <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Select</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-200">
+                                                        {scheduleData.schedules.map((sku, skuIdx) =>
+                                                            sku.calendars?.map((cal, calIdx) =>
+                                                                cal.calendars?.map((slot, slotIdx) => {
+                                                                    const isSelected = selectedSchedule?.sku_id === sku.sku_id && selectedSchedule?.start_time === slot.start_time;
+                                                                    return (
+                                                                        <tr key={`${sku.sku_id}-${slotIdx}`} className={`hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50' : ''}`}>
+                                                                            <td className="px-6 py-4">
+                                                                                <div className="flex items-center gap-3">
+                                                                                    <Badge className="w-4 h-4 text-blue-600" />
+                                                                                    <div>
+                                                                                        <p className="text-sm font-medium text-gray-900">SKU: {sku.sku_id}</p>
+                                                                                        <p className="text-xs text-gray-500">{sku.currency}</p>
+                                                                                    </div>
                                                                                 </div>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td className="px-6 py-4">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <Clock className="w-4 h-4 text-gray-400" />
-                                                                                <div>
-                                                                                    <p className="text-sm font-medium text-gray-900">{slot.start_time.split(' ')[0]}</p>
-                                                                                    <p className="text-xs text-gray-500">{slot.start_time.split(' ')[1]} - {slot.block_out_time_utc.split(' ')[1]}</p>
+                                                                            </td>
+                                                                            <td className="px-6 py-4">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <Clock className="w-4 h-4 text-gray-400" />
+                                                                                    <div>
+                                                                                        <p className="text-sm font-medium text-gray-900">{slot.start_time.split(' ')[0]}</p>
+                                                                                        <p className="text-xs text-gray-500">{slot.start_time.split(' ')[1]} - {slot.block_out_time_utc.split(' ')[1]}</p>
+                                                                                    </div>
                                                                                 </div>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td className="px-6 py-4">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <Users className="w-4 h-4 text-gray-400" />
-                                                                                <span className="text-sm text-gray-600">{slot.remaining_quota ? `${slot.remaining_quota} spots` : 'Available'}</span>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td className="px-6 py-4">
-                                                                            <span className="text-lg font-bold text-blue-600">
-                                                                                {applyMarkup(slot.selling_price).toFixed(2)} {sku.currency}
-                                                                            </span>
-                                                                        </td>
-                                                                        <td className="px-6 py-4 text-center">
-                                                                            <input
-                                                                                type="radio"
-                                                                                name="schedule-selection"
-                                                                                checked={isSelected}
-                                                                                onChange={() =>
-                                                                                    setSelectedSchedule({
-                                                                                        sku_id: sku.sku_id,
-                                                                                        start_time: slot.start_time,
-                                                                                        end_time: slot.block_out_time_utc,
-                                                                                        price: applyMarkup(slot.selling_price),
-                                                                                        original_price: slot.selling_price,
-                                                                                        currency: sku.currency,
-                                                                                    })
-                                                                                }
-                                                                                className="accent-blue-600 w-5 h-5"
-                                                                            />
-                                                                        </td>
-                                                                    </tr>
-                                                                );
-                                                            })
-                                                        )
-                                                    )}
-                                                </tbody>
-                                            </table>
+                                                                            </td>
+                                                                            <td className="px-6 py-4">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <Users className="w-4 h-4 text-gray-400" />
+                                                                                    <span className="text-sm text-gray-600">{slot.remaining_quota ? `${slot.remaining_quota} spots` : 'Available'}</span>
+                                                                                </div>
+                                                                            </td>
+                                                                            <td className="px-6 py-4">
+                                                                                <span className="text-lg font-bold text-blue-600">
+                                                                                    {applyMarkup(slot.selling_price).toFixed(2)} {sku.currency}
+                                                                                </span>
+                                                                            </td>
+                                                                            <td className="px-6 py-4 text-center">
+                                                                                <input
+                                                                                    type="radio"
+                                                                                    name="schedule-selection"
+                                                                                    checked={isSelected}
+                                                                                    onChange={() =>
+                                                                                        setSelectedSchedule({
+                                                                                            sku_id: sku.sku_id,
+                                                                                            start_time: slot.start_time,
+                                                                                            end_time: slot.block_out_time_utc,
+                                                                                            price: applyMarkup(slot.selling_price),
+                                                                                            original_price: slot.selling_price,
+                                                                                            currency: sku.currency,
+                                                                                        })
+                                                                                    }
+                                                                                    className="accent-blue-600 w-5 h-5"
+                                                                                />
+                                                                            </td>
+                                                                        </tr>
+                                                                    );
+                                                                })
+                                                            )
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <div className="bg-gray-50 rounded-xl border border-gray-200 p-12 text-center">
+                                            <div className="flex flex-col items-center gap-4">
+                                                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                                                    <Calendar className="w-8 h-8 text-gray-400" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-xl font-semibold text-gray-700 mb-2">No Schedules Available</h4>
+                                                    <p className="text-gray-500 mb-4">
+                                                        Sorry, there are no available time slots for <span className="font-medium">{travelDate}</span>.
+                                                    </p>
+                                                    <p className="text-sm text-gray-400">
+                                                        Please try selecting a different date or check back later.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
-                            {selectedSchedule && (
+                            {selectedSchedule && hasAvailableTimeSlots(scheduleData?.schedules) && (
                                 <div className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-xl">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
