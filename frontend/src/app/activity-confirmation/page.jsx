@@ -38,6 +38,8 @@ const OrderConfirmationPage = () => {
     const [isFloating, setIsFloating] = useState(false);
     const [floatingTop, setFloatingTop] = useState(0);
     const [elementHeight, setElementHeight] = useState(0);
+    const [passengerForms, setPassengerForms] = useState([]);
+    const [passengerErrors, setPassengerErrors] = useState({});
     
     // Refs for floating behavior
     const priceSummaryRef = useRef(null);
@@ -154,6 +156,135 @@ const OrderConfirmationPage = () => {
             }
         };
     }, []);
+
+    // Initialize passenger forms when booking summary is loaded
+    useEffect(() => {
+        if (bookingSummary) {
+            const passengers = [];
+            
+            // Add additional adults (excluding the first adult who is the lead passenger/booker)
+            for (let i = 1; i < bookingSummary.adult_quantity; i++) {
+                passengers.push({
+                    id: `adult_${i}`,
+                    type: 'adult',
+                    index: i,
+                    first_name: "",
+                    last_name: "",
+                    email: "",
+                    phone: "",
+                    country: "",
+                    passport_id: "" // Passport/ID number for adults
+                });
+            }
+            
+            // Add children
+            for (let i = 0; i < bookingSummary.child_quantity; i++) {
+                passengers.push({
+                    id: `child_${i}`,
+                    type: 'child',
+                    index: i,
+                    first_name: "",
+                    last_name: "",
+                    country: "",
+                    passport_id: "", // Passport/ID for children
+                    age: "" // Required for children
+                });
+            }
+            
+            setPassengerForms(passengers);
+            console.log('Initialized passenger forms:', passengers);
+        }
+    }, [bookingSummary]);
+
+    // Handler for passenger form changes
+    const handlePassengerFormChange = (passengerId, fieldName, value) => {
+        setPassengerForms(prev => 
+            prev.map(passenger => 
+                passenger.id === passengerId 
+                    ? { ...passenger, [fieldName]: value }
+                    : passenger
+            )
+        );
+        
+        // Clear error if field becomes valid
+        const errorKey = `${passengerId}_${fieldName}`;
+        if (passengerErrors[errorKey]) {
+            setPassengerErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[errorKey];
+                return newErrors;
+            });
+        }
+    };
+
+    // Validation function for passenger forms
+    const validatePassengerForms = () => {
+        const newErrors = {};
+        
+        passengerForms.forEach((passenger) => {
+            const requiredFields = ['first_name', 'last_name', 'country'];
+            
+            // Add passport_id for both adults and children, age for children only
+            if (passenger.type === 'adult') {
+                requiredFields.push('email', 'phone', 'passport_id');
+            } else if (passenger.type === 'child') {
+                requiredFields.push('passport_id', 'age');
+            }
+            
+            requiredFields.forEach(field => {
+                const value = passenger[field];
+                const errorKey = `${passenger.id}_${field}`;
+                
+                if (field === 'age' && passenger.type === 'child') {
+                    if (!value || value.trim() === '') {
+                        newErrors[errorKey] = 'Age is required for children';
+                    } else {
+                        const age = parseInt(value);
+                        if (isNaN(age) || age < 0 || age > 17) {
+                            newErrors[errorKey] = 'Please enter a valid age (0-17 for children)';
+                        }
+                    }
+                } else if (field === 'passport_id') {
+                    if (!value || value.trim() === '') {
+                        const passengerLabel = passenger.type === 'adult' ? `Adult ${passenger.index + 1}` : `Child ${passenger.index + 1}`;
+                        newErrors[errorKey] = `${passengerLabel}: Passport/ID number is required`;
+                    }
+                } else if (field === 'email') {
+                    if (!value || value.trim() === '') {
+                        newErrors[errorKey] = 'Email is required';
+                    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                        newErrors[errorKey] = 'Please enter a valid email address';
+                    }
+                } else if (field === 'phone') {
+                    if (!value || value.trim() === '') {
+                        newErrors[errorKey] = 'Phone number is required';
+                    } else {
+                        const cleanPhone = value.replace(/\D/g, '');
+                        if (cleanPhone.length < 10) {
+                            newErrors[errorKey] = 'Phone number must be at least 10 digits';
+                        }
+                    }
+                } else if (field === 'first_name' || field === 'last_name') {
+                    if (!value || value.trim() === '') {
+                        newErrors[errorKey] = `${field === 'first_name' ? 'First' : 'Last'} name is required`;
+                    } else if (value.trim().length < 2) {
+                        newErrors[errorKey] = `${field === 'first_name' ? 'First' : 'Last'} name must be at least 2 characters`;
+                    } else if (!/^[a-zA-Z\s'-]+$/.test(value)) {
+                        newErrors[errorKey] = `${field === 'first_name' ? 'First' : 'Last'} name must contain only letters, spaces, hyphens, and apostrophes`;
+                    }
+                } else if (field === 'country') {
+                    if (!value || value.trim() === '') {
+                        newErrors[errorKey] = 'Country is required';
+                    } else if (value.trim().length < 2) {
+                        newErrors[errorKey] = 'Please enter a valid country name';
+                    }
+                }
+            });
+        });
+        
+        setPassengerErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     const createKlookOrder = async (bookingPayload, existingAgentOrderId = null) => {
         try {
@@ -282,6 +413,21 @@ const OrderConfirmationPage = () => {
             try {
                 setLoading(true);
                 setError(null);
+                
+                // Validate passenger forms if there are any
+                if (passengerForms.length > 0) {
+                    const isValid = validatePassengerForms();
+                    if (!isValid) {
+                        setLoading(false);
+                        // Scroll to first error
+                        const firstErrorField = document.querySelector(`[name="${Object.keys(passengerErrors)[0]}"]`);
+                        if (firstErrorField) {
+                            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            firstErrorField.focus();
+                        }
+                        return;
+                    }
+                }
                 
                 const originalTotal = parseFloat(orderData.total_amount);
                 const finalTotal = originalTotal * (1 + markupRate);
@@ -775,24 +921,310 @@ const OrderConfirmationPage = () => {
 
                                         {/* Additional Passengers Notice */}
                                         {bookingSummary && ((bookingSummary.adult_quantity > 1) || (bookingSummary.child_quantity > 0)) && (
-                                            <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                                            <div className="mt-6 bg-green-50 border border-green-200 rounded-xl p-4">
                                                 <div className="flex items-start gap-3">
-                                                    <div className="w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center mt-0.5">
-                                                        <span className="text-white text-xs font-bold">!</span>
+                                                    <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
+                                                        <CheckCircle className="w-3 h-3 text-white" />
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-semibold text-yellow-800 mb-1">Additional Passenger Details Required</h4>
-                                                        <p className="text-yellow-700 text-sm">
-                                                            You have {Math.max(0, (bookingSummary.adult_quantity || 0) - 1)} additional adult{Math.max(0, (bookingSummary.adult_quantity || 0) - 1) !== 1 ? 's' : ''} 
+                                                        <h4 className="font-semibold text-green-800 mb-1">Additional Passenger Details</h4>
+                                                        <p className="text-green-700 text-sm">
+                                                            Please fill in the details for {Math.max(0, (bookingSummary.adult_quantity || 0) - 1)} additional adult{Math.max(0, (bookingSummary.adult_quantity || 0) - 1) !== 1 ? 's' : ''} 
                                                             {bookingSummary.child_quantity > 0 && ` and ${bookingSummary.child_quantity} child${bookingSummary.child_quantity !== 1 ? 'ren' : ''}`} 
-                                                            {' '}that will need to provide their details before the trip.
+                                                            {' '}below before proceeding to payment.
                                                         </p>
-                                                        <p className="text-yellow-600 text-xs mt-2">
-                                                            Additional passenger forms will be available after payment confirmation.
+                                                        <p className="text-green-600 text-xs mt-2">
+                                                            All passenger information is required for booking confirmation.
                                                         </p>
                                                     </div>
                                                 </div>
                                             </div>
+                                        )}
+
+                                        {/* Additional Passenger Forms */}
+                                        {passengerForms.length > 0 && (
+                                            <motion.div 
+                                                className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300"
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 0.6 }}
+                                            >
+                                                <div className="flex items-center gap-4 mb-6">
+                                                    <div className="bg-orange-600 rounded-2xl p-3 shadow-lg">
+                                                        <Users className="w-6 h-6 text-white" />
+                                                    </div>
+                                                    <h2 className="text-2xl font-bold text-gray-900">Additional Passenger Details</h2>
+                                                </div>
+
+                                                <div className="space-y-8">
+                                                    {passengerForms.map((passenger, index) => {
+                                                        const isAdult = passenger.type === 'adult';
+                                                        const passengerNumber = passenger.index + 1;
+                                                        const title = isAdult ? `Adult ${passengerNumber}` : `Child ${passengerNumber}`;
+                                                        const bgColor = isAdult ? 'bg-blue-50' : 'bg-green-50';
+                                                        const borderColor = isAdult ? 'border-blue-200' : 'border-green-200';
+                                                        
+                                                        return (
+                                                            <div key={passenger.id} className={`${bgColor} ${borderColor} border rounded-xl p-6`}>
+                                                                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
+                                                                        isAdult ? 'bg-blue-600' : 'bg-green-600'
+                                                                    }`}>
+                                                                        {passengerNumber}
+                                                                    </div>
+                                                                    {title}
+                                                                    {!isAdult && (
+                                                                        <span className="text-sm bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-medium">
+                                                                            Age required
+                                                                        </span>
+                                                                    )}
+                                                                </h3>
+                                                                
+                                                                <div className="grid md:grid-cols-2 gap-6">
+                                                                    {/* First Name */}
+                                                                    <div className="space-y-3">
+                                                                        <label className="block text-sm font-semibold text-gray-900">
+                                                                            First Name <span className="text-red-500">*</span>
+                                                                        </label>
+                                                                        <input
+                                                                            type="text"
+                                                                            name={`${passenger.id}_first_name`}
+                                                                            value={passenger.first_name}
+                                                                            onChange={(e) => handlePassengerFormChange(passenger.id, 'first_name', e.target.value)}
+                                                                            placeholder={`Enter ${title.toLowerCase()}'s first name`}
+                                                                            className={`w-full p-4 border-2 rounded-xl transition-all duration-300 ${
+                                                                                passengerErrors[`${passenger.id}_first_name`]
+                                                                                    ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100'
+                                                                                    : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                                                                            }`}
+                                                                        />
+                                                                        <AnimatePresence>
+                                                                            {passengerErrors[`${passenger.id}_first_name`] && (
+                                                                                <motion.p 
+                                                                                    className="text-red-500 text-sm flex items-center gap-2"
+                                                                                    initial={{ opacity: 0, y: -10 }}
+                                                                                    animate={{ opacity: 1, y: 0 }}
+                                                                                    exit={{ opacity: 0, y: -10 }}
+                                                                                >
+                                                                                    <AlertCircle className="w-4 h-4" />
+                                                                                    {passengerErrors[`${passenger.id}_first_name`]}
+                                                                                </motion.p>
+                                                                            )}
+                                                                        </AnimatePresence>
+                                                                    </div>
+                                                                    
+                                                                    {/* Last Name */}
+                                                                    <div className="space-y-3">
+                                                                        <label className="block text-sm font-semibold text-gray-900">
+                                                                            Last Name <span className="text-red-500">*</span>
+                                                                        </label>
+                                                                        <input
+                                                                            type="text"
+                                                                            name={`${passenger.id}_last_name`}
+                                                                            value={passenger.last_name}
+                                                                            onChange={(e) => handlePassengerFormChange(passenger.id, 'last_name', e.target.value)}
+                                                                            placeholder={`Enter ${title.toLowerCase()}'s last name`}
+                                                                            className={`w-full p-4 border-2 rounded-xl transition-all duration-300 ${
+                                                                                passengerErrors[`${passenger.id}_last_name`]
+                                                                                    ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100'
+                                                                                    : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                                                                            }`}
+                                                                        />
+                                                                        <AnimatePresence>
+                                                                            {passengerErrors[`${passenger.id}_last_name`] && (
+                                                                                <motion.p 
+                                                                                    className="text-red-500 text-sm flex items-center gap-2"
+                                                                                    initial={{ opacity: 0, y: -10 }}
+                                                                                    animate={{ opacity: 1, y: 0 }}
+                                                                                    exit={{ opacity: 0, y: -10 }}
+                                                                                >
+                                                                                    <AlertCircle className="w-4 h-4" />
+                                                                                    {passengerErrors[`${passenger.id}_last_name`]}
+                                                                                </motion.p>
+                                                                            )}
+                                                                        </AnimatePresence>
+                                                                    </div>
+                                                                    
+                                                                    {/* Email - Only for adults */}
+                                                                    {passenger.type === 'adult' && (
+                                                                        <div className="space-y-3">
+                                                                            <label className="block text-sm font-semibold text-gray-900">
+                                                                                Email Address <span className="text-red-500">*</span>
+                                                                            </label>
+                                                                            <input
+                                                                                type="email"
+                                                                                name={`${passenger.id}_email`}
+                                                                                value={passenger.email}
+                                                                                onChange={(e) => handlePassengerFormChange(passenger.id, 'email', e.target.value)}
+                                                                                placeholder={`Enter ${title.toLowerCase()}'s email`}
+                                                                                className={`w-full p-4 border-2 rounded-xl transition-all duration-300 ${
+                                                                                    passengerErrors[`${passenger.id}_email`]
+                                                                                        ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100'
+                                                                                        : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                                                                                }`}
+                                                                            />
+                                                                            <AnimatePresence>
+                                                                                {passengerErrors[`${passenger.id}_email`] && (
+                                                                                    <motion.p 
+                                                                                        className="text-red-500 text-sm flex items-center gap-2"
+                                                                                        initial={{ opacity: 0, y: -10 }}
+                                                                                        animate={{ opacity: 1, y: 0 }}
+                                                                                        exit={{ opacity: 0, y: -10 }}
+                                                                                    >
+                                                                                        <AlertCircle className="w-4 h-4" />
+                                                                                        {passengerErrors[`${passenger.id}_email`]}
+                                                                                    </motion.p>
+                                                                                )}
+                                                                            </AnimatePresence>
+                                                                        </div>
+                                                                    )}
+                                                                    
+                                                                    {/* Phone - Only for adults */}
+                                                                    {passenger.type === 'adult' && (
+                                                                        <div className="space-y-3">
+                                                                            <label className="block text-sm font-semibold text-gray-900">
+                                                                                Phone Number <span className="text-red-500">*</span>
+                                                                            </label>
+                                                                            <input
+                                                                                type="tel"
+                                                                                name={`${passenger.id}_phone`}
+                                                                                value={passenger.phone}
+                                                                                onChange={(e) => handlePassengerFormChange(passenger.id, 'phone', e.target.value)}
+                                                                                placeholder={`Enter ${title.toLowerCase()}'s phone`}
+                                                                                className={`w-full p-4 border-2 rounded-xl transition-all duration-300 ${
+                                                                                    passengerErrors[`${passenger.id}_phone`]
+                                                                                        ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100'
+                                                                                        : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                                                                                }`}
+                                                                            />
+                                                                            <AnimatePresence>
+                                                                                {passengerErrors[`${passenger.id}_phone`] && (
+                                                                                    <motion.p 
+                                                                                        className="text-red-500 text-sm flex items-center gap-2"
+                                                                                        initial={{ opacity: 0, y: -10 }}
+                                                                                        animate={{ opacity: 1, y: 0 }}
+                                                                                        exit={{ opacity: 0, y: -10 }}
+                                                                                    >
+                                                                                        <AlertCircle className="w-4 h-4" />
+                                                                                        {passengerErrors[`${passenger.id}_phone`]}
+                                                                                    </motion.p>
+                                                                                )}
+                                                                            </AnimatePresence>
+                                                                        </div>
+                                                                    )}
+                                                                    
+                                                                    {/* Country */}
+                                                                    <div className="space-y-3">
+                                                                        <label className="block text-sm font-semibold text-gray-900">
+                                                                            Country <span className="text-red-500">*</span>
+                                                                        </label>
+                                                                        <input
+                                                                            type="text"
+                                                                            name={`${passenger.id}_country`}
+                                                                            value={passenger.country}
+                                                                            onChange={(e) => handlePassengerFormChange(passenger.id, 'country', e.target.value)}
+                                                                            placeholder={`Enter ${title.toLowerCase()}'s country`}
+                                                                            list="countries-list"
+                                                                            className={`w-full p-4 border-2 rounded-xl transition-all duration-300 ${
+                                                                                passengerErrors[`${passenger.id}_country`]
+                                                                                    ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100'
+                                                                                    : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                                                                            }`}
+                                                                        />
+                                                                        <datalist id="countries-list">
+                                                                            {["United States", "United Kingdom", "Canada", "Australia", "Germany", "France", "Japan", "Singapore", "China", "India"].map(country => (
+                                                                                <option key={country} value={country} />
+                                                                            ))}
+                                                                        </datalist>
+                                                                        <AnimatePresence>
+                                                                            {passengerErrors[`${passenger.id}_country`] && (
+                                                                                <motion.p 
+                                                                                    className="text-red-500 text-sm flex items-center gap-2"
+                                                                                    initial={{ opacity: 0, y: -10 }}
+                                                                                    animate={{ opacity: 1, y: 0 }}
+                                                                                    exit={{ opacity: 0, y: -10 }}
+                                                                                >
+                                                                                    <AlertCircle className="w-4 h-4" />
+                                                                                    {passengerErrors[`${passenger.id}_country`]}
+                                                                                </motion.p>
+                                                                            )}
+                                                                        </AnimatePresence>
+                                                                    </div>
+                                                                    
+                                                                    {/* Passport/ID - Required for both adults and children */}
+                                                                    <div className="space-y-3">
+                                                                        <label className="block text-sm font-semibold text-gray-900">
+                                                                            Passport No. / ID No. <span className="text-red-500">*</span>
+                                                                        </label>
+                                                                        <input
+                                                                            type="text"
+                                                                            name={`${passenger.id}_passport_id`}
+                                                                            value={passenger.passport_id}
+                                                                            onChange={(e) => handlePassengerFormChange(passenger.id, 'passport_id', e.target.value)}
+                                                                            placeholder="Enter passport or ID number"
+                                                                            className={`w-full p-4 border-2 rounded-xl transition-all duration-300 ${
+                                                                                passengerErrors[`${passenger.id}_passport_id`]
+                                                                                    ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100'
+                                                                                    : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                                                                            }`}
+                                                                        />
+                                                                        <AnimatePresence>
+                                                                            {passengerErrors[`${passenger.id}_passport_id`] && (
+                                                                                <motion.p 
+                                                                                    className="text-red-500 text-sm flex items-center gap-2"
+                                                                                    initial={{ opacity: 0, y: -10 }}
+                                                                                    animate={{ opacity: 1, y: 0 }}
+                                                                                    exit={{ opacity: 0, y: -10 }}
+                                                                                >
+                                                                                    <AlertCircle className="w-4 h-4" />
+                                                                                    {passengerErrors[`${passenger.id}_passport_id`]}
+                                                                                </motion.p>
+                                                                            )}
+                                                                        </AnimatePresence>
+                                                                    </div>
+                                                                    
+                                                                    {/* Age - Only for children */}
+                                                                    {passenger.type === 'child' && (
+                                                                        <div className="space-y-3">
+                                                                            <label className="block text-sm font-semibold text-gray-900">
+                                                                                Age <span className="text-red-500">*</span>
+                                                                                <span className="text-xs text-gray-500 ml-2">(0-17 years)</span>
+                                                                            </label>
+                                                                            <input
+                                                                                type="number"
+                                                                                name={`${passenger.id}_age`}
+                                                                                min="0"
+                                                                                max="17"
+                                                                                value={passenger.age}
+                                                                                onChange={(e) => handlePassengerFormChange(passenger.id, 'age', e.target.value)}
+                                                                                placeholder="Enter child's age"
+                                                                                className={`w-full p-4 border-2 rounded-xl transition-all duration-300 ${
+                                                                                    passengerErrors[`${passenger.id}_age`]
+                                                                                        ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100'
+                                                                                        : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                                                                                }`}
+                                                                            />
+                                                                            <AnimatePresence>
+                                                                                {passengerErrors[`${passenger.id}_age`] && (
+                                                                                    <motion.p 
+                                                                                        className="text-red-500 text-sm flex items-center gap-2"
+                                                                                        initial={{ opacity: 0, y: -10 }}
+                                                                                        animate={{ opacity: 1, y: 0 }}
+                                                                                        exit={{ opacity: 0, y: -10 }}
+                                                                                    >
+                                                                                        <AlertCircle className="w-4 h-4" />
+                                                                                        {passengerErrors[`${passenger.id}_age`]}
+                                                                                    </motion.p>
+                                                                                )}
+                                                                            </AnimatePresence>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </motion.div>
                                         )}
                                     </motion.div>
                                 )}
