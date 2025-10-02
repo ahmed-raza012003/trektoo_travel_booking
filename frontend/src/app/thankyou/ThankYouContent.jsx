@@ -318,7 +318,7 @@ const ThankYouPage = () => {
         format: 'a4'
       });
 
-      // Define colors and styles
+      // Define colors and styles - Professional Blue Theme
       const colors = {
         primary: [37, 99, 235],     // Blue #2563eb
         secondary: [59, 130, 246],  // Light Blue #3b82f6
@@ -329,288 +329,470 @@ const ThankYouPage = () => {
         light: [243, 244, 246],     // Gray-100 #f3f4f6
         text: [55, 65, 81],         // Gray-700 #374151
         border: [229, 231, 235],    // Gray-200 #e5e7eb
-        success: [34, 197, 94]      // Green-500 #22c55e
+        success: [34, 197, 94],     // Green-500 #22c55e
+        blueLight: [239, 246, 255], // Blue-50 #eff6ff
+        blueMedium: [147, 197, 253], // Blue-300 #93c5fd
+        blueDark: [30, 64, 175],    // Blue-800 #1e40af
+        grayLight: [249, 250, 251], // Gray-50 #f9fafb
+        grayMedium: [156, 163, 175] // Gray-400 #9ca3af
       };
 
       // Set font
       doc.setFont('helvetica');
 
-      // Utility functions
+      // Enhanced utility functions for responsive design
       const addPageFooter = (pageNum, totalPages) => {
-        doc.setDrawColor(...colors.border);
-        doc.setLineWidth(0.1);
+        // Elegant footer with gradient effect
+        doc.setFillColor(...colors.blueLight);
+        doc.rect(0, 280, 210, 30, 'F');
+        
+        doc.setDrawColor(...colors.primary);
+        doc.setLineWidth(0.5);
         doc.line(20, 285, 190, 285);
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text(`TrekToo Booking Overview | ${booking.agent_order_id}`, 20, 290);
-        doc.text(`Page ${pageNum} of ${totalPages}`, 190, 290, { align: 'right' });
+        
+        doc.setFontSize(9);
+        doc.setTextColor(...colors.primary);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`TrekToo Travel Booking`, 20, 292);
+        doc.text(`Order: ${booking.agent_order_id}`, 20, 297);
+        
+        doc.setTextColor(...colors.grayMedium);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Page ${pageNum} of ${totalPages}`, 190, 292, { align: 'right' });
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 190, 297, { align: 'right' });
       };
 
       const checkPageBreak = (currentY, minHeight = 20) => {
-        if (currentY > 270) {
+        if (currentY > 260) {
           doc.addPage();
           return 30;
         }
         return currentY;
       };
 
-      const addSectionHeader = (title, currentY, color = colors.primary) => {
+      const addSectionHeader = (title, currentY, color = colors.primary, icon = null) => {
+        // Elegant section header with gradient and icon
+        const headerHeight = 16;
+        
+        // Main header background
         doc.setFillColor(...color);
-        doc.rect(20, currentY - 5, 170, 12, 'F');
+        doc.roundedRect(20, currentY - 6, 170, headerHeight, 3, 3, 'F');
+        
+        // Subtle shadow effect
+        doc.setFillColor(...colors.blueDark);
+        doc.roundedRect(21, currentY - 5, 170, headerHeight, 3, 3, 'F');
+        
+        // Main header
+        doc.setFillColor(...color);
+        doc.roundedRect(20, currentY - 6, 170, headerHeight, 3, 3, 'F');
+        
+        // Icon if provided
+        if (icon) {
+          doc.setFillColor(255, 255, 255);
+          doc.circle(30, currentY + 2, 3, 'F');
+        }
+        
+        // Title text
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(14);
+        doc.setFontSize(13);
         doc.setFont('helvetica', 'bold');
-        doc.text(title, 25, currentY + 3);
-        return currentY + 15;
+        doc.text(title, icon ? 40 : 25, currentY + 3);
+        
+        return currentY + 18;
       };
 
-      // PAGE 1: Header and Booking Overview
-      // Header with logo
-      doc.setFillColor(...colors.primary);
-      doc.rect(0, 0, 210, 45, 'F');
+      const addInfoCard = (title, value, currentY, isHighlight = false) => {
+        const cardHeight = 12;
+        const cardWidth = 80;
+        
+        // Card background
+        doc.setFillColor(...(isHighlight ? colors.blueLight : colors.grayLight));
+        doc.roundedRect(20, currentY, cardWidth, cardHeight, 2, 2, 'F');
+        
+        // Card border
+        doc.setDrawColor(...colors.border);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(20, currentY, cardWidth, cardHeight, 2, 2, 'S');
+        
+        // Title
+        doc.setFontSize(8);
+        doc.setTextColor(...colors.grayMedium);
+        doc.setFont('helvetica', 'normal');
+        doc.text(title, 22, currentY + 4);
+        
+        // Value
+        doc.setFontSize(10);
+        doc.setTextColor(...(isHighlight ? colors.primary : colors.dark));
+        doc.setFont('helvetica', 'bold');
+        doc.text(value, 22, currentY + 8);
+        
+        return currentY + cardHeight + 4;
+      };
 
-      // Logo placeholder
+      const addPassengerCard = (passenger, currentY, isLead = false) => {
+        const cardHeight = isLead ? 20 : 16;
+        const cardWidth = 170;
+        
+        // Card background with different colors for lead vs regular
+        doc.setFillColor(...(isLead ? colors.blueLight : colors.grayLight));
+        doc.roundedRect(20, currentY, cardWidth, cardHeight, 4, 4, 'F');
+        
+        // Card border
+        doc.setDrawColor(...(isLead ? colors.primary : colors.border));
+        doc.setLineWidth(isLead ? 0.8 : 0.3);
+        doc.roundedRect(20, currentY, cardWidth, cardHeight, 4, 4, 'S');
+        
+        // Lead passenger badge
+        if (isLead) {
+          doc.setFillColor(...colors.primary);
+          doc.roundedRect(25, currentY + 2, 30, 6, 3, 3, 'F');
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(7);
+          doc.setFont('helvetica', 'bold');
+          doc.text('LEAD', 40, currentY + 5, { align: 'center' });
+        }
+        
+        // Passenger name
+        doc.setFontSize(11);
+        doc.setTextColor(...colors.dark);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${passenger.first_name} ${passenger.last_name}`, 25, currentY + (isLead ? 10 : 6));
+        
+        // Passenger details
+        doc.setFontSize(8);
+        doc.setTextColor(...colors.text);
+        doc.setFont('helvetica', 'normal');
+        
+        let detailY = currentY + (isLead ? 13 : 9);
+        const details = [];
+        
+        if (passenger.email) details.push(`Email: ${passenger.email}`);
+        if (passenger.phone) details.push(`Phone: ${passenger.phone}`);
+        details.push(`Country: ${passenger.country}`);
+        details.push(`ID: ${passenger.passport_id}`);
+        if (passenger.age !== null) details.push(`Age: ${passenger.age}`);
+        
+        details.forEach((detail, index) => {
+          if (detailY < currentY + cardHeight - 2) {
+            doc.text(detail, 25, detailY);
+            detailY += 3;
+          }
+        });
+        
+        return currentY + cardHeight + 6;
+      };
+
+      // PAGE 1: Elegant Header and Booking Overview
+      // Modern gradient header
+      doc.setFillColor(...colors.primary);
+      doc.rect(0, 0, 210, 50, 'F');
+      
+      // Subtle gradient effect
+      doc.setFillColor(...colors.blueDark);
+      doc.rect(0, 0, 210, 5, 'F');
+      
+      // Logo area with modern design
       doc.setFillColor(255, 255, 255);
-      doc.rect(20, 12, 35, 12, 'F');
+      doc.roundedRect(20, 15, 40, 20, 4, 4, 'F');
       doc.setTextColor(...colors.primary);
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text('TREKTOO', 40, 28, { align: 'center' });
+
+      // Main title with elegant typography
+      doc.setTextColor(255, 255, 255);
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text('TREKTOO', 25, 20);
-
-      // Title
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16);
+      doc.text('BOOKING CONFIRMATION', 80, 25);
+      
+      // Subtitle
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text('BOOKING OVERVIEW', 80, 20);
+      doc.setTextColor(...colors.blueMedium);
+      doc.text('Your Adventure Awaits', 80, 30);
 
       // Decorative elements
-      doc.setFillColor(...colors.secondary);
-      doc.circle(190, 22, 6, 'F');
+      doc.setFillColor(255, 255, 255);
+      doc.circle(185, 20, 4, 'F');
+      doc.circle(190, 25, 2, 'F');
+      doc.circle(180, 30, 3, 'F');
 
-      let currentY = 60;
+      let currentY = 70;
 
-      // Removed booking status section
-
-      // Activity Information
-      currentY = addSectionHeader('ACTIVITY INFORMATION', currentY);
+      // Activity Information with modern card design
+      currentY = addSectionHeader('ACTIVITY INFORMATION', currentY, colors.primary);
       
+      // Activity name with elegant typography
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...colors.dark);
-      const activityLines = doc.splitTextToSize(booking.activity_name || 'Activity', 170);
-      activityLines.forEach(line => {
-        doc.text(line, 20, currentY);
-        currentY += 8;
+      const activityLines = doc.splitTextToSize(booking.activity_name || 'Activity', 160);
+      activityLines.forEach((line, index) => {
+        doc.text(line, 25, currentY + (index * 7));
       });
+      currentY += (activityLines.length * 7) + 8;
 
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...colors.text);
-      doc.text(`Package ID: ${booking.activity_package_id}`, 20, currentY);
-      currentY += 10;
-
-      // Booking Details Grid
-      doc.setDrawColor(...colors.border);
+      // Package info in a card
+      doc.setFillColor(...colors.blueLight);
+      doc.roundedRect(25, currentY, 160, 12, 3, 3, 'F');
+      doc.setDrawColor(...colors.primary);
       doc.setLineWidth(0.5);
-      doc.line(20, currentY, 190, currentY);
-      currentY += 10;
-
-      doc.setFontSize(11);
-      doc.setTextColor(...colors.text);
-
-      // Left column
-      doc.text('Booking ID:', 20, currentY);
+      doc.roundedRect(25, currentY, 160, 12, 3, 3, 'S');
+      
+      doc.setFontSize(10);
+      doc.setTextColor(...colors.primary);
       doc.setFont('helvetica', 'bold');
-      doc.text(booking.id.toString(), 20, currentY + 6);
+      doc.text('Package ID:', 28, currentY + 4);
       doc.setFont('helvetica', 'normal');
-      currentY += 12;
+      doc.text(booking.activity_package_id, 28, currentY + 8);
+      currentY += 18;
 
-      doc.text('Agent Order ID:', 20, currentY);
-      doc.setFont('helvetica', 'bold');
-      doc.text(booking.agent_order_id, 20, currentY + 6);
-      doc.setFont('helvetica', 'normal');
-      currentY += 12;
+      // Booking Details in responsive grid
+      currentY = addSectionHeader('BOOKING DETAILS', currentY, colors.secondary);
+      
+      // Create responsive grid of info cards
+      const bookingDetails = [
+        { title: 'Booking ID', value: booking.id.toString(), highlight: false },
+        { title: 'Order ID', value: booking.agent_order_id, highlight: true },
+        { title: 'Status', value: booking.status.toUpperCase(), highlight: true },
+        { title: 'Activity Date', value: booking.activity_date ? 
+          new Date(booking.activity_date).toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }) : 'Not specified', highlight: false }
+      ];
 
-      // Right column
-      doc.text('Activity Date:', 120, currentY - 24);
-      doc.setFont('helvetica', 'bold');
-      const activityDate = booking.activity_date ?
-        new Date(booking.activity_date).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        }) :
-        'Not specified';
-      doc.text(activityDate, 120, currentY - 18);
-      doc.setFont('helvetica', 'normal');
+      // Responsive grid layout
+      let gridY = currentY;
+      const cardWidth = 80;
+      const cardSpacing = 10;
+      const cardsPerRow = 2;
+      
+      bookingDetails.forEach((detail, index) => {
+        const col = index % cardsPerRow;
+        const row = Math.floor(index / cardsPerRow);
+        const x = 20 + (col * (cardWidth + cardSpacing));
+        const y = gridY + (row * 20);
+        
+        // Card background
+        doc.setFillColor(...(detail.highlight ? colors.blueLight : colors.grayLight));
+        doc.roundedRect(x, y, cardWidth, 16, 3, 3, 'F');
+        
+        // Card border
+        doc.setDrawColor(...(detail.highlight ? colors.primary : colors.border));
+        doc.setLineWidth(detail.highlight ? 0.8 : 0.3);
+        doc.roundedRect(x, y, cardWidth, 16, 3, 3, 'S');
+        
+        // Title
+        doc.setFontSize(8);
+        doc.setTextColor(...colors.grayMedium);
+        doc.setFont('helvetica', 'normal');
+        doc.text(detail.title, x + 3, y + 5);
+        
+        // Value
+        doc.setFontSize(10);
+        doc.setTextColor(...(detail.highlight ? colors.primary : colors.dark));
+        doc.setFont('helvetica', 'bold');
+        const valueLines = doc.splitTextToSize(detail.value, cardWidth - 6);
+        valueLines.forEach((line, lineIndex) => {
+          doc.text(line, x + 3, y + 9 + (lineIndex * 4));
+        });
+      });
+      
+      currentY = gridY + (Math.ceil(bookingDetails.length / cardsPerRow) * 20) + 10;
 
-      doc.text('Status:', 120, currentY - 12);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...colors.success);
-      doc.text(booking.status.toUpperCase(), 120, currentY - 6);
-      doc.setTextColor(...colors.text);
-      doc.setFont('helvetica', 'normal');
-      currentY += 6;
-
-      // Payment Information
+      // Payment Information with elegant design
       currentY = addSectionHeader('PAYMENT INFORMATION', currentY, colors.accent);
-
-      doc.setFontSize(11);
-      doc.setTextColor(...colors.text);
-
-      // Payment Information - Simplified
+      
       const totalPrice = parseFloat(booking.total_price) || 0;
       const totalPaid = payment ? parseFloat(payment.amount) || 0 : totalPrice;
 
+      // Payment summary card
+      doc.setFillColor(...colors.success);
+      doc.roundedRect(20, currentY, 170, 20, 4, 4, 'F');
+      
+      // Payment details
+      doc.setFontSize(12);
+      doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.text('Total Paid:', 20, currentY);
-      doc.setTextColor(...colors.success);
-      doc.text(`${totalPaid.toFixed(2)} ${booking.currency}`, 120, currentY, { align: 'right' });
-      doc.setTextColor(...colors.text);
-      currentY += 15;
+      doc.text('Total Amount Paid', 25, currentY + 8);
+      
+      doc.setFontSize(18);
+      doc.text(`${totalPaid.toFixed(2)} ${booking.currency}`, 25, currentY + 15);
+      
+      // Payment method if available
+      if (payment && payment.method) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...colors.blueMedium);
+        doc.text(`Paid via ${payment.method}`, 25, currentY + 19);
+      }
+      
+      currentY += 25;
 
-      // Passenger Information
+      // Passenger Information with modern card layout
       currentY = addSectionHeader('PASSENGER INFORMATION', currentY, colors.warning);
       
-      // Lead Passenger
+      // Passenger summary
+      doc.setFillColor(...colors.blueLight);
+      doc.roundedRect(20, currentY, 170, 12, 3, 3, 'F');
+      doc.setDrawColor(...colors.primary);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(20, currentY, 170, 12, 3, 3, 'S');
+      
+      doc.setFontSize(10);
+      doc.setTextColor(...colors.primary);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Total Travelers: ${summary.total_passengers}`, 25, currentY + 4);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Adults: ${summary.adult_passengers} | Children: ${summary.child_passengers}`, 25, currentY + 8);
+      currentY += 16;
+
+      // Lead Passenger Card
       const leadPassenger = summary.lead_passenger;
       if (leadPassenger) {
-        doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...colors.dark);
-        doc.text('Lead Passenger:', 20, currentY);
-        currentY += 8;
-
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...colors.text);
-        
-        const leadPassengerInfo = [
-          `Name: ${leadPassenger.first_name} ${leadPassenger.last_name}`,
-          `Email: ${leadPassenger.email || 'N/A'}`,
-          `Phone: ${leadPassenger.phone || 'N/A'}`,
-          `Country: ${leadPassenger.country}`,
-          `Passport/ID: ${leadPassenger.passport_id}`
-        ];
-
-        leadPassengerInfo.forEach(info => {
-          doc.text(info, 25, currentY);
-          currentY += 6;
-        });
-        currentY += 8;
+        currentY = addPassengerCard(leadPassenger, currentY, true);
       }
 
-      // All Passengers
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...colors.dark);
-      doc.text(`Total Passengers: ${summary.total_passengers} (${summary.adult_passengers} adults, ${summary.child_passengers} children)`, 20, currentY);
-      currentY += 8;
-
-      // List all passengers
+      // Additional Passengers Cards
       passengers.forEach((passenger, index) => {
         if (!passenger.is_lead_passenger) {
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...colors.text);
-          doc.text(`${passenger.type.toUpperCase()} ${passenger.passenger_number}:`, 25, currentY);
-          currentY += 6;
-          
-          doc.text(`  • Name: ${passenger.first_name} ${passenger.last_name}`, 30, currentY);
-      currentY += 5;
-
-          if (passenger.email) {
-            doc.text(`  • Email: ${passenger.email}`, 30, currentY);
-      currentY += 5;
-          }
-          
-          if (passenger.phone) {
-            doc.text(`  • Phone: ${passenger.phone}`, 30, currentY);
-      currentY += 5;
-          }
-          
-          doc.text(`  • Country: ${passenger.country}`, 30, currentY);
-          currentY += 5;
-          
-          doc.text(`  • Passport/ID: ${passenger.passport_id}`, 30, currentY);
-          currentY += 5;
-          
-          if (passenger.age !== null) {
-            doc.text(`  • Age: ${passenger.age}`, 30, currentY);
-            currentY += 5;
-          }
-          
-          currentY += 3;
+          currentY = checkPageBreak(currentY, 20);
+          currentY = addPassengerCard(passenger, currentY, false);
         }
       });
 
-      // QR Code
+      // QR Code with elegant design
       currentY = checkPageBreak(currentY, 60);
+      
+      // QR Code container
+      doc.setFillColor(...colors.blueLight);
+      doc.roundedRect(130, currentY, 60, 50, 4, 4, 'F');
+      doc.setDrawColor(...colors.primary);
+      doc.setLineWidth(1);
+      doc.roundedRect(130, currentY, 60, 50, 4, 4, 'S');
+      
       try {
         const QRCode = require('qrcode');
         const canvas = document.createElement('canvas');
-        await QRCode.toCanvas(canvas, voucherCode, { width: 50, height: 50 });
+        await QRCode.toCanvas(canvas, voucherCode, { width: 40, height: 40 });
         const imgData = canvas.toDataURL('image/png');
-        doc.addImage(imgData, 'PNG', 140, currentY, 50, 50);
+        doc.addImage(imgData, 'PNG', 140, currentY + 5, 40, 40);
       } catch (error) {
         console.error('QR Code generation error:', error);
         doc.setFillColor(...colors.light);
-        doc.rect(140, currentY, 50, 50, 'F');
-      doc.setTextColor(...colors.text);
+        doc.roundedRect(140, currentY + 5, 40, 40, 2, 2, 'F');
+        doc.setTextColor(...colors.text);
         doc.setFontSize(8);
-        doc.text('QR Code', 165, currentY + 25, { align: 'center' });
+        doc.text('QR Code', 160, currentY + 25, { align: 'center' });
       }
+      
+      // QR Code label
+      doc.setFontSize(8);
+      doc.setTextColor(...colors.primary);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Voucher Code', 160, currentY + 48, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.text(voucherCode, 160, currentY + 52, { align: 'center' });
+      
       currentY += 60;
 
       addPageFooter(1, 2);
 
-      // PAGE 2: Additional Details
+      // PAGE 2: Additional Details with modern design
       doc.addPage();
 
-      // Header
+      // Elegant header for second page
       doc.setFillColor(...colors.primary);
-      doc.rect(0, 0, 210, 30, 'F');
+      doc.rect(0, 0, 210, 35, 'F');
+      
+      // Subtle gradient
+      doc.setFillColor(...colors.blueDark);
+      doc.rect(0, 0, 210, 3, 'F');
+      
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(18);
+      doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
-      doc.text('BOOKING DETAILS', 20, 20);
+      doc.text('BOOKING DETAILS', 20, 22);
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...colors.blueMedium);
+      doc.text('Complete Information & Voucher', 20, 28);
 
-      currentY = 40;
+      currentY = 50;
 
-      // Voucher Information
-      currentY = addSectionHeader('VOUCHER INFORMATION', currentY);
+      // Voucher Information with modern card
+      currentY = addSectionHeader('VOUCHER INFORMATION', currentY, colors.accent);
+      
+      // Voucher card
+      doc.setFillColor(...colors.blueLight);
+      doc.roundedRect(20, currentY, 170, 16, 4, 4, 'F');
+      doc.setDrawColor(...colors.accent);
+      doc.setLineWidth(0.8);
+      doc.roundedRect(20, currentY, 170, 16, 4, 4, 'S');
       
       doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
       doc.setTextColor(...colors.accent);
-      doc.text(`Voucher Code: ${voucherCode}`, 20, currentY);
-      currentY += 15;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Voucher Code:', 25, currentY + 6);
+      doc.setFont('helvetica', 'normal');
+      doc.text(voucherCode, 25, currentY + 12);
+      currentY += 22;
 
-      // Booking Summary
+      // Booking Summary with responsive cards
       currentY = addSectionHeader('BOOKING SUMMARY', currentY, colors.secondary);
       
       const bookingSummary = [
-        `Booking Type: ${booking.type}`,
-        `External Booking ID: ${booking.external_booking_id || 'N/A'}`,
-        `Adults: ${booking.adults}`,
-        `Children: ${booking.children}`,
-        `Total Guests: ${booking.guests}`,
-        `Created: ${new Date(booking.created_at).toLocaleDateString()}`,
-        `Confirmed: ${booking.confirmed_at ? new Date(booking.confirmed_at).toLocaleDateString() : 'Not confirmed'}`
+        { title: 'Booking Type', value: booking.type, highlight: false },
+        { title: 'External ID', value: booking.external_booking_id || 'N/A', highlight: true },
+        { title: 'Adults', value: booking.adults.toString(), highlight: false },
+        { title: 'Children', value: booking.children.toString(), highlight: false },
+        { title: 'Total Guests', value: booking.guests.toString(), highlight: true },
+        { title: 'Created', value: new Date(booking.created_at).toLocaleDateString(), highlight: false },
+        { title: 'Confirmed', value: booking.confirmed_at ? new Date(booking.confirmed_at).toLocaleDateString() : 'Not confirmed', highlight: booking.confirmed_at ? true : false }
       ];
 
-      doc.setFontSize(11);
+      // Responsive grid for booking summary
+      gridY = currentY;
+      const summaryCardWidth = 80;
+      const summaryCardSpacing = 10;
+      const summaryCardsPerRow = 2;
+      
+      bookingSummary.forEach((item, index) => {
+        const col = index % summaryCardsPerRow;
+        const row = Math.floor(index / summaryCardsPerRow);
+        const x = 20 + (col * (summaryCardWidth + summaryCardSpacing));
+        const y = gridY + (row * 18);
+        
+        // Card background
+        doc.setFillColor(...(item.highlight ? colors.blueLight : colors.grayLight));
+        doc.roundedRect(x, y, summaryCardWidth, 16, 3, 3, 'F');
+        
+        // Card border
+        doc.setDrawColor(...(item.highlight ? colors.secondary : colors.border));
+        doc.setLineWidth(item.highlight ? 0.8 : 0.3);
+        doc.roundedRect(x, y, summaryCardWidth, 16, 3, 3, 'S');
+        
+        // Title
+        doc.setFontSize(8);
+        doc.setTextColor(...colors.grayMedium);
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...colors.text);
-
-      bookingSummary.forEach(info => {
-          currentY = checkPageBreak(currentY, 10);
-        doc.text(info, 20, currentY);
-          currentY += 7;
+        doc.text(item.title, x + 3, y + 5);
+        
+        // Value
+        doc.setFontSize(9);
+        doc.setTextColor(...(item.highlight ? colors.secondary : colors.dark));
+        doc.setFont('helvetica', 'bold');
+        const valueLines = doc.splitTextToSize(item.value, summaryCardWidth - 6);
+        valueLines.forEach((line, lineIndex) => {
+          doc.text(line, x + 3, y + 9 + (lineIndex * 3));
         });
-        currentY += 5;
-
-      // Removed Important Information and Contact Information sections
+      });
+      
+      currentY = gridY + (Math.ceil(bookingSummary.length / summaryCardsPerRow) * 18) + 10;
 
       addPageFooter(2, 2);
 
