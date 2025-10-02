@@ -313,6 +313,17 @@ class PaymentController extends BaseController
             'booking_data.child_quantity' => 'sometimes|integer|min:0',
             'booking_data.customer_phone' => 'sometimes|nullable|string',
             'booking_data.customer_country' => 'sometimes|nullable|string',
+            'original_amount' => 'required|numeric|min:0.01',
+            'markup_percentage' => 'required|numeric|min:0',
+            'passengers' => 'required|array',
+            'passengers.*.type' => 'required|string|in:adult,child',
+            'passengers.*.first_name' => 'required|string',
+            'passengers.*.last_name' => 'required|string',
+            'passengers.*.email' => 'required_if:passengers.*.type,adult|nullable|email',
+            'passengers.*.phone' => 'required_if:passengers.*.type,adult|nullable|string',
+            'passengers.*.country' => 'required|string',
+            'passengers.*.passport_id' => 'required|string',
+            'passengers.*.age' => 'required_if:passengers.*.type,child|nullable|integer|min:0|max:17',
         ]);
 
         try {
@@ -327,6 +338,10 @@ class PaymentController extends BaseController
 
             $user = Auth::user();
             $bookingData = $request->booking_data;
+            $passengers = $request->passengers;
+
+            // Calculate markup amount
+            $markupAmount = $request->original_amount * ($request->markup_percentage / 100);
 
             // Create booking record from Klook data
             $booking = Booking::create([
@@ -339,7 +354,10 @@ class PaymentController extends BaseController
                 'adults' => $bookingData['adult_quantity'] ?? 1,
                 'children' => $bookingData['child_quantity'] ?? 0,
                 'guests' => ($bookingData['adult_quantity'] ?? 1) + ($bookingData['child_quantity'] ?? 0),
-                'total_price' => $request->amount,
+                'total_price' => $request->amount, // Final amount including markup
+                'original_amount' => $request->original_amount,
+                'markup_percentage' => $request->markup_percentage,
+                'markup_amount' => $markupAmount,
                 'currency' => $request->currency,
                 'status' => 'pending',
                 'external_booking_id' => $request->order_id,
@@ -352,6 +370,9 @@ class PaymentController extends BaseController
                 ],
                 'booking_details' => $bookingData
             ]);
+
+            // Create passenger records
+            $this->createPassengers($booking, $passengers);
 
             Log::info('Klook Payment Intent - Booking created with external_booking_id', [
                 'booking_id' => $booking->id,
@@ -1126,5 +1147,44 @@ class PaymentController extends BaseController
 
             return $this->errorResponse('Failed to complete payment flow', 500, $e->getMessage());
         }
+    }
+
+    /**
+     * Create passenger records for a booking
+     */
+    private function createPassengers(Booking $booking, array $passengers): void
+    {
+        $passengerNumber = 1;
+        $leadPassengerSet = false;
+
+        foreach ($passengers as $passengerData) {
+            // Determine if this is the lead passenger (first adult)
+            $isLeadPassenger = false;
+            if ($passengerData['type'] === 'adult' && !$leadPassengerSet) {
+                $isLeadPassenger = true;
+                $leadPassengerSet = true;
+            }
+
+            \App\Models\Passenger::create([
+                'booking_id' => $booking->id,
+                'type' => $passengerData['type'],
+                'passenger_number' => $passengerNumber,
+                'is_lead_passenger' => $isLeadPassenger,
+                'first_name' => $passengerData['first_name'],
+                'last_name' => $passengerData['last_name'],
+                'email' => $passengerData['email'] ?? null,
+                'phone' => $passengerData['phone'] ?? null,
+                'country' => $passengerData['country'],
+                'passport_id' => $passengerData['passport_id'],
+                'age' => $passengerData['age'] ?? null,
+            ]);
+
+            $passengerNumber++;
+        }
+
+        Log::info('Passengers created for booking', [
+            'booking_id' => $booking->id,
+            'passenger_count' => count($passengers)
+        ]);
     }
 }

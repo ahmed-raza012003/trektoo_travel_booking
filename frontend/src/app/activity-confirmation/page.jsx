@@ -452,6 +452,44 @@ const OrderConfirmationPage = () => {
                     orderData: orderData
                 });
 
+                // Prepare passenger data
+                const passengers = [];
+                
+                // Add lead passenger (booker info)
+                if (bookerInfo) {
+                    passengers.push({
+                        type: 'adult',
+                        first_name: bookerInfo.first_name || '',
+                        last_name: bookerInfo.last_name || '',
+                        email: bookerInfo.email || '',
+                        phone: bookerInfo.phone || '',
+                        country: bookerInfo.country || '',
+                        passport_id: bookerInfo.passport_id || ''
+                    });
+                }
+                
+                // Add additional passengers
+                passengerForms.forEach((passenger) => {
+                    const passengerData = {
+                        type: passenger.type,
+                        first_name: passenger.first_name,
+                        last_name: passenger.last_name,
+                        country: passenger.country,
+                        passport_id: passenger.passport_id
+                    };
+                    
+                    // Add email and phone for adults only
+                    if (passenger.type === 'adult') {
+                        passengerData.email = passenger.email;
+                        passengerData.phone = passenger.phone;
+                    } else {
+                        // Add age for children only
+                        passengerData.age = passenger.age;
+                    }
+                    
+                    passengers.push(passengerData);
+                });
+
                 const response = await fetch(`${API_BASE}/klook/payment-intent`, {
                     method: 'POST',
                     headers: {
@@ -466,6 +504,9 @@ const OrderConfirmationPage = () => {
                         currency: orderData.currency || 'USD',
                         customer_email: customerEmail,
                         customer_name: customerName,
+                        original_amount: originalTotal.toFixed(2),
+                        markup_percentage: (markupRate * 100).toFixed(2),
+                        passengers: passengers,
                         booking_data: {
                             activity_id: storedBooking.activity_id || 'activity_123',
                             activity_name: orderData.bookings?.[0]?.activity_name || storedBooking.package_name || 'Klook Activity',
@@ -1284,8 +1325,8 @@ const OrderConfirmationPage = () => {
                                         </div>
 
                                         <div className="space-y-4 mb-6">
-                                            {/* Original Price */}
-                                            <div className="text-sm text-gray-500 mb-2">Original Price:</div>
+                                            {/* Original Amount */}
+                                            <div className="text-sm text-gray-500 mb-2">Original Amount:</div>
                                             {orderData.skus?.map((sku, index) => (
                                                 <div key={index} className="flex justify-between text-sm text-gray-500">
                                                     <span>SKU {sku.sku_id} (x{sku.quantity})</span>
@@ -1299,19 +1340,19 @@ const OrderConfirmationPage = () => {
                                                 <div className="flex justify-between text-sm text-gray-500">
                                                     <span>Original Total:</span>
                                                     <span>
-                                                        {orderData.total_amount} {orderData.currency}
+                                                        {originalTotal.toFixed(2)} {orderData.currency}
                                                     </span>
                                                 </div>
                                             </div>
 
-                                            {/* Service Fee */}
+                                            {/* Markup Fee */}
                                             <div className="pt-4">
                                                 <div className="flex items-center gap-2 text-sm font-medium mb-2">
                                                     <Percent className="w-4 h-4 text-blue-600" />
-                                                    <span>Service Fee ({markupRate * 100}%)</span>
+                                                    <span>Markup Fee ({(markupRate * 100).toFixed(1)}%)</span>
                                                 </div>
                                                 <div className="flex justify-between text-sm">
-                                                    <span>Service Fee</span>
+                                                    <span>Markup Fee</span>
                                                     <span className="text-blue-600">
                                                         +{markupAmount.toFixed(2)} {orderData.currency}
                                                     </span>

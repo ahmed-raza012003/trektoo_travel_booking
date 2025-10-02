@@ -34,6 +34,9 @@ class Booking extends Model
         'children',
         'total_price',
         'subtotal',
+        'original_amount',
+        'markup_percentage',
+        'markup_amount',
         'tax_amount',
         'service_fee',
         'currency',
@@ -42,6 +45,7 @@ class Booking extends Model
         'agent_order_id',
         'customer_info',
         'booking_details',
+        'external_booking_data',
         'ratehawk_booking_data',
         'ratehawk_order_id',
         'hotel_images',
@@ -56,6 +60,7 @@ class Booking extends Model
         'activity_schedule' => 'array',
         'customer_info' => 'array',
         'booking_details' => 'array',
+        'external_booking_data' => 'array',
         'ratehawk_booking_data' => 'array',
         'hotel_images' => 'array',
         'hotel_amenities' => 'array',
@@ -69,6 +74,9 @@ class Booking extends Model
         'cancelled_at' => 'datetime',
         'total_price' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'original_amount' => 'decimal:2',
+        'markup_percentage' => 'decimal:2',
+        'markup_amount' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'service_fee' => 'decimal:2',
     ];
@@ -87,6 +95,14 @@ class Booking extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Get the passengers for the booking.
+     */
+    public function passengers(): HasMany
+    {
+        return $this->hasMany(Passenger::class);
     }
 
     /**
@@ -221,5 +237,48 @@ class Booking extends Model
     public function getHotelDisplayNameAttribute(): string
     {
         return $this->hotel_name ?? 'Hotel Booking';
+    }
+
+    /**
+     * Get the lead passenger for this booking.
+     */
+    public function leadPassenger(): HasOne
+    {
+        return $this->hasOne(Passenger::class)->where('is_lead_passenger', true);
+    }
+
+    /**
+     * Get adult passengers for this booking.
+     */
+    public function adultPassengers(): HasMany
+    {
+        return $this->hasMany(Passenger::class)->where('type', 'adult');
+    }
+
+    /**
+     * Get child passengers for this booking.
+     */
+    public function childPassengers(): HasMany
+    {
+        return $this->hasMany(Passenger::class)->where('type', 'child');
+    }
+
+    /**
+     * Calculate markup amount from percentage.
+     */
+    public function calculateMarkupAmount(): float
+    {
+        if ($this->original_amount && $this->markup_percentage) {
+            return $this->original_amount * ($this->markup_percentage / 100);
+        }
+        return 0;
+    }
+
+    /**
+     * Get the final total price including markup.
+     */
+    public function getFinalTotalAttribute(): float
+    {
+        return $this->original_amount + $this->markup_amount;
     }
 }
