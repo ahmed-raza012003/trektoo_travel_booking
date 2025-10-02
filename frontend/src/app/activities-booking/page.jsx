@@ -753,9 +753,7 @@ const BookingPage = () => {
                                             <p className="text-sm text-gray-600">
                                                 {booking.schedule.price.toFixed(2)} {booking.schedule.currency} per person
                                             </p>
-                                            <p className="text-xs text-blue-600 font-medium">
-                                                Additional passenger details will be collected after booking confirmation
-                                            </p>
+                                           
                                         </div>
                                     </div>
 
@@ -786,8 +784,7 @@ const BookingPage = () => {
                                         <Users className="w-6 h-6 text-white" />
                                     </div>
                                         <div>
-                                            <h2 className="text-3xl font-bold text-gray-900">Lead Passenger & Contact</h2>
-                                            <p className="text-gray-600 mt-1">Adult 1 - Primary contact for this booking</p>
+                                            <h2 className="text-3xl font-bold text-gray-900">Booker Information</h2>
                                         </div>
                                 </div>
 
@@ -797,6 +794,7 @@ const BookingPage = () => {
                                         { field: 'last_name', label: 'Last Name', type: 'text', placeholder: 'Enter your last name' },
                                         { field: 'email', label: 'Email Address', type: 'email', placeholder: 'Enter your email address' },
                                         { field: 'phone', label: 'Phone Number', type: 'tel', placeholder: 'Enter your phone number' },
+                                        { field: 'country', label: 'Country', type: 'text', placeholder: 'Enter your country' },
                                         { field: 'passport_id', label: 'Passport No. / ID No.', type: 'text', placeholder: 'Enter your passport or ID number' },
                                     ].map(({ field, label, type, placeholder }) => (
                                         <div key={field} className="space-y-3">
@@ -809,6 +807,7 @@ const BookingPage = () => {
                                                 value={formData[field]}
                                                 onChange={handleInputChange}
                                                 placeholder={placeholder}
+                                                list={field === 'country' ? 'countries-list' : undefined}
                                                 className={`w-full p-4 border-2 rounded-xl transition-all duration-300 ${errors[field]
                                                     ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100'
                                                     : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
@@ -816,6 +815,13 @@ const BookingPage = () => {
                                                 aria-invalid={errors[field] ? 'true' : 'false'}
                                                 aria-describedby={errors[field] ? `${field}-error` : undefined}
                                             />
+                                            {field === 'country' && (
+                                                <datalist id="countries-list">
+                                                    {POPULAR_COUNTRIES.map(country => (
+                                                        <option key={country} value={country} />
+                                                    ))}
+                                                </datalist>
+                                            )}
                                             <AnimatePresence>
                                                 {errors[field] && (
                                                     <motion.p 
@@ -832,45 +838,6 @@ const BookingPage = () => {
                                             </AnimatePresence>
                                         </div>
                                     ))}
-
-                                    <div className="md:col-span-2 space-y-3">
-                                        <label className="block text-sm font-semibold text-gray-900">
-                                            Country <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="country"
-                                            value={formData.country}
-                                            onChange={handleInputChange}
-                                            placeholder="Enter your country"
-                                            list="countries-list"
-                                            className={`w-full p-4 border-2 rounded-xl transition-all duration-300 ${errors.country
-                                                ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100'
-                                                : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
-                                                }`}
-                                            aria-invalid={errors.country ? 'true' : 'false'}
-                                            aria-describedby={errors.country ? 'country-error' : undefined}
-                                        />
-                                        <datalist id="countries-list">
-                                            {POPULAR_COUNTRIES.map(country => (
-                                                <option key={country} value={country} />
-                                            ))}
-                                        </datalist>
-                                        <AnimatePresence>
-                                            {errors.country && (
-                                                <motion.p 
-                                                    id="country-error"
-                                                    className="text-red-500 text-sm flex items-center gap-2"
-                                                    initial={{ opacity: 0, y: -10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    exit={{ opacity: 0, y: -10 }}
-                                                >
-                                                    <AlertCircle className="w-4 h-4" />
-                                                    {errors.country}
-                                                </motion.p>
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
                                 </div>
 
                                 <div className="mt-8 pt-6 border-t border-gray-200">
