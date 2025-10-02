@@ -32,6 +32,8 @@ const OrderConfirmationPage = () => {
     const [orderData, setOrderData] = useState(null);
     const [error, setError] = useState(null);
     const [bookingData, setBookingData] = useState(null);
+    const [bookerInfo, setBookerInfo] = useState(null);
+    const [bookingSummary, setBookingSummary] = useState(null);
     const [markupRate] = useState(0.15);
 
     useEffect(() => {
@@ -43,9 +45,28 @@ const OrderConfirmationPage = () => {
 
         // Get booking data from localStorage
         const storedBooking = localStorage.getItem('pendingBooking');
+        const storedBookerInfo = localStorage.getItem('bookerInfo');
+        const storedBookingSummary = localStorage.getItem('bookingSummary');
+        
         if (storedBooking) {
             const parsedBooking = JSON.parse(storedBooking);
             setBookingData(parsedBooking);
+        }
+        
+        if (storedBookerInfo) {
+            const parsedBookerInfo = JSON.parse(storedBookerInfo);
+            setBookerInfo(parsedBookerInfo);
+            console.log('Booker Info:', parsedBookerInfo);
+        }
+        
+        if (storedBookingSummary) {
+            const parsedBookingSummary = JSON.parse(storedBookingSummary);
+            setBookingSummary(parsedBookingSummary);
+            console.log('Booking Summary:', parsedBookingSummary);
+        }
+        
+        if (storedBooking) {
+            const parsedBooking = JSON.parse(storedBooking);
 
             const klookOrderNo = localStorage.getItem('klookOrderNo');
             const storedAgentOrderId = localStorage.getItem('agentOrderId');
@@ -596,6 +617,114 @@ const OrderConfirmationPage = () => {
                                         </div>
                                     ))}
                                 </motion.div>
+
+                                {/* Passenger Information */}
+                                {(bookerInfo || bookingSummary) && (
+                                    <motion.div 
+                                        className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.5 }}
+                                    >
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <div className="bg-green-600 rounded-2xl p-3 shadow-lg">
+                                                <Users className="w-6 h-6 text-white" />
+                                            </div>
+                                            <h2 className="text-2xl font-bold text-gray-900">Passenger Information</h2>
+                                        </div>
+
+                                        {/* Passenger Quantities */}
+                                        {bookingSummary && (
+                                            <div className="bg-blue-50 rounded-xl p-6 border border-blue-200 mb-6">
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Booking Details</h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div className="text-center">
+                                                        <div className="text-2xl font-bold text-blue-600">
+                                                            {bookingSummary.adult_quantity || 0}
+                                                        </div>
+                                                        <div className="text-sm text-gray-600">
+                                                            Adult{(bookingSummary.adult_quantity || 0) !== 1 ? 's' : ''}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <div className="text-2xl font-bold text-green-600">
+                                                            {bookingSummary.child_quantity || 0}
+                                                        </div>
+                                                        <div className="text-sm text-gray-600">
+                                                            Child{(bookingSummary.child_quantity || 0) !== 1 ? 'ren' : ''}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <div className="text-2xl font-bold text-purple-600">
+                                                            {(bookingSummary.adult_quantity || 0) + (bookingSummary.child_quantity || 0)}
+                                                        </div>
+                                                        <div className="text-sm text-gray-600">Total Passengers</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Lead Passenger/Booker Information */}
+                                        {bookerInfo && (
+                                            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                                    <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                                        1
+                                                    </div>
+                                                    Lead Passenger & Contact Person
+                                                </h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-500 mb-1">First Name</label>
+                                                        <p className="text-gray-900 font-semibold">{bookerInfo.first_name || 'Not provided'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-500 mb-1">Last Name</label>
+                                                        <p className="text-gray-900 font-semibold">{bookerInfo.last_name || 'Not provided'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-500 mb-1">Email</label>
+                                                        <p className="text-gray-900 font-semibold">{bookerInfo.email || 'Not provided'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-500 mb-1">Phone</label>
+                                                        <p className="text-gray-900 font-semibold">{bookerInfo.phone || 'Not provided'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-500 mb-1">Country</label>
+                                                        <p className="text-gray-900 font-semibold">{bookerInfo.country || 'Not provided'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-500 mb-1">Passport/ID No.</label>
+                                                        <p className="text-gray-900 font-semibold">{bookerInfo.passport_id || 'Not provided'}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Additional Passengers Notice */}
+                                        {bookingSummary && ((bookingSummary.adult_quantity > 1) || (bookingSummary.child_quantity > 0)) && (
+                                            <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center mt-0.5">
+                                                        <span className="text-white text-xs font-bold">!</span>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-semibold text-yellow-800 mb-1">Additional Passenger Details Required</h4>
+                                                        <p className="text-yellow-700 text-sm">
+                                                            You have {Math.max(0, (bookingSummary.adult_quantity || 0) - 1)} additional adult{Math.max(0, (bookingSummary.adult_quantity || 0) - 1) !== 1 ? 's' : ''} 
+                                                            {bookingSummary.child_quantity > 0 && ` and ${bookingSummary.child_quantity} child${bookingSummary.child_quantity !== 1 ? 'ren' : ''}`} 
+                                                            {' '}that will need to provide their details before the trip.
+                                                        </p>
+                                                        <p className="text-yellow-600 text-xs mt-2">
+                                                            Additional passenger forms will be available after payment confirmation.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
                             </div>
 
                             {/* Right Column - Price Summary */}
