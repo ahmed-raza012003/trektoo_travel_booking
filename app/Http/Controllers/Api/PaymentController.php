@@ -1196,4 +1196,132 @@ class PaymentController extends BaseController
             'passenger_count' => count($passengers)
         ]);
     }
+
+    /**
+     * Get complete booking data for PDF generation
+     */
+    public function getCompleteBookingData(Request $request, $orderId)
+    {
+        try {
+            $user = $request->user();
+            
+            // Find the booking by agent_order_id or external_booking_id (klktech_order_id)
+            $booking = Booking::where(function($query) use ($orderId) {
+                $query->where('agent_order_id', $orderId)
+                      ->orWhere('external_booking_id', $orderId);
+            })
+            ->where('user_id', $user->id)
+            ->with(['passengers', 'payments'])
+            ->first();
+
+            if (!$booking) {
+                Log::info('Booking not found for orderId', [
+                    'order_id' => $orderId,
+                    'user_id' => $user->id
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Booking not found'
+                ], 404);
+            }
+
+            // Get the latest payment for this booking
+            $payment = $booking->payments()->latest()->first();
+
+            // Prepare complete booking data
+            $bookingData = [
+                'booking' => [
+                    'id' => $booking->id,
+                    'type' => $booking->type,
+                    'activity_name' => $booking->activity_name,
+                    'activity_external_id' => $booking->activity_external_id,
+                    'activity_package_id' => $booking->activity_package_id,
+                    'activity_date' => $booking->activity_date,
+                    'activity_schedule' => $booking->activity_schedule,
+                    'adults' => $booking->adults,
+                    'children' => $booking->children,
+                    'guests' => $booking->guests,
+                    'total_price' => $booking->total_price,
+                    'original_amount' => $booking->original_amount,
+                    'markup_percentage' => $booking->markup_percentage,
+                    'markup_amount' => $booking->markup_amount,
+                    'currency' => $booking->currency,
+                    'status' => $booking->status,
+                    'external_booking_id' => $booking->external_booking_id,
+                    'agent_order_id' => $booking->agent_order_id,
+                    'customer_info' => $booking->customer_info,
+                    'booking_details' => $booking->booking_details,
+                    'external_booking_data' => $booking->external_booking_data,
+                    'confirmed_at' => $booking->confirmed_at,
+                    'created_at' => $booking->created_at,
+                ],
+                'passengers' => $booking->passengers->map(function ($passenger) {
+                    return [
+                        'id' => $passenger->id,
+                        'type' => $passenger->type,
+                        'passenger_number' => $passenger->passenger_number,
+                        'is_lead_passenger' => $passenger->is_lead_passenger,
+                        'first_name' => $passenger->first_name,
+                        'last_name' => $passenger->last_name,
+                        'email' => $passenger->email,
+                        'phone' => $passenger->phone,
+                        'country' => $passenger->country,
+                        'passport_id' => $passenger->passport_id,
+                        'age' => $passenger->age,
+                        'full_name' => $passenger->full_name,
+                    ];
+                }),
+                'payment' => $payment ? [
+                    'id' => $payment->id,
+                    'amount' => $payment->amount,
+                    'currency' => $payment->currency,
+                    'method' => $payment->method,
+                    'status' => $payment->status,
+                    'transaction_id' => $payment->transaction_id,
+                    'payment_intent_id' => $payment->payment_intent_id,
+                    'checkout_session_id' => $payment->checkout_session_id,
+                    'charge_id' => $payment->charge_id,
+                    'provider' => $payment->provider,
+                    'customer_email' => $payment->customer_email,
+                    'customer_name' => $payment->customer_name,
+                    'billing_address' => $payment->billing_address,
+                    'created_at' => $payment->created_at,
+                ] : null,
+                'summary' => [
+                    'total_passengers' => $booking->passengers->count(),
+                    'adult_passengers' => $booking->passengers->where('type', 'adult')->count(),
+                    'child_passengers' => $booking->passengers->where('type', 'child')->count(),
+                    'lead_passenger' => $booking->passengers->where('is_lead_passenger', true)->first(),
+                    'total_amount_paid' => $payment ? $payment->amount : $booking->total_price,
+                    'payment_status' => $payment ? $payment->status : 'unknown',
+                ]
+            ];
+
+            Log::info('Complete booking data retrieved', [
+                'booking_id' => $booking->id,
+                'order_id' => $orderId,
+                'agent_order_id' => $booking->agent_order_id,
+                'external_booking_id' => $booking->external_booking_id,
+                'passenger_count' => $booking->passengers->count(),
+                'has_payment' => $payment ? true : false
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $bookingData
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Get complete booking data error', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to get booking data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

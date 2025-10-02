@@ -40,6 +40,7 @@ const ThankYouPage = () => {
 
   const [orderData, setOrderData] = useState(null);
   const [stripePaymentData, setStripePaymentData] = useState(null);
+  const [completeBookingData, setCompleteBookingData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [resendingVoucher, setResendingVoucher] = useState(false);
@@ -55,6 +56,7 @@ const ThankYouPage = () => {
   useEffect(() => {
     if (orderId && isInitialized && token) {
       fetchOrderDetails(orderId);
+      fetchCompleteBookingData(orderId);
       // Get Stripe payment data from localStorage
       const storedPayment = localStorage.getItem('klookPayment');
       if (storedPayment) {
@@ -92,6 +94,37 @@ const ThankYouPage = () => {
       setError(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCompleteBookingData = async (orderId) => {
+    try {
+      console.log('Fetching complete booking data for orderId:', orderId);
+      console.log('API URL:', `${API_BASE}/klook/booking-data/${orderId}`);
+      
+      const response = await fetch(`${API_BASE}/klook/booking-data/${orderId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Response data:', result);
+        if (result.success) {
+          setCompleteBookingData(result.data);
+          console.log('Complete booking data loaded:', result.data);
+        } else {
+          console.error('Failed to fetch complete booking data:', result.error);
+        }
+      } else {
+        const errorText = await response.text();
+        console.error(`HTTP error! status: ${response.status}`, errorText);
+      }
+    } catch (error) {
+      console.error('Error fetching complete booking data:', error);
     }
   };
 
@@ -187,7 +220,7 @@ const ThankYouPage = () => {
           setCancellationInfo(result.data);
           setCancellationStatus({
             success: true,
-            message: 'Cancellation status retrieved successfully!'
+            message: 'Cancellation status checked successfully!'
           });
         } else {
           throw new Error(result.error || 'Failed to get cancellation status');
@@ -242,17 +275,34 @@ const ThankYouPage = () => {
 
   const displayPrice = getDisplayPrice();
 
-  // Enhanced PDF generation function with comprehensive booking information
+  // Enhanced PDF generation function using complete database data
   const downloadPDF = async () => {
     try {
-      if (!orderData || !orderData.bookings || orderData.bookings.length === 0) {
-        alert('No booking data available for PDF generation.');
-        return;
+      if (!completeBookingData) {
+        // Try to fetch the data again if not available
+        console.log('Complete booking data not available, attempting to fetch...');
+        try {
+          await fetchCompleteBookingData(orderId);
+          // Wait a bit for state to update
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+          console.error('Failed to fetch complete booking data:', error);
+        }
+        
+        if (!completeBookingData) {
+          alert('Complete booking data not available. Please try again or contact support.');
+          return;
+        }
       }
 
-      const booking = orderData.bookings[0];
-      const voucherCode = booking.original_vouchers?.[0]?.codes?.[0]?.code || 'N/A';
-      const itineraryItems = booking.original_vouchers?.[0]?.urls?.[0]?.description?.split('\n') || [];
+      const { booking, passengers, payment, summary } = completeBookingData;
+      const voucherCode = orderData?.bookings?.[0]?.original_vouchers?.[0]?.codes?.[0]?.code || 'N/A';
+      
+      // Debug logging
+      console.log('PDF Generation - Complete booking data:', completeBookingData);
+      console.log('PDF Generation - Booking data:', booking);
+      console.log('PDF Generation - Payment data:', payment);
+      console.log('PDF Generation - Passengers data:', passengers);
 
       // Create a new jsPDF instance
       const doc = new jsPDF({
@@ -285,7 +335,7 @@ const ThankYouPage = () => {
         doc.line(20, 285, 190, 285);
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
-        doc.text(`TrekToo Booking Overview | ${booking.booking_ref_number}`, 20, 290);
+        doc.text(`TrekToo Booking Overview | ${booking.agent_order_id}`, 20, 290);
         doc.text(`Page ${pageNum} of ${totalPages}`, 190, 290, { align: 'right' });
       };
 
@@ -312,7 +362,7 @@ const ThankYouPage = () => {
       doc.setFillColor(...colors.primary);
       doc.rect(0, 0, 210, 45, 'F');
 
-      // Logo placeholder (you can replace with actual logo)
+      // Logo placeholder
       doc.setFillColor(255, 255, 255);
       doc.rect(20, 12, 35, 12, 'F');
       doc.setTextColor(...colors.primary);
@@ -324,7 +374,7 @@ const ThankYouPage = () => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(16);
       doc.setFont('helvetica', 'normal');
-      doc.text('BOOKING Overview', 80, 20);
+      doc.text('BOOKING OVERVIEW', 80, 20);
 
       // Decorative elements
       doc.setFillColor(...colors.secondary);
@@ -338,7 +388,7 @@ const ThankYouPage = () => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text('✓ BOOKING CONFIRMED', 25, currentY + 5);
+      doc.text(`✓ BOOKING ${booking.status.toUpperCase()}`, 25, currentY + 5);
       currentY += 15;
 
       // Activity Information
@@ -347,7 +397,7 @@ const ThankYouPage = () => {
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...colors.dark);
-      const activityLines = doc.splitTextToSize(booking.activity_name, 170);
+      const activityLines = doc.splitTextToSize(booking.activity_name || 'Activity', 170);
       activityLines.forEach(line => {
         doc.text(line, 20, currentY);
         currentY += 8;
@@ -356,7 +406,7 @@ const ThankYouPage = () => {
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...colors.text);
-      doc.text(`Package: ${booking.package_name}`, 20, currentY);
+      doc.text(`Package ID: ${booking.activity_package_id}`, 20, currentY);
       currentY += 10;
 
       // Booking Details Grid
@@ -369,78 +419,67 @@ const ThankYouPage = () => {
       doc.setTextColor(...colors.text);
 
       // Left column
-      doc.text('Booking Reference:', 20, currentY);
+      doc.text('Booking ID:', 20, currentY);
       doc.setFont('helvetica', 'bold');
-      doc.text(booking.booking_ref_number, 20, currentY + 6);
+      doc.text(booking.id.toString(), 20, currentY + 6);
       doc.setFont('helvetica', 'normal');
       currentY += 12;
 
-      doc.text('Order ID:', 20, currentY);
+      doc.text('Agent Order ID:', 20, currentY);
       doc.setFont('helvetica', 'bold');
-      doc.text(orderData.klktech_order_id, 20, currentY + 6);
+      doc.text(booking.agent_order_id, 20, currentY + 6);
       doc.setFont('helvetica', 'normal');
       currentY += 12;
 
       // Right column
       doc.text('Activity Date:', 120, currentY - 24);
       doc.setFont('helvetica', 'bold');
-      const activityDate = booking.start_time ?
-        new Date(booking.start_time).toLocaleDateString('en-US', {
+      const activityDate = booking.activity_date ?
+        new Date(booking.activity_date).toLocaleDateString('en-US', {
           weekday: 'long',
           year: 'numeric',
           month: 'long',
           day: 'numeric'
         }) :
-        new Date().toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
+        'Not specified';
       doc.text(activityDate, 120, currentY - 18);
       doc.setFont('helvetica', 'normal');
 
       doc.text('Status:', 120, currentY - 12);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...colors.success);
-      doc.text(orderData.confirm_status, 120, currentY - 6);
+      doc.text(booking.status.toUpperCase(), 120, currentY - 6);
       doc.setTextColor(...colors.text);
       doc.setFont('helvetica', 'normal');
       currentY += 6;
 
-      // Additional booking information from database
-      if (booking.booking_ref_number) {
-        doc.text('Confirmation Number:', 20, currentY);
-        doc.setFont('helvetica', 'bold');
-        doc.text(booking.booking_ref_number, 20, currentY + 6);
-        doc.setFont('helvetica', 'normal');
-        currentY += 12;
-      }
-
-      if (booking.confirm_status) {
-        doc.text('Booking Status:', 120, currentY - 12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...colors.accent);
-        doc.text(booking.confirm_status, 120, currentY - 6);
-        doc.setTextColor(...colors.text);
-        doc.setFont('helvetica', 'normal');
-        currentY += 6;
-      }
-
       // Payment Information
       currentY = addSectionHeader('PAYMENT INFORMATION', currentY, colors.accent);
-      
-      // Use actual payment data from the booking
-      const originalAmount = parseFloat(orderData.total_amount) || 0;
-      const finalAmount = displayPrice.amount;
 
       doc.setFontSize(11);
       doc.setTextColor(...colors.text);
 
-      // Payment breakdown using actual data
-      doc.text('Activity Price:', 20, currentY);
-      doc.text(`${originalAmount.toFixed(2)} ${orderData.currency}`, 120, currentY, { align: 'right' });
-      currentY += 8;
+      // Payment breakdown using database data
+      const originalAmount = parseFloat(booking.original_amount) || 0;
+      const markupAmount = parseFloat(booking.markup_amount) || 0;
+      const markupPercentage = parseFloat(booking.markup_percentage) || 0;
+      const totalPrice = parseFloat(booking.total_price) || 0;
+
+      if (originalAmount > 0) {
+        doc.text('Original Amount:', 20, currentY);
+        doc.text(`${originalAmount.toFixed(2)} ${booking.currency}`, 120, currentY, { align: 'right' });
+        currentY += 8;
+
+        if (markupAmount > 0) {
+          doc.text(`Markup (${markupPercentage}%):`, 20, currentY);
+          doc.text(`+${markupAmount.toFixed(2)} ${booking.currency}`, 120, currentY, { align: 'right' });
+          currentY += 8;
+        }
+      } else {
+        doc.text('Total Amount:', 20, currentY);
+        doc.text(`${totalPrice.toFixed(2)} ${booking.currency}`, 120, currentY, { align: 'right' });
+        currentY += 8;
+      }
 
       doc.setDrawColor(...colors.border);
       doc.setLineWidth(0.5);
@@ -451,102 +490,95 @@ const ThankYouPage = () => {
       doc.setFontSize(14);
       doc.text('Total Paid:', 20, currentY);
       doc.setTextColor(...colors.success);
-      doc.text(`${finalAmount} ${displayPrice.currency}`, 120, currentY, { align: 'right' });
+      const totalPaid = payment ? parseFloat(payment.amount) || 0 : totalPrice;
+      doc.text(`${totalPaid.toFixed(2)} ${booking.currency}`, 120, currentY, { align: 'right' });
       doc.setTextColor(...colors.text);
       currentY += 15;
 
-      // Stripe Payment Info
-      if (stripePaymentData) {
+      // Payment Details
+      if (payment) {
         doc.setFontSize(10);
         doc.setTextColor(...colors.text);
-        doc.text(`Payment Method: Stripe (${stripePaymentData.payment_method || 'Card'})`, 20, currentY);
+        doc.text(`Payment Method: ${payment.method || 'Unknown'}`, 20, currentY);
         currentY += 6;
-        doc.text(`Transaction ID: ${stripePaymentData.id || 'N/A'}`, 20, currentY);
+        doc.text(`Transaction ID: ${payment.transaction_id || 'N/A'}`, 20, currentY);
+        currentY += 6;
+        doc.text(`Payment Status: ${payment.status}`, 20, currentY);
         currentY += 10;
       }
 
       // Passenger Information
       currentY = addSectionHeader('PASSENGER INFORMATION', currentY, colors.warning);
       
-      // Lead Passenger (from contact_info)
-      const contactInfo = orderData.contact_info || {};
-      doc.setFontSize(12);
+      // Lead Passenger
+      const leadPassenger = summary.lead_passenger;
+      if (leadPassenger) {
+        doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...colors.dark);
-      doc.text('Lead Passenger:', 20, currentY);
-      currentY += 8;
+        doc.text('Lead Passenger:', 20, currentY);
+        currentY += 8;
 
       doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...colors.text);
-      
-      const leadPassengerInfo = [
-        `Name: ${contactInfo.first_name || 'N/A'} ${contactInfo.family_name || 'N/A'}`,
-        `Email: ${contactInfo.email || 'N/A'}`,
-        `Phone: ${contactInfo.mobile || 'N/A'}`,
-        `Country: ${contactInfo.country || 'N/A'}`
-      ];
+        
+        const leadPassengerInfo = [
+          `Name: ${leadPassenger.first_name} ${leadPassenger.last_name}`,
+          `Email: ${leadPassenger.email || 'N/A'}`,
+          `Phone: ${leadPassenger.phone || 'N/A'}`,
+          `Country: ${leadPassenger.country}`,
+          `Passport/ID: ${leadPassenger.passport_id}`
+        ];
 
-      leadPassengerInfo.forEach(info => {
-        doc.text(info, 25, currentY);
-        currentY += 6;
-      });
+        leadPassengerInfo.forEach(info => {
+          doc.text(info, 25, currentY);
+          currentY += 6;
+        });
+        currentY += 8;
+      }
+
+      // All Passengers
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...colors.dark);
+      doc.text(`Total Passengers: ${summary.total_passengers} (${summary.adult_passengers} adults, ${summary.child_passengers} children)`, 20, currentY);
       currentY += 8;
 
-      // Show detailed passenger information from booking data
-      if (booking.skus && booking.skus.length > 0) {
-        const totalTravelers = booking.skus.reduce((sum, sku) => sum + (sku.quantity || 0), 0);
-        
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...colors.dark);
-        doc.text(`Total Travelers: ${totalTravelers}`, 20, currentY);
-        currentY += 8;
-
-        // Show detailed SKU information
-        booking.skus.forEach((sku, index) => {
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(...colors.text);
-          doc.text(`Passenger Group ${index + 1}:`, 25, currentY);
+      // List all passengers
+      passengers.forEach((passenger, index) => {
+        if (!passenger.is_lead_passenger) {
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...colors.text);
+          doc.text(`${passenger.type.toUpperCase()} ${passenger.passenger_number}:`, 25, currentY);
           currentY += 6;
           
-          doc.text(`  • Type: ${sku.sku_name || `SKU ${sku.sku_id}`}`, 30, currentY);
+          doc.text(`  • Name: ${passenger.first_name} ${passenger.last_name}`, 30, currentY);
+      currentY += 5;
+
+          if (passenger.email) {
+            doc.text(`  • Email: ${passenger.email}`, 30, currentY);
+      currentY += 5;
+          }
+          
+          if (passenger.phone) {
+            doc.text(`  • Phone: ${passenger.phone}`, 30, currentY);
+      currentY += 5;
+          }
+          
+          doc.text(`  • Country: ${passenger.country}`, 30, currentY);
           currentY += 5;
           
-          doc.text(`  • Quantity: ${sku.quantity}`, 30, currentY);
+          doc.text(`  • Passport/ID: ${passenger.passport_id}`, 30, currentY);
           currentY += 5;
           
-          if (sku.sku_price) {
-            doc.text(`  • Price per person: ${sku.sku_price} ${sku.currency || orderData.currency}`, 30, currentY);
+          if (passenger.age !== null) {
+            doc.text(`  • Age: ${passenger.age}`, 30, currentY);
             currentY += 5;
           }
           
           currentY += 3;
-        });
-        currentY += 5;
-      }
-
-      // Show booking details if available
-      if (booking.adult_quantity || booking.child_quantity) {
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...colors.dark);
-        doc.text('Booking Details:', 20, currentY);
-        currentY += 8;
-
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...colors.text);
-        
-        if (booking.adult_quantity) {
-          doc.text(`Adults: ${booking.adult_quantity}`, 25, currentY);
-          currentY += 6;
         }
-        
-        if (booking.child_quantity) {
-          doc.text(`Children: ${booking.child_quantity}`, 25, currentY);
-          currentY += 6;
-        }
-        
-        currentY += 5;
-      }
+      });
 
       // QR Code
       currentY = checkPageBreak(currentY, 60);
@@ -560,7 +592,7 @@ const ThankYouPage = () => {
         console.error('QR Code generation error:', error);
         doc.setFillColor(...colors.light);
         doc.rect(140, currentY, 50, 50, 'F');
-        doc.setTextColor(...colors.text);
+      doc.setTextColor(...colors.text);
         doc.setFontSize(8);
         doc.text('QR Code', 165, currentY + 25, { align: 'center' });
       }
@@ -568,7 +600,7 @@ const ThankYouPage = () => {
 
       addPageFooter(1, 2);
 
-      // PAGE 2: Activity Details and Policies
+      // PAGE 2: Additional Details
       doc.addPage();
 
       // Header
@@ -577,7 +609,7 @@ const ThankYouPage = () => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text('ACTIVITY DETAILS & POLICIES', 20, 20);
+      doc.text('BOOKING DETAILS', 20, 20);
 
       currentY = 40;
 
@@ -585,10 +617,34 @@ const ThankYouPage = () => {
       currentY = addSectionHeader('VOUCHER INFORMATION', currentY);
       
       doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'bold');
       doc.setTextColor(...colors.accent);
       doc.text(`Voucher Code: ${voucherCode}`, 20, currentY);
       currentY += 15;
+
+      // Booking Summary
+      currentY = addSectionHeader('BOOKING SUMMARY', currentY, colors.secondary);
+      
+      const bookingSummary = [
+        `Booking Type: ${booking.type}`,
+        `External Booking ID: ${booking.external_booking_id || 'N/A'}`,
+        `Adults: ${booking.adults}`,
+        `Children: ${booking.children}`,
+        `Total Guests: ${booking.guests}`,
+        `Created: ${new Date(booking.created_at).toLocaleDateString()}`,
+        `Confirmed: ${booking.confirmed_at ? new Date(booking.confirmed_at).toLocaleDateString() : 'Not confirmed'}`
+      ];
+
+      doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...colors.text);
+
+      bookingSummary.forEach(info => {
+          currentY = checkPageBreak(currentY, 10);
+        doc.text(info, 20, currentY);
+          currentY += 7;
+        });
+        currentY += 5;
 
       // Important Information
       currentY = addSectionHeader('IMPORTANT INFORMATION', currentY, colors.danger);
@@ -601,17 +657,12 @@ const ThankYouPage = () => {
         '• Contact support if you have any questions or need to make changes'
       ];
 
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...colors.text);
-      
       importantInfo.forEach(info => {
         currentY = checkPageBreak(currentY, 10);
         doc.text(info, 20, currentY);
         currentY += 7;
       });
       currentY += 5;
-
 
       // Contact Information
       currentY = addSectionHeader('CONTACT INFORMATION', currentY, colors.secondary);
@@ -624,7 +675,7 @@ const ThankYouPage = () => {
       ];
 
       contactDetails.forEach(contact => {
-        currentY = checkPageBreak(currentY, 10);
+          currentY = checkPageBreak(currentY, 10);
         doc.text(contact, 20, currentY);
         currentY += 7;
       });
@@ -632,12 +683,18 @@ const ThankYouPage = () => {
       addPageFooter(2, 2);
 
       // Save the PDF
-      const fileName = `trektoo-booking-${booking.booking_ref_number || orderData.klktech_order_id}.pdf`;
+      const fileName = `trektoo-booking-${booking.agent_order_id}.pdf`;
       doc.save(fileName);
 
     } catch (error) {
       console.error('PDF generation error:', error);
-      alert('Failed to generate PDF. Please try again.');
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        completeBookingData: completeBookingData,
+        orderData: orderData
+      });
+      alert(`Failed to generate PDF: ${error.message}. Please check console for details.`);
     }
   };
 
@@ -724,13 +781,13 @@ const ThankYouPage = () => {
         {/* Header */}
         <div className="text-center mb-12 max-w-3xl mx-auto mt-10">
           <motion.div
-            className="inline-flex items-center gap-3 bg-green-50 px-6 py-3 rounded-full border border-green-200 mb-6"
+            className="inline-flex items-center gap-3 bg-blue-50 px-6 py-3 rounded-full border border-green-200 mb-6"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            <span className="text-sm font-medium text-green-700">Booking Confirmed Successfully</span>
+            <CheckCircle className="w-5 h-5 text-blue-600" />
+            <span className="text-sm font-medium text-blue-700">Booking Confirmed Successfully</span>
           </motion.div>
 
           <motion.h1
@@ -813,7 +870,7 @@ const ThankYouPage = () => {
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-gray-500">Status</span>
                     </div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
                       <CheckCircle className="w-4 h-4" />
                       {orderData.confirm_status}
                     </div>
@@ -823,7 +880,7 @@ const ThankYouPage = () => {
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-gray-500">Total Paid</span>
                     </div>
-                    <p className="text-xl font-bold text-green-600">
+                    <p className="text-xl font-bold text-blue-600">
                       {displayPrice.amount} {displayPrice.currency}
                     </p>
                     {stripePaymentData && (
@@ -835,7 +892,7 @@ const ThankYouPage = () => {
                 </div>
 
                 {/* Price Breakdown */}
-                <div className="mt-6 pt-6 border-t border-gray-200">
+                {/* <div className="mt-6 pt-6 border-t border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Price Breakdown</h3>
 
                   <div className="space-y-2">
@@ -854,7 +911,7 @@ const ThankYouPage = () => {
                       <span className="text-green-600">{displayPrice.amount} {displayPrice.currency}</span>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </motion.div>
 
               {/* Booking Details Card */}
@@ -892,7 +949,7 @@ const ThankYouPage = () => {
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-gray-500">Status</span>
                       </div>
-                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
                         <CheckCircle className="w-4 h-4" />
                         {booking.confirm_status}
                       </div>
@@ -920,7 +977,8 @@ const ThankYouPage = () => {
                     </div>
                   )}
 
-                  {/* Voucher Resend Section */}
+                  {/* Voucher Resend Section - Only show if booking is confirmed */}
+                  {orderData.confirm_status === 'confirmed' && (
                   <div>
                     <button
                       onClick={resendVoucher}
@@ -946,7 +1004,7 @@ const ThankYouPage = () => {
                       className="w-full py-3 border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition duration-200 flex items-center justify-center mt-4"
                     >
                       <Download className="w-4 h-4 mr-2" />
-                      Download Booking Overview
+                        Download Booking Overview
                     </button>
 
                     {resendStatus && (
@@ -956,6 +1014,24 @@ const ThankYouPage = () => {
                       </div>
                     )}
                   </div>
+                  )}
+
+                  {/* Show message when booking is not confirmed */}
+                  {orderData.confirm_status !== 'confirmed' && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                          <Clock className="w-4 h-4 text-yellow-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-yellow-800">Booking Pending Confirmation</h4>
+                          <p className="text-sm text-yellow-700 mt-1">
+                            Your booking is being processed. You'll receive an email confirmation once it's confirmed.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               ))}
 
@@ -1033,11 +1109,24 @@ const ThankYouPage = () => {
                   )}
 
                   {cancellationInfo && (
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                      <h4 className="font-semibold text-blue-800 mb-2">Cancellation Details</h4>
-                      <pre className="text-xs text-blue-700 overflow-auto">
-                        {JSON.stringify(cancellationInfo, null, 2)}
-                      </pre>
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                          <XCircle className="w-4 h-4 text-red-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-red-800">Order Cancelled</h4>
+                          <p className="text-sm text-red-700 mt-1">
+                            Your order has been cancelled successfully.
+                          </p>
+                          {cancellationInfo.result && cancellationInfo.result.length > 0 && (
+                            <div className="mt-2 text-xs text-red-600">
+                              {/* <p>Refund Amount: {cancellationInfo.result[0].finance_info?.refund_amount} {cancellationInfo.result[0].finance_info?.currency}</p> */}
+                              <p>Cancelled on: {new Date(cancellationInfo.result[0].cancel_confirm_time).toLocaleDateString()}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>

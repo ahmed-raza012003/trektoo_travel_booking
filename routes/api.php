@@ -131,6 +131,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/resend-voucher/{orderId}', [KlookApiController::class, 'resendVoucher']);
         Route::get('/balance', [KlookApiController::class, 'getBalance']);
         
+        // Complete booking data for PDF generation
+        Route::get('/booking-data/{orderId}', [PaymentController::class, 'getCompleteBookingData']);
+        
         // Test routes (for development only)
         Route::post('/test/balance-payment', [PaymentController::class, 'testBalancePayment']);
         Route::post('/manual-complete-payment', [PaymentController::class, 'manualCompletePayment']);
