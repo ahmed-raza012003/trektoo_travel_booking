@@ -343,6 +343,15 @@ class PaymentController extends BaseController
             // Calculate markup amount
             $markupAmount = $request->original_amount * ($request->markup_percentage / 100);
 
+            // Get lead passenger data (first adult passenger)
+            $leadPassenger = collect($passengers)->firstWhere('type', 'adult') ?? collect($passengers)->first();
+            
+            Log::info('Lead Passenger Data for customer_info', [
+                'lead_passenger' => $leadPassenger,
+                'fallback_email' => $request->customer_email,
+                'fallback_name' => $request->customer_name
+            ]);
+
             // Create booking record from Klook data
             $booking = Booking::create([
                 'user_id' => $user->id,
@@ -363,10 +372,10 @@ class PaymentController extends BaseController
                 'external_booking_id' => $request->order_id,
                 'agent_order_id' => $request->agent_order_id,
                 'customer_info' => [
-                    'email' => $request->customer_email,
-                    'name' => $request->customer_name,
-                    'phone' => $bookingData['customer_phone'] ?? null,
-                    'country' => $bookingData['customer_country'] ?? null
+                    'email' => $leadPassenger['email'] ?? $request->customer_email,
+                    'name' => $leadPassenger ? ($leadPassenger['first_name'] . ' ' . $leadPassenger['last_name']) : $request->customer_name,
+                    'phone' => $leadPassenger['phone'] ?? $bookingData['customer_phone'] ?? null,
+                    'country' => $leadPassenger['country'] ?? $bookingData['customer_country'] ?? null
                 ],
                 'booking_details' => $bookingData
             ]);

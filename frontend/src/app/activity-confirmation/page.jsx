@@ -14,7 +14,8 @@ import {
   ChevronRight,
   BadgeCheck,
   Percent,
-  Sparkles
+  Sparkles,
+  AlertCircle
 } from "lucide-react";
 import  API_BASE  from "@/lib/api/klookApi";
 import { useAuth } from '@/contexts/AuthContext';
@@ -221,6 +222,12 @@ const OrderConfirmationPage = () => {
     const validatePassengerForms = () => {
         const newErrors = {};
         
+        // Check if passengerForms exists and is an array
+        if (!passengerForms || !Array.isArray(passengerForms)) {
+            console.warn('passengerForms is not available for validation');
+            return true; // Allow proceeding if no forms to validate
+        }
+        
         passengerForms.forEach((passenger) => {
             const requiredFields = ['first_name', 'last_name', 'country'];
             
@@ -415,7 +422,7 @@ const OrderConfirmationPage = () => {
                 setError(null);
                 
                 // Validate passenger forms if there are any
-                if (passengerForms.length > 0) {
+                if (passengerForms && Array.isArray(passengerForms) && passengerForms.length > 0) {
                     const isValid = validatePassengerForms();
                     if (!isValid) {
                         setLoading(false);
@@ -434,25 +441,7 @@ const OrderConfirmationPage = () => {
                 
                 const storedBooking = JSON.parse(localStorage.getItem('pendingBooking') || '{}');
 
-                // Get customer info from stored booking or use defaults
-                const customerEmail = orderData.contact_info?.email || 
-                                   storedBooking.customer_info?.email || 
-                                   storedBooking.formData?.email || 
-                                   'customer@example.com';
-                
-                const customerName = `${orderData.contact_info?.first_name || storedBooking.customer_info?.first_name || storedBooking.formData?.first_name || 'Customer'} ${orderData.contact_info?.family_name || storedBooking.customer_info?.last_name || storedBooking.formData?.last_name || 'User'}`.trim() || 'Customer User';
-                
-                const packageId = storedBooking.package_id ? String(storedBooking.package_id) : '123';
-
-                console.log('Payment Intent Data:', {
-                    customer_email: customerEmail,
-                    customer_name: customerName,
-                    package_id: packageId,
-                    storedBooking: storedBooking,
-                    orderData: orderData
-                });
-
-                // Prepare passenger data
+                // Prepare passenger data first
                 const passengers = [];
                 
                 // Add lead passenger (booker info)
@@ -469,7 +458,8 @@ const OrderConfirmationPage = () => {
                 }
                 
                 // Add additional passengers
-                passengerForms.forEach((passenger) => {
+                if (passengerForms && Array.isArray(passengerForms)) {
+                    passengerForms.forEach((passenger) => {
                     const passengerData = {
                         type: passenger.type,
                         first_name: passenger.first_name,
@@ -482,12 +472,40 @@ const OrderConfirmationPage = () => {
                     if (passenger.type === 'adult') {
                         passengerData.email = passenger.email;
                         passengerData.phone = passenger.phone;
-                    } else {
-                        // Add age for children only
+                    }
+                    
+                    // Add age for children only
+                    if (passenger.type === 'child') {
                         passengerData.age = passenger.age;
                     }
                     
                     passengers.push(passengerData);
+                    });
+                }
+
+                // Get lead passenger data (first adult passenger)
+                const leadPassenger = passengers.find(p => p.type === 'adult') || passengers[0];
+                
+                // Use lead passenger data instead of fallbacks
+                const customerEmail = leadPassenger?.email || 
+                                   orderData.contact_info?.email || 
+                                   storedBooking.customer_info?.email || 
+                                   storedBooking.formData?.email || 
+                                   'customer@example.com';
+                
+                const customerName = leadPassenger ? 
+                    `${leadPassenger.first_name || 'Customer'} ${leadPassenger.last_name || 'User'}`.trim() :
+                    `${orderData.contact_info?.first_name || storedBooking.customer_info?.first_name || storedBooking.formData?.first_name || 'Customer'} ${orderData.contact_info?.family_name || storedBooking.customer_info?.last_name || storedBooking.formData?.last_name || 'User'}`.trim() || 'Customer User';
+                
+                const packageId = storedBooking.package_id ? String(storedBooking.package_id) : '123';
+
+                console.log('Payment Intent Data:', {
+                    customer_email: customerEmail,
+                    customer_name: customerName,
+                    package_id: packageId,
+                    storedBooking: storedBooking,
+                    orderData: orderData,
+                    passengers: passengers
                 });
 
                 const response = await fetch(`${API_BASE}/klook/payment-intent`, {
@@ -514,8 +532,8 @@ const OrderConfirmationPage = () => {
                             start_time: storedBooking.schedule?.start_time || new Date().toISOString(),
                             adult_quantity: storedBooking.adult_quantity || 1,
                             child_quantity: storedBooking.child_quantity || 0,
-                            customer_phone: orderData.contact_info?.mobile || storedBooking.customer_info?.phone || storedBooking.formData?.phone || '+1234567890',
-                            customer_country: orderData.contact_info?.country || storedBooking.customer_info?.country || storedBooking.formData?.country || 'US'
+                            customer_phone: leadPassenger?.phone || orderData.contact_info?.mobile || storedBooking.customer_info?.phone || storedBooking.formData?.phone || '+1234567890',
+                            customer_country: leadPassenger?.country || orderData.contact_info?.country || storedBooking.customer_info?.country || storedBooking.formData?.country || 'US'
                         }
                     })
                 });
