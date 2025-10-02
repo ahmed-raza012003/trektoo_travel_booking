@@ -92,16 +92,19 @@ const KlookDropdown = () => {
         setActiveCategory(null);
     };
 
-    const handleMainCategoryClick = (category) => {
-        // If main category has no subcategories, navigate directly
-        if (!category.sub_category || category.sub_category.length === 0) {
-            router.push(`/activities?category_id=${category.id}`);
-            setOpen(false);
-            setActiveCategory(null);
-        } else {
-            // If it has subcategories, show them
-            setActiveCategory(category);
-        }
+    const handleMainCategoryClick = (category, event) => {
+        // Prevent event bubbling
+        event?.stopPropagation();
+        
+        // Always navigate to activities page with the main category ID
+        router.push(`/activities?category_id=${category.id}`);
+        setOpen(false);
+        setActiveCategory(null);
+    };
+
+    const handleCategoryHoverOnly = (category) => {
+        // Only set active category for hover, don't navigate
+        setActiveCategory(category);
     };
 
     const toggleDropdown = () => {
@@ -158,27 +161,28 @@ const KlookDropdown = () => {
                                         const isActive = activeCategory?.id === category.id;
 
                                         return (
-                                            <button
-                                                key={category.id}
-                                                onMouseEnter={() => handleCategoryHover(category)}
-                                                onClick={() => handleMainCategoryClick(category)}
-                                                className={`w-full flex items-center gap-3 p-3 rounded-md transition-all text-left ${
-                                                    isActive
-                                                        ? "bg-blue-50 text-blue-600"
-                                                        : "text-gray-700 hover:bg-gray-50"
-                                                }`}
-                                            >
-                                                <IconComponent size={20} className="flex-shrink-0 text-blue-500" />
-                                                <span className="text-sm font-medium">{category.name}</span>
-                                                {category.sub_category && category.sub_category.length > 0 && (
-                                                    <ChevronDown
-                                                        size={14}
-                                                        className={`ml-auto transition-transform ${
-                                                            isActive ? "-rotate-90" : ""
-                                                        }`}
-                                                    />
-                                                )}
-                                            </button>
+                                            <div key={category.id} className="relative">
+                                                <button
+                                                    onMouseEnter={() => handleCategoryHoverOnly(category)}
+                                                    onClick={(e) => handleMainCategoryClick(category, e)}
+                                                    className={`w-full flex items-center gap-3 p-3 rounded-md transition-all text-left ${
+                                                        isActive
+                                                            ? "bg-blue-50 text-blue-600"
+                                                            : "text-gray-700 hover:bg-gray-50"
+                                                    }`}
+                                                >
+                                                    <IconComponent size={20} className="flex-shrink-0 text-blue-500" />
+                                                    <span className="text-sm font-medium flex-1">{category.name}</span>
+                                                    {category.sub_category && category.sub_category.length > 0 && (
+                                                        <ChevronDown
+                                                            size={14}
+                                                            className={`ml-auto transition-transform ${
+                                                                isActive ? "-rotate-90" : ""
+                                                            }`}
+                                                        />
+                                                    )}
+                                                </button>
+                                            </div>
                                         );
                                     })}
                                 </div>
@@ -277,14 +281,22 @@ export const MobileKlookDropdown = () => {
         setExpandedCategories(new Set());
     };
 
-    const handleMainCategoryClick = (category) => {
-        if (!category.sub_category || category.sub_category.length === 0) {
-            router.push(`/activities?category_id=${category.id}`);
-            setOpen(false);
-            setExpandedCategories(new Set());
-        } else {
-            toggleCategory(category.id);
-        }
+    const handleMainCategoryClick = (category, event) => {
+        // Prevent event bubbling
+        event?.stopPropagation();
+        
+        // Always navigate to activities page with the main category ID
+        router.push(`/activities?category_id=${category.id}`);
+        setOpen(false);
+        setExpandedCategories(new Set());
+    };
+
+    const handleCategoryExpand = (category, event) => {
+        // Prevent event bubbling
+        event?.stopPropagation();
+        
+        // Only toggle expansion, don't navigate
+        toggleCategory(category.id);
     };
 
     return (
@@ -314,21 +326,28 @@ export const MobileKlookDropdown = () => {
 
                                 return (
                                     <div key={category.id} className="border-b border-gray-100 last:border-b-0">
-                                        <button
-                                            onClick={() => handleMainCategoryClick(category)}
-                                            className="w-full flex items-center gap-3 p-2 rounded-lg transition-all text-left text-gray-700 hover:bg-gray-50"
-                                        >
-                                            <IconComponent size={18} className="flex-shrink-0 text-blue-500" />
-                                            <span className="text-sm font-medium flex-1">{category.name}</span>
+                                        <div className="flex items-center">
+                                            <button
+                                                onClick={(e) => handleMainCategoryClick(category, e)}
+                                                className="flex-1 flex items-center gap-3 p-2 rounded-lg transition-all text-left text-gray-700 hover:bg-gray-50"
+                                            >
+                                                <IconComponent size={18} className="flex-shrink-0 text-blue-500" />
+                                                <span className="text-sm font-medium flex-1">{category.name}</span>
+                                            </button>
                                             {category.sub_category && category.sub_category.length > 0 && (
-                                                <ChevronDown
-                                                    size={14}
-                                                    className={`transition-transform ${
-                                                        isExpanded ? "rotate-180" : ""
-                                                    }`}
-                                                />
+                                                <button
+                                                    onClick={(e) => handleCategoryExpand(category, e)}
+                                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                                >
+                                                    <ChevronDown
+                                                        size={14}
+                                                        className={`transition-transform ${
+                                                            isExpanded ? "rotate-180" : ""
+                                                        }`}
+                                                    />
+                                                </button>
                                             )}
-                                        </button>
+                                        </div>
 
                                         {isExpanded && category.sub_category && (
                                             <div className="ml-6 mt-1 space-y-2 pb-2">

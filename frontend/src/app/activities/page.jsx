@@ -147,26 +147,49 @@ const ActivitiesPage = () => {
       if (targetCategory) {
         setCategoryData(targetCategory);
 
-        // Get ALL valid sub-category IDs from this category
+        // Get ALL valid category IDs from this category (including nested ones)
         let validCategoryIds = [parseInt(categoryFilter)]; // Include main category ID
           
-        if (targetCategory.sub_category) {
-          targetCategory.sub_category.forEach(sub => {
-            validCategoryIds.push(sub.id);
+        // Recursive function to collect all nested category IDs
+        const collectCategoryIds = (category) => {
+          if (category.sub_category && Array.isArray(category.sub_category)) {
+            category.sub_category.forEach(sub => {
+              validCategoryIds.push(parseInt(sub.id));
               
-            if (sub.leaf_category) {
-              sub.leaf_category.forEach(leaf => {
-                validCategoryIds.push(leaf.id);
-              });
-            }
-          });
-        }
+              if (sub.leaf_category && Array.isArray(sub.leaf_category)) {
+                sub.leaf_category.forEach(leaf => {
+                  validCategoryIds.push(parseInt(leaf.id));
+                });
+              }
+              
+              // Recursively collect from nested subcategories if they exist
+              collectCategoryIds(sub);
+            });
+          }
+        };
 
-        console.log('🔍 DEBUG - Valid category IDs:', validCategoryIds);
-        filtered = filtered.filter(activity =>
-            validCategoryIds.includes(parseInt(activity.category_id))
-          );
-        console.log('🔍 DEBUG - After category filter:', filtered.length);
+        collectCategoryIds(targetCategory);
+
+        // Remove duplicates
+        validCategoryIds = [...new Set(validCategoryIds)];
+
+        console.log('🔍 DEBUG - Valid category IDs for category', categoryFilter, ':', validCategoryIds);
+        
+        const beforeFilterCount = filtered.length;
+        filtered = filtered.filter(activity => {
+          const activityCategoryId = parseInt(activity.category_id);
+          return validCategoryIds.includes(activityCategoryId);
+        });
+        
+        console.log('🔍 DEBUG - Category filter applied:', {
+          targetCategory: targetCategory.name,
+          validIds: validCategoryIds,
+          before: beforeFilterCount,
+          after: filtered.length
+        });
+      } else {
+        console.log('🔍 DEBUG - Category not found:', categoryFilter);
+        setCategoryData(null);
       }
     } else {
       setCategoryData(null);
@@ -332,8 +355,7 @@ const ActivitiesPage = () => {
     setSelectedCategoryFilter('');
     setSearchQuery('');
     setActiveSearchQuery('');
-    setSortBy('default');
-    setCurrentPage(1);
+    setSortBy('popular'); // Reset to default sort option
     
     // Apply filters immediately (this will clear search)
     if (allActivities.length > 0) {
@@ -512,7 +534,7 @@ const ActivitiesPage = () => {
               <div className="space-y-4">
               <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
                 {categoryData?.name 
-                  ? `Explore ${totalActivities} activities in ${categoryData.name}`
+                  ? `Explore ${totalActivities} activities in ${categoryData.name}${categoryData.sub_category && categoryData.sub_category.length > 0 ? ' and all subcategories' : ''}`
                     : searchQuery
                     ? `Found ${totalActivities} activities matching "${searchQuery}"`
                     : `Discover ${totalActivities} amazing experiences from our curated collection`
@@ -700,7 +722,7 @@ const ActivitiesPage = () => {
                 <div className="flex flex-col">
               <p className="text-lg text-gray-500 font-medium">
                 {totalActivities} activities found
-                {categoryData && ` in ${categoryData.name}`}
+                {categoryData && ` in ${categoryData.name}${categoryData.sub_category && categoryData.sub_category.length > 0 ? ' (including subcategories)' : ''}`}
                     {searchQuery && ` for "${searchQuery}"`}
                   </p>
                   {totalAvailableActivities > 0 && (
