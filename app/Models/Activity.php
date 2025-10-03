@@ -16,11 +16,20 @@ class Activity extends Model
         'supported_languages',
         'price',
         'currency',
-        'vat_price'
+        'vat_price',
+        // Image fields
+        'primary_image_url',
+        'image_alt_text',
+        'all_images',
+        // Country/location fields
+        'country_name',
+        'city_name',
+        'location_display'
     ];
 
     protected $casts = [
         'supported_languages' => 'array',
+        'all_images' => 'array',
         'activity_id' => 'integer',
         'city_id' => 'integer',
         'country_id' => 'integer',
@@ -53,5 +62,11 @@ class Activity extends Model
     public function scopeByCountry($query, $countryId)
     {
         return $query->where('country_id', $countryId);
+    }
+    
+    // Scope for filtering by country name
+    public function scopeByCountryName($query, $countryName)
+    {
+        return $query->where('country_name', $countryName);
     }
 }

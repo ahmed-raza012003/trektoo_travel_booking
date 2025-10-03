@@ -21,7 +21,7 @@ class DumpKlookActivities extends Command
      *
      * @var string
      */
-    protected $description = 'Dump Klook activities data into local database';
+    protected $description = 'Dump Klook activities data into local database with images and country info';
 
     protected $klookService;
 
@@ -48,6 +48,7 @@ class DumpKlookActivities extends Command
         $this->info("📈 Limit: {$config['limit']} activities");
         $this->info("⏰ Frequency: {$config['frequency']}");
         $this->info("💡 Description: {$config['description']}");
+        $this->info("🎨 Features: Images + Country Names extraction enabled");
         
         if ($force) {
             $this->info('🗑️  Clearing existing activities data...');
@@ -87,10 +88,10 @@ class DumpKlookActivities extends Command
                     break;
                 }
 
-                $this->info("📦 Processing " . count($activities) . " activities...");
+                $this->info("📦 Processing " . count($activities) . " activities (extracting images & countries)...");
 
-                // Process activities in batches for better performance
-                $this->processActivitiesBatch($activities);
+                // Process activities with individual detail fetching for images
+                $this->processActivitiesWithDetails($activities);
 
                 $totalFetched += count($activities);
                 $progressBar->setProgress($totalFetched);
@@ -117,6 +118,7 @@ class DumpKlookActivities extends Command
         $this->info("🎉 Data dump completed for {$environment} environment!");
         $this->info("📊 Total activities dumped: {$totalFetched}");
         $this->info("💾 Database now contains " . Activity::count() . " activities");
+        $this->info("🎨 All activities include images and country information");
 
         return self::SUCCESS;
     }
@@ -153,11 +155,23 @@ class DumpKlookActivities extends Command
         return $configs[$environment] ?? $configs['local'];
     }
 
-    private function processActivitiesBatch($activities)
+    private function processActivitiesWithDetails($activities)
     {
         $batchData = [];
 
-        foreach ($activities as $activity) {
+        foreach ($activities as $index => $activity) {
+            $this->info("🔍 Fetching details for activity {$activity['activity_id']} (" . ($index + 1) . "/" . count($activities) . ")");
+            
+            // Fetch detailed activity data for images
+            $detailedActivity = $this->fetchActivityDetails($activity['activity_id']);
+            
+            // Merge basic activity data with detailed data
+            $fullActivityData = array_merge($activity, $detailedActivity);
+            
+            // Extract image and country data
+            $imageData = $this->extractImageData($fullActivityData);
+            $countryData = $this->extractCountryData($fullActivityData);
+            
             $batchData[] = [
                 'activity_id' => $activity['activity_id'],
                 'title' => $activity['title'],
@@ -169,6 +183,64 @@ class DumpKlookActivities extends Command
                 'price' => $activity['price'] ?? null,
                 'currency' => $activity['currency'] ?? null,
                 'vat_price' => $activity['vat_price'] ?? null,
+                
+                // New image fields
+                'primary_image_url' => $imageData['primary_image'],
+                'image_alt_text' => $imageData['alt_text'],
+                'all_images' => $imageData['all_images'],
+                
+                // New country fields
+                'country_name' => $countryData['country_name'],
+                'city_name' => $countryData['city_name'],
+                'location_display' => $countryData['location_display'],
+                
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+            
+            // Small delay to avoid rate limiting
+            usleep(100000); // 0.1 second
+        }
+
+        // Use upsert to handle duplicates
+        DB::table('activities')->upsert(
+            $batchData,
+            ['activity_id'], // Unique key
+            ['title', 'sub_title', 'city_id', 'country_id', 'category_id', 'supported_languages', 'price', 'currency', 'vat_price', 'primary_image_url', 'image_alt_text', 'all_images', 'country_name', 'city_name', 'location_display', 'updated_at'] // Update these fields
+        );
+    }
+
+    private function processActivitiesBatch($activities)
+    {
+        $batchData = [];
+
+        foreach ($activities as $activity) {
+            // Extract image and country data
+            $imageData = $this->extractImageData($activity);
+            $countryData = $this->extractCountryData($activity);
+            
+            $batchData[] = [
+                'activity_id' => $activity['activity_id'],
+                'title' => $activity['title'],
+                'sub_title' => $activity['sub_title'] ?? null,
+                'city_id' => $activity['city_id'],
+                'country_id' => $activity['country_id'],
+                'category_id' => $activity['category_id'],
+                'supported_languages' => json_encode($activity['supported_languages'] ?? []),
+                'price' => $activity['price'] ?? null,
+                'currency' => $activity['currency'] ?? null,
+                'vat_price' => $activity['vat_price'] ?? null,
+                
+                // New image fields
+                'primary_image_url' => $imageData['primary_image'],
+                'image_alt_text' => $imageData['alt_text'],
+                'all_images' => $imageData['all_images'],
+                
+                // New country fields
+                'country_name' => $countryData['country_name'],
+                'city_name' => $countryData['city_name'],
+                'location_display' => $countryData['location_display'],
+                
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
@@ -178,7 +250,178 @@ class DumpKlookActivities extends Command
         DB::table('activities')->upsert(
             $batchData,
             ['activity_id'], // Unique key
-            ['title', 'sub_title', 'city_id', 'country_id', 'category_id', 'supported_languages', 'price', 'currency', 'vat_price', 'updated_at'] // Update these fields
+            ['title', 'sub_title', 'city_id', 'country_id', 'category_id', 'supported_languages', 'price', 'currency', 'vat_price', 'primary_image_url', 'image_alt_text', 'all_images', 'country_name', 'city_name', 'location_display', 'updated_at'] // Update these fields
         );
+    }
+
+    /**
+     * Fetch detailed activity data including images
+     */
+    private function fetchActivityDetails($activityId)
+    {
+        try {
+            $response = $this->klookService->getActivityDetail($activityId);
+            
+            
+            if ($response['success'] && isset($response['activity'])) {
+                return $response['activity'];
+            }
+            
+            if ($response['success'] && isset($response['data']['activity'])) {
+                return $response['data']['activity'];
+            }
+            
+            $this->warn("⚠️  Unexpected response structure for activity {$activityId}");
+            return [];
+        } catch (\Exception $e) {
+            $this->warn("⚠️  Failed to fetch details for activity {$activityId}: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Extract image data from activity
+     */
+    private function extractImageData($activity)
+    {
+        $images = $activity['images'] ?? [];
+        $primaryImage = null;
+        $altText = $activity['title'] ?? 'Activity Image';
+        $allImages = [];
+
+        if (!empty($images) && is_array($images)) {
+            // Find the best image (prefer landscape, high quality)
+            $bestImage = $this->findBestImage($images);
+            if ($bestImage) {
+                $primaryImage = $bestImage['image_url_host'] ?? null;
+                $altText = $bestImage['image_alt'] ?? $activity['title'] ?? 'Activity Image';
+            }
+            
+            // Store all images as JSON
+            $allImages = array_map(function($img) {
+                return [
+                    'url' => $img['image_url_host'] ?? null,
+                    'alt_text' => $img['image_alt'] ?? null,
+                    'width' => $img['width'] ?? null,
+                    'height' => $img['height'] ?? null,
+                    'description' => $img['image_desc'] ?? null,
+                ];
+            }, $images);
+        }
+
+        return [
+            'primary_image' => $primaryImage,
+            'alt_text' => $altText,
+            'all_images' => json_encode($allImages)
+        ];
+    }
+
+    /**
+     * Extract country and location data from activity
+     */
+    private function extractCountryData($activity)
+    {
+        $countryName = null;
+        $cityName = null;
+        $locationDisplay = null;
+
+        // Try to get from city_info if available
+        if (isset($activity['city_info']) && is_array($activity['city_info']) && !empty($activity['city_info'])) {
+            $cityInfo = $activity['city_info'][0];
+            $countryName = $cityInfo['country_name'] ?? null;
+            $cityName = $cityInfo['city_name'] ?? null;
+        }
+
+        // Fallback to location field
+        if (!$countryName && isset($activity['location'])) {
+            $locationDisplay = $activity['location'];
+            // Try to extract country from location string
+            $countryName = $this->extractCountryFromLocation($activity['location']);
+        }
+
+        // Create location display string
+        if ($cityName && $countryName) {
+            $locationDisplay = "{$cityName}, {$countryName}";
+        } elseif ($countryName) {
+            $locationDisplay = $countryName;
+        } elseif (isset($activity['location'])) {
+            $locationDisplay = $activity['location'];
+        }
+
+        return [
+            'country_name' => $countryName,
+            'city_name' => $cityName,
+            'location_display' => $locationDisplay
+        ];
+    }
+
+    /**
+     * Find the best image from available images
+     */
+    private function findBestImage($images)
+    {
+        if (empty($images)) {
+            return null;
+        }
+
+        // Sort by preference: landscape > square > portrait, then by size
+        usort($images, function($a, $b) {
+            $aWidth = $a['width'] ?? 0;
+            $aHeight = $a['height'] ?? 0;
+            $bWidth = $b['width'] ?? 0;
+            $bHeight = $b['height'] ?? 0;
+            
+            $aRatio = $aWidth / max($aHeight, 1);
+            $bRatio = $bWidth / max($bHeight, 1);
+            
+            // Prefer landscape images (ratio > 1.2)
+            if ($aRatio > 1.2 && $bRatio <= 1.2) return -1;
+            if ($bRatio > 1.2 && $aRatio <= 1.2) return 1;
+            
+            // Then prefer larger images
+            $aSize = $aWidth * $aHeight;
+            $bSize = $bWidth * $bHeight;
+            
+            return $bSize - $aSize;
+        });
+
+        return $images[0];
+    }
+
+    /**
+     * Extract country name from location string
+     */
+    private function extractCountryFromLocation($location)
+    {
+        $location = strtolower($location);
+        
+        $countryMap = [
+            'hong kong' => 'Hong Kong',
+            'singapore' => 'Singapore',
+            'tokyo' => 'Japan',
+            'japan' => 'Japan',
+            'bangkok' => 'Thailand',
+            'thailand' => 'Thailand',
+            'kuala lumpur' => 'Malaysia',
+            'malaysia' => 'Malaysia',
+            'jakarta' => 'Indonesia',
+            'indonesia' => 'Indonesia',
+            'manila' => 'Philippines',
+            'philippines' => 'Philippines',
+            'seoul' => 'South Korea',
+            'korea' => 'South Korea',
+            'taipei' => 'Taiwan',
+            'taiwan' => 'Taiwan',
+            'vietnam' => 'Vietnam',
+            'ho chi minh' => 'Vietnam',
+        ];
+
+        foreach ($countryMap as $keyword => $country) {
+            if (strpos($location, $keyword) !== false) {
+                return $country;
+            }
+        }
+
+        return null;
     }
 }

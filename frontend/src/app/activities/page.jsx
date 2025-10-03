@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import API_BASE from '@/lib/api/klookApi';
-import { useActivityImagesOptimized as useActivityImages } from '@/hooks/useActivityImagesOptimized';
+// Images are now loaded directly from database - no complex hook needed
 
 const LoadingSpinner = lazy(() => import('@/components/ui/LoadingSpinner').then(m => ({ default: m.LoadingSpinner })));
 const { ActivityGridSkeleton, CardSkeleton } = require('@/components/ui/LoadingSkeleton');
@@ -57,23 +57,13 @@ const ActivitiesPage = () => {
   const [totalAvailableActivities, setTotalAvailableActivities] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Use the optimized activity images hook
-  const {
-    getImageUrl,
-    isImageLoading,
-    hasImageError,
-    fetchImageForActivity,
-    getObserverRef
-  } = useActivityImages(currentPageActivities);
+  // Note: Images are now loaded directly from database - no need for complex image loading
 
   // Function to get the best available image for an activity
   const getActivityImage = (activity) => {
-    const activityId = activity.activity_id;
-    const apiImageUrl = getImageUrl(activityId);
-    
-    // If we have an image from API, use it
-    if (apiImageUrl) {
-      return apiImageUrl;
+    // Use database image if available
+    if (activity.primary_image_url) {
+      return activity.primary_image_url;
     }
     
     // Fallback to default image
@@ -81,20 +71,7 @@ const ActivitiesPage = () => {
   };
 
 
-  // Preload critical images (first 6 activities) for instant display
-  useEffect(() => {
-    if (currentPageActivities.length > 0) {
-      const criticalActivities = currentPageActivities.slice(0, 6);
-      const criticalIds = criticalActivities
-        .map(activity => activity.activity_id)
-        .filter(id => id && !getImageUrl(id) && !isImageLoading(id) && !hasImageError(id));
-      
-      if (criticalIds.length > 0) {
-        // Trigger immediate fetch for critical images
-        criticalIds.forEach(id => fetchImageForActivity(id));
-      }
-    }
-  }, [currentPageActivities, getImageUrl, isImageLoading, hasImageError, fetchImageForActivity]);
+  // Images are now loaded directly from database - no preloading needed
 
   // Fast database fetch function - get all activities at once
   const fetchActivitiesFromDatabase = async (controller) => {
@@ -915,44 +892,13 @@ const ActivitiesPage = () => {
                     {/* Activity Image */}
                     <div 
                       className={`relative overflow-hidden ${viewMode === 'list' ? 'w-64 flex-shrink-0 h-64' : 'h-56'}`}
-                      data-activity-id={activity.activity_id}
-                      ref={(el) => {
-                        if (el && getObserverRef()) {
-                          getObserverRef().observe(el);
-                        }
-                      }}
                     >
-                      {/* Loading overlay with skeleton animation */}
-                      {isImageLoading(activity.activity_id) && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 z-10 animate-pulse">
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="text-center">
-                              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-1"></div>
-                              <p className="text-xs text-gray-500">Loading...</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {getImageUrl(activity.activity_id) ? (
-                        <img
-                          src={getActivityImage(activity)}
-                          alt={activity.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={() => {
-                            // If image fails to load, try to fetch it from API
-                            if (!hasImageError(activity.activity_id)) {
-                              fetchImageForActivity(activity.activity_id);
-                            }
-                          }}
-                          loading="lazy"
-                        />
-                      ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                        <Ticket className="h-24 w-24 text-blue-500" />
-                      </div>
-                      )}
+                      <img
+                        src={getActivityImage(activity)}
+                        alt={activity.image_alt_text || activity.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
 
                       {/* Favorite Button */}
                       <motion.button
@@ -1006,7 +952,14 @@ const ActivitiesPage = () => {
                       {/* Location */}
                       <div className="flex items-center gap-2 text-gray-500 mb-3">
                         <MapPin className="h-3 w-3" />
-                        <span className="text-xs">{activity.location}</span>
+                        <div className="flex flex-col">
+                          <span className="text-xs">{activity.location_display || activity.location || 'Various Locations'}</span>
+                          {activity.country_name && (
+                            <span className="text-xs font-medium text-blue-600">
+                              {activity.country_name}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Highlights */}

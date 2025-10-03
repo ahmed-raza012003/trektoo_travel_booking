@@ -458,6 +458,17 @@ class KlookApiService
                     'price' => $activity->price,
                     'currency' => $activity->currency,
                     'vat_price' => $activity->vat_price,
+                    
+                    // Image data
+                    'primary_image_url' => $activity->primary_image_url,
+                    'image_alt_text' => $activity->image_alt_text,
+                    'all_images' => $activity->all_images ?? [],
+                    
+                    // Country/location data
+                    'country_name' => $activity->country_name,
+                    'city_name' => $activity->city_name,
+                    'location_display' => $activity->location_display,
+                    'location' => $activity->location_display, // For backward compatibility
                 ];
             })->toArray();
 
