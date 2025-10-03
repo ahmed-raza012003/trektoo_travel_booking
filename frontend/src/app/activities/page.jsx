@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import API_BASE from '@/lib/api/klookApi';
+import { useActivityImagesOptimized as useActivityImages } from '@/hooks/useActivityImagesOptimized';
 
 const LoadingSpinner = lazy(() => import('@/components/ui/LoadingSpinner').then(m => ({ default: m.LoadingSpinner })));
 const { ActivityGridSkeleton, CardSkeleton } = require('@/components/ui/LoadingSkeleton');
@@ -48,6 +49,9 @@ const ActivitiesPage = () => {
   const [sortBy, setSortBy] = useState('popular');
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
+  const [isCountryFilterOpen, setIsCountryFilterOpen] = useState(false);
+  const [selectedCountryFilter, setSelectedCountryFilter] = useState('');
+  const [availableCountries, setAvailableCountries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -55,6 +59,107 @@ const ActivitiesPage = () => {
   const [hasInitialData, setHasInitialData] = useState(false);
   const [totalAvailableActivities, setTotalAvailableActivities] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Use the optimized activity images hook
+  const {
+    getImageUrl,
+    getCountryName,
+    isImageLoading,
+    hasImageError,
+    fetchImageForActivity,
+    getObserverRef
+  } = useActivityImages(currentPageActivities);
+
+  // Function to get the best available image for an activity
+  const getActivityImage = (activity) => {
+    const activityId = activity.activity_id;
+    const apiImageUrl = getImageUrl(activityId);
+    
+    // If we have an image from API, use it
+    if (apiImageUrl) {
+      return apiImageUrl;
+    }
+    
+    // Fallback to default image
+    return `https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop&crop=center`;
+  };
+
+  // Function to get country name with fallback
+  const getActivityCountry = (activity) => {
+    const activityId = activity.activity_id;
+    const apiCountryName = getCountryName(activityId);
+    
+    // If we have country name from API, use it
+    if (apiCountryName) {
+      return apiCountryName;
+    }
+    
+    // Fallback based on location or other data
+    const location = activity.location?.toLowerCase() || '';
+    
+    // Simple country mapping based on common location patterns
+    if (location.includes('hong kong') || location.includes('hk')) return 'Hong Kong';
+    if (location.includes('singapore') || location.includes('sg')) return 'Singapore';
+    if (location.includes('tokyo') || location.includes('japan')) return 'Japan';
+    if (location.includes('bangkok') || location.includes('thailand')) return 'Thailand';
+    if (location.includes('kuala lumpur') || location.includes('malaysia')) return 'Malaysia';
+    if (location.includes('jakarta') || location.includes('indonesia')) return 'Indonesia';
+    if (location.includes('manila') || location.includes('philippines')) return 'Philippines';
+    if (location.includes('seoul') || location.includes('korea')) return 'South Korea';
+    if (location.includes('taipei') || location.includes('taiwan')) return 'Taiwan';
+    if (location.includes('vietnam') || location.includes('ho chi minh')) return 'Vietnam';
+    
+    return null; // No fallback available
+  };
+
+  // Function to get country flag emoji
+  const getCountryFlag = (countryName) => {
+    if (!countryName) return '';
+    
+    const flagMap = {
+      'Hong Kong': '🇭🇰',
+      'Singapore': '🇸🇬',
+      'Japan': '🇯🇵',
+      'Thailand': '🇹🇭',
+      'Malaysia': '🇲🇾',
+      'Indonesia': '🇮🇩',
+      'Philippines': '🇵🇭',
+      'South Korea': '🇰🇷',
+      'Taiwan': '🇹🇼',
+      'Vietnam': '🇻🇳',
+    };
+    
+    return flagMap[countryName] || '🌍';
+  };
+
+  // Function to extract unique countries from activities
+  const extractUniqueCountries = (activities) => {
+    const countries = new Set();
+    
+    activities.forEach(activity => {
+      const countryName = getActivityCountry(activity);
+      if (countryName) {
+        countries.add(countryName);
+      }
+    });
+    
+    return Array.from(countries).sort();
+  };
+
+  // Preload critical images (first 6 activities) for instant display
+  useEffect(() => {
+    if (currentPageActivities.length > 0) {
+      const criticalActivities = currentPageActivities.slice(0, 6);
+      const criticalIds = criticalActivities
+        .map(activity => activity.activity_id)
+        .filter(id => id && !getImageUrl(id) && !isImageLoading(id) && !hasImageError(id));
+      
+      if (criticalIds.length > 0) {
+        // Trigger immediate fetch for critical images
+        criticalIds.forEach(id => fetchImageForActivity(id));
+      }
+    }
+  }, [currentPageActivities, getImageUrl, isImageLoading, hasImageError, fetchImageForActivity]);
 
   // Fast database fetch function - get all activities at once
   const fetchActivitiesFromDatabase = async (controller) => {
@@ -119,7 +224,7 @@ const ActivitiesPage = () => {
         const { activities, categories } = await fetchActivitiesFromDatabase(controller);
         
         // Apply initial filtering immediately
-        applyFilters(activities, categories, selectedCategoryFilter, searchQuery);
+        applyFilters(activities, categories, selectedCategoryFilter, searchQuery, selectedCountryFilter);
 
       } catch (err) {
         if (err.name !== 'AbortError') {
@@ -135,8 +240,8 @@ const ActivitiesPage = () => {
   }, []); // Only run once on mount
 
   // Enhanced filters function with instant search
-  const applyFilters = useCallback((activities, categories, categoryFilter, search) => {
-    console.log('🔍 DEBUG - Filter inputs:', { categoryFilter, search, activitiesCount: activities.length });
+  const applyFilters = useCallback((activities, categories, categoryFilter, search, countryFilter) => {
+    console.log('🔍 DEBUG - Filter inputs:', { categoryFilter, search, countryFilter, activitiesCount: activities.length });
     
     let filtered = [...activities];
 
@@ -195,19 +300,24 @@ const ActivitiesPage = () => {
       setCategoryData(null);
     }
 
-    // Enhanced search filter with multiple fields
+    // Enhanced search filter with multiple fields including country names
     if (search.trim()) {
       const searchLower = search.toLowerCase();
       const searchTerms = searchLower.split(' ').filter(term => term.length > 0);
       const beforeSearchCount = filtered.length;
       
       filtered = filtered.filter(activity => {
+        // Get country name for this activity
+        const countryName = getActivityCountry(activity);
+        
         const searchableText = [
           activity.title,
           activity.sub_title,
           activity.location,
+          countryName, // Include country name in search
           // Add more searchable fields if available
-        ].join(' ').toLowerCase();
+        ].filter(Boolean) // Remove null/undefined values
+         .join(' ').toLowerCase();
         
         // Check if all search terms are found in the searchable text
         return searchTerms.every(term => searchableText.includes(term));
@@ -217,6 +327,22 @@ const ActivitiesPage = () => {
         searchTerm: search,
         searchTerms: searchTerms,
         before: beforeSearchCount,
+        after: filtered.length
+      });
+    }
+
+    // Apply country filter
+    if (countryFilter) {
+      const beforeCountryCount = filtered.length;
+      
+      filtered = filtered.filter(activity => {
+        const countryName = getActivityCountry(activity);
+        return countryName === countryFilter;
+      });
+      
+      console.log('🔍 DEBUG - Country filter applied:', {
+        countryFilter,
+        before: beforeCountryCount,
         after: filtered.length
       });
     }
@@ -244,9 +370,17 @@ const ActivitiesPage = () => {
         categoryFilter: selectedCategoryFilter,
         totalActivities: allActivities.length
       });
-      applyFilters(allActivities, allCategories, selectedCategoryFilter, activeSearchQuery);
+      applyFilters(allActivities, allCategories, selectedCategoryFilter, activeSearchQuery, selectedCountryFilter);
     }
-  }, [selectedCategoryFilter, allActivities, allCategories, applyFilters, activeSearchQuery]);
+  }, [selectedCategoryFilter, allActivities, allCategories, applyFilters, activeSearchQuery, selectedCountryFilter]);
+
+  // Update available countries when activities change
+  useEffect(() => {
+    if (allActivities.length > 0) {
+      const countries = extractUniqueCountries(allActivities);
+      setAvailableCountries(countries);
+    }
+  }, [allActivities]);
 
   // Paginate filtered activities when page changes
   useEffect(() => {
@@ -301,6 +435,19 @@ const ActivitiesPage = () => {
     setIsCategoryFilterOpen(false);
   };
 
+  const handleCountryFilterChange = (countryName) => {
+    setSelectedCountryFilter(countryName);
+    const params = new URLSearchParams(searchParams.toString());
+    if (countryName) {
+      params.set('country', countryName);
+    } else {
+      params.delete('country');
+    }
+    params.set('page', '1'); // Reset to first page
+    router.push(`/activities?${params.toString()}`);
+    setIsCountryFilterOpen(false);
+  };
+
 
   // Simple search that only works on submit
   const handleSearchChange = (query) => {
@@ -353,13 +500,14 @@ const ActivitiesPage = () => {
 
   const clearAllFilters = () => {
     setSelectedCategoryFilter('');
+    setSelectedCountryFilter('');
     setSearchQuery('');
     setActiveSearchQuery('');
     setSortBy('popular'); // Reset to default sort option
     
     // Apply filters immediately (this will clear search)
     if (allActivities.length > 0) {
-      applyFilters(allActivities, allCategories, '', '');
+      applyFilters(allActivities, allCategories, '', '', '');
     }
     
     router.push('/activities');
@@ -387,13 +535,16 @@ const ActivitiesPage = () => {
       if (isCategoryFilterOpen && !event.target.closest('[data-category-filter]')) {
         setIsCategoryFilterOpen(false);
       }
+      if (isCountryFilterOpen && !event.target.closest('[data-country-filter]')) {
+        setIsCountryFilterOpen(false);
+      }
     };
 
-    if (isSortOpen || isCategoryFilterOpen) {
+    if (isSortOpen || isCategoryFilterOpen || isCountryFilterOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [isSortOpen, isCategoryFilterOpen]);
+  }, [isSortOpen, isCategoryFilterOpen, isCountryFilterOpen]);
 
   // Sort activities based on selected criteria
   const sortedActivities = React.useMemo(() => {
@@ -655,10 +806,59 @@ const ActivitiesPage = () => {
                   </div>
                 )}
               </div>
+
+              {/* Country Filter */}
+              <div className="relative" data-country-filter>
+                <button
+                  onClick={() => setIsCountryFilterOpen(!isCountryFilterOpen)}
+                  className="flex items-center gap-2 bg-white border border-gray-200 rounded-2xl px-6 py-4 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap"
+                >
+                  <MapPin className="h-5 w-5" />
+                  <span className="font-medium">
+                    {selectedCountryFilter 
+                      ? `${getCountryFlag(selectedCountryFilter)} ${selectedCountryFilter}`
+                      : 'All Countries'}
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${isCountryFilterOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {isCountryFilterOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl py-2 z-50 border border-blue-100 max-h-96 overflow-y-auto">
+                    <button
+                      onClick={() => handleCountryFilterChange('')}
+                      className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                        !selectedCountryFilter 
+                          ? 'bg-blue-100 text-blue-600 font-medium' 
+                          : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
+                      }`}
+                    >
+                      All Countries
+                    </button>
+                    {availableCountries.map((country) => (
+                      <button
+                        key={country}
+                        onClick={() => handleCountryFilterChange(country)}
+                        className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                          selectedCountryFilter === country
+                            ? 'bg-blue-100 text-blue-600 font-medium' 
+                            : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{getCountryFlag(country)}</span>
+                          <span>{country}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Active Filters */}
-            {(selectedCategoryFilter || searchQuery) && (
+            {(selectedCategoryFilter || searchQuery || selectedCountryFilter) && (
               <div className="flex items-center gap-2 mt-4 flex-wrap">
                 <span className="text-sm text-gray-600 font-medium">Active filters:</span>
                 {selectedCategoryFilter && categoryData && (
@@ -667,6 +867,17 @@ const ActivitiesPage = () => {
                     <button
                       onClick={() => handleCategoryFilterChange('')}
                       className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+                {selectedCountryFilter && (
+                  <div className="flex items-center gap-1 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
+                    <span>{getCountryFlag(selectedCountryFilter)} {selectedCountryFilter}</span>
+                    <button
+                      onClick={() => handleCountryFilterChange('')}
+                      className="ml-1 hover:bg-purple-200 rounded-full p-0.5"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -681,7 +892,7 @@ const ActivitiesPage = () => {
                         setActiveSearchQuery('');
                         // Apply filters immediately to clear search results
                         if (allActivities.length > 0) {
-                          applyFilters(allActivities, allCategories, selectedCategoryFilter, '');
+                          applyFilters(allActivities, allCategories, selectedCategoryFilter, '', selectedCountryFilter);
                         }
                         // Update URL
                         const params = new URLSearchParams(searchParams.toString());
@@ -722,12 +933,12 @@ const ActivitiesPage = () => {
                 <div className="flex flex-col">
               <p className="text-lg text-gray-500 font-medium">
                 {totalActivities} activities found
-                {categoryData && ` in ${categoryData.name}${categoryData.sub_category && categoryData.sub_category.length > 0 ? ' (including subcategories)' : ''}`}
+                {categoryData && ` in ${categoryData.name}${categoryData.sub_category && categoryData.sub_category.length > 0 ? '' : ''}`}
                     {searchQuery && ` for "${searchQuery}"`}
                   </p>
                   {totalAvailableActivities > 0 && (
                     <p className="text-sm text-gray-400">
-                      {allActivities.length.toLocaleString()} activities loaded instantly from database
+                      {allActivities.length.toLocaleString()} Total Activities
                     </p>
                   )}
                 </div>
@@ -871,10 +1082,46 @@ const ActivitiesPage = () => {
                       }`}
                   >
                     {/* Activity Image */}
-                    <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-64 flex-shrink-0 h-64' : 'h-56'}`}>
-                      <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                        <Ticket className="h-24 w-24 text-blue-500" />
-                      </div>
+                    <div 
+                      className={`relative overflow-hidden ${viewMode === 'list' ? 'w-64 flex-shrink-0 h-64' : 'h-56'}`}
+                      data-activity-id={activity.activity_id}
+                      ref={(el) => {
+                        if (el && getObserverRef()) {
+                          getObserverRef().observe(el);
+                        }
+                      }}
+                    >
+                      {/* Loading overlay with skeleton animation */}
+                      {isImageLoading(activity.activity_id) && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 z-10 animate-pulse">
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="text-center">
+                              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-1"></div>
+                              <p className="text-xs text-gray-500">Loading...</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {getImageUrl(activity.activity_id) ? (
+                        <img
+                          src={getActivityImage(activity)}
+                          alt={activity.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={() => {
+                            // If image fails to load, try to fetch it from API
+                            if (!hasImageError(activity.activity_id)) {
+                              fetchImageForActivity(activity.activity_id);
+                            }
+                          }}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                          <Ticket className="h-24 w-24 text-blue-500" />
+                        </div>
+                      )}
 
                       {/* Favorite Button */}
                       <motion.button
@@ -925,10 +1172,20 @@ const ActivitiesPage = () => {
                         {activity.sub_title}
                       </p>
 
-                      {/* Location */}
+                      {/* Location & Country */}
                       <div className="flex items-center gap-2 text-gray-500 mb-3">
                         <MapPin className="h-3 w-3" />
-                        <span className="text-xs">{activity.location}</span>
+                        <div className="flex flex-col">
+                          <span className="text-xs">{activity.location}</span>
+                          {getActivityCountry(activity) && (
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm">{getCountryFlag(getActivityCountry(activity))}</span>
+                              <span className="text-xs font-medium text-blue-600">
+                                {getActivityCountry(activity)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Highlights */}
@@ -1016,21 +1273,7 @@ const ActivitiesPage = () => {
             </motion.div>
           )}
 
-          {/* Database Performance Message */}
-          {!isLoading && totalAvailableActivities > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center mt-8 p-6 bg-green-50 rounded-2xl border border-green-200"
-            >
-              <div className="flex items-center justify-center gap-2 text-green-700 font-medium">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span>All {allActivities.length.toLocaleString()} activities loaded instantly from database!</span>
-              </div>
-            </motion.div>
-          )}
+          
         </Suspense>
       </div>
     </div>
