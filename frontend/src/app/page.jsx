@@ -9,6 +9,7 @@ const FAQ = lazy(() => import('@/components/feature/FAQSection/FAQ'));
 const WhyChooseUs = lazy(() => import('@/components/feature/WhyChooseUsSection/WhyChooseUs'));
 const FeaturedDestinations = lazy(() => import('@/components/feature/FeaturedDestinationsSection/FeaturedDestinations'));
 const PopularActivities = lazy(() => import('@/components/feature/PopularActivitiesSection/PopularActivities'));
+const ActivitiesByCountries = lazy(() => import('@/components/feature/ActivitiesByCountriesSection/ActivitiesByCountries'));
 const TestimonialsSection = lazy(() => import('@/components/feature/TestimonialsSection/TestimonialsSection'));
 const InspirationSection = lazy(() => import('@/components/feature/InspirationSection/InspirationSection'));
 
@@ -46,6 +47,10 @@ export default function HomePage() {
 
         <Suspense fallback={<ComponentLoader />}>
           <PopularActivities />
+        </Suspense>
+
+        <Suspense fallback={<ComponentLoader />}>
+          <ActivitiesByCountries />
         </Suspense>
 
         {/* <Suspense fallback={<ComponentLoader />}>
