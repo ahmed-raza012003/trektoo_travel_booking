@@ -69,6 +69,7 @@ function HeroContent() {
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const dateFromPickerRef = useRef(null);
   const dateToPickerRef = useRef(null);
@@ -220,6 +221,32 @@ function HeroContent() {
     setSearchError(null);
     toast.success('Search cleared', { duration: 2000, position: 'top-center' });
   }, []);
+
+  const handleNavigateToActivities = useCallback(async () => {
+    setIsNavigating(true);
+    try {
+      toast.success('Loading activities...', { duration: 2000, position: 'top-center' });
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate loading
+      router.push('/activities');
+    } catch (error) {
+      toast.error('Navigation failed. Please try again.', { duration: 4000, position: 'top-center' });
+    } finally {
+      setIsNavigating(false);
+    }
+  }, [router]);
+
+  const handleNavigateToCars = useCallback(async () => {
+    setIsNavigating(true);
+    try {
+      toast.success('Loading car rentals...', { duration: 2000, position: 'top-center' });
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate loading
+      router.push('/activities?category_id=182');
+    } catch (error) {
+      toast.error('Navigation failed. Please try again.', { duration: 4000, position: 'top-center' });
+    } finally {
+      setIsNavigating(false);
+    }
+  }, [router]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -522,23 +549,43 @@ function HeroContent() {
               {/* Search Button */}
               {selectedService === 'activities' ? (
                 <motion.button
-                  onClick={() => router.push('/activities')}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-4 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-lg"
+                  onClick={handleNavigateToActivities}
+                  disabled={isNavigating}
+                  whileHover={{ scale: isNavigating ? 1 : 1.03 }}
+                  whileTap={{ scale: isNavigating ? 1 : 0.97 }}
+                  className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-4 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg"
                 >
-                  <Ticket className="w-5 h-5" />
-                  Explore Activities
+                  {isNavigating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Loading Activities...
+                    </>
+                  ) : (
+                    <>
+                      <Ticket className="w-5 h-5" />
+                      Explore Activities
+                    </>
+                  )}
                 </motion.button>
               ) : selectedService === 'cars' ? (
                 <motion.button
-                  onClick={() => router.push('/activities?category_id=182')}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-4 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-lg"
+                  onClick={handleNavigateToCars}
+                  disabled={isNavigating}
+                  whileHover={{ scale: isNavigating ? 1 : 1.03 }}
+                  whileTap={{ scale: isNavigating ? 1 : 0.97 }}
+                  className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-4 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg"
                 >
-                  <Car className="w-5 h-5" />
-                  Explore Car Rentals
+                  {isNavigating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Loading Car Rentals...
+                    </>
+                  ) : (
+                    <>
+                      <Car className="w-5 h-5" />
+                      Explore Car Rentals
+                    </>
+                  )}
                 </motion.button>
               ) : (
                 <motion.button
