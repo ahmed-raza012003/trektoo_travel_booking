@@ -88,6 +88,7 @@ const ActivityDetailPage = () => {
     const currentSkuIds = currentPackage?.sku_list?.map(sku => sku.sku_id) || [];
     const MARKUP_PERCENTAGE = 0.15;
     const applyMarkup = (price) => price * (1 + MARKUP_PERCENTAGE);
+    const images = activity?.images || [];
 
     // Helper function to check if there are any available time slots
     const hasAvailableTimeSlots = (schedules) => {
@@ -135,6 +136,30 @@ const ActivityDetailPage = () => {
         }, 5000);
         return () => clearInterval(interval);
     }, [autoRotate, activity?.images]);
+
+    // Keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (images.length <= 1) return;
+            
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                setSelectedImageIndex(prev => 
+                    prev === 0 ? images.length - 1 : prev - 1
+                );
+                setAutoRotate(false);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                setSelectedImageIndex(prev => 
+                    prev === images.length - 1 ? 0 : prev + 1
+                );
+                setAutoRotate(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [images.length]);
 
     // Fetch activity
     useEffect(() => {
@@ -297,7 +322,6 @@ const ActivityDetailPage = () => {
         visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
     };
 
-    const images = activity.images || [];
     const totalQuantity = adultQuantity + childQuantity;
 
     return (
@@ -351,7 +375,7 @@ const ActivityDetailPage = () => {
                     {/* Left Column: Image Gallery */}
                     <div className="space-y-4">
                         {/* Main Image */}
-                        <div className="relative rounded-2xl overflow-hidden shadow-lg border border-gray-200 bg-gray-100 aspect-video">
+                        <div className="relative rounded-2xl overflow-hidden shadow-lg border border-gray-200 bg-gray-100 aspect-video group">
                             <Image
                                 src={images[selectedImageIndex]?.image_url_host || "/placeholder.jpg"}
                                 alt={activity.title}
@@ -361,11 +385,47 @@ const ActivityDetailPage = () => {
                                 onMouseEnter={() => setAutoRotate(false)}
                                 onMouseLeave={() => setAutoRotate(true)}
                             />
+                            
+                            {/* Image Counter */}
                             {images.length > 1 && (
                                 <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-sm">
                                     {selectedImageIndex + 1} / {images.length}
                                 </div>
                             )}
+
+                            {/* Navigation Arrows */}
+                            {images.length > 1 && (
+                                <>
+                                    {/* Previous Arrow */}
+                                    <button
+                                        onClick={() => {
+                                            setSelectedImageIndex(prev => 
+                                                prev === 0 ? images.length - 1 : prev - 1
+                                            );
+                                            setAutoRotate(false);
+                                        }}
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full backdrop-blur-sm transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110"
+                                        aria-label="Previous image"
+                                    >
+                                        <ArrowRight className="h-5 w-5 rotate-180" />
+                                    </button>
+
+                                    {/* Next Arrow */}
+                                    <button
+                                        onClick={() => {
+                                            setSelectedImageIndex(prev => 
+                                                prev === images.length - 1 ? 0 : prev + 1
+                                            );
+                                            setAutoRotate(false);
+                                        }}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full backdrop-blur-sm transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110"
+                                        aria-label="Next image"
+                                    >
+                                        <ArrowRight className="h-5 w-5" />
+                                    </button>
+                                </>
+                            )}
+
                         </div>
 
                         {/* Thumbnail Gallery */}
@@ -374,30 +434,50 @@ const ActivityDetailPage = () => {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.3 }}
-                                className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar"
+                                className="space-y-3"
                             >
-                                {images.slice(0, 10).map((img, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => {
-                                            setSelectedImageIndex(idx);
-                                            setAutoRotate(false);
-                                        }}
-                                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 transform hover:scale-105 ${selectedImageIndex === idx
-                                            ? 'border-blue-500 ring-2 ring-blue-200'
-                                            : 'border-gray-300 hover:border-gray-400'
-                                            }`}
-                                        aria-label={`View image ${idx + 1}`}
-                                    >
-                                        <Image
-                                            src={img.image_url_host || "/placeholder.jpg"}
-                                            alt={`Thumbnail ${idx + 1}`}
-                                            width={80}
-                                            height={80}
-                                            className="object-cover w-full h-full"
-                                        />
-                                    </button>
-                                ))}
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-semibold text-gray-700">Gallery</h3>
+                                    <span className="text-xs text-gray-500">
+                                        {images.length} {images.length === 1 ? 'image' : 'images'}
+                                    </span>
+                                </div>
+                                <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
+                                    {images.slice(0, 10).map((img, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => {
+                                                setSelectedImageIndex(idx);
+                                                setAutoRotate(false);
+                                            }}
+                                            className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 transform hover:scale-105 relative group ${selectedImageIndex === idx
+                                                ? 'border-blue-500 ring-2 ring-blue-200'
+                                                : 'border-gray-300 hover:border-gray-400'
+                                                }`}
+                                            aria-label={`View image ${idx + 1}`}
+                                        >
+                                            <Image
+                                                src={img.image_url_host || "/placeholder.jpg"}
+                                                alt={`Thumbnail ${idx + 1}`}
+                                                width={80}
+                                                height={80}
+                                                className="object-cover w-full h-full"
+                                            />
+                                            {/* Hover overlay */}
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                    <div className="w-6 h-6 bg-white/90 rounded-full flex items-center justify-center">
+                                                        <ArrowRight className="h-3 w-3 text-gray-800" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {/* Selected indicator */}
+                                            {selectedImageIndex === idx && (
+                                                <div className="absolute top-1 right-1 w-3 h-3 bg-blue-500 rounded-full border border-white"></div>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
                             </motion.div>
                         )}
                     </div>
