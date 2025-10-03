@@ -49,9 +49,6 @@ const ActivitiesPage = () => {
   const [sortBy, setSortBy] = useState('popular');
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
-  const [isCountryFilterOpen, setIsCountryFilterOpen] = useState(false);
-  const [selectedCountryFilter, setSelectedCountryFilter] = useState('');
-  const [availableCountries, setAvailableCountries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -63,7 +60,6 @@ const ActivitiesPage = () => {
   // Use the optimized activity images hook
   const {
     getImageUrl,
-    getCountryName,
     isImageLoading,
     hasImageError,
     fetchImageForActivity,
@@ -84,67 +80,6 @@ const ActivitiesPage = () => {
     return `https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop&crop=center`;
   };
 
-  // Function to get country name with fallback
-  const getActivityCountry = (activity) => {
-    const activityId = activity.activity_id;
-    const apiCountryName = getCountryName(activityId);
-    
-    // If we have country name from API, use it
-    if (apiCountryName) {
-      return apiCountryName;
-    }
-    
-    // Fallback based on location or other data
-    const location = activity.location?.toLowerCase() || '';
-    
-    // Simple country mapping based on common location patterns
-    if (location.includes('hong kong') || location.includes('hk')) return 'Hong Kong';
-    if (location.includes('singapore') || location.includes('sg')) return 'Singapore';
-    if (location.includes('tokyo') || location.includes('japan')) return 'Japan';
-    if (location.includes('bangkok') || location.includes('thailand')) return 'Thailand';
-    if (location.includes('kuala lumpur') || location.includes('malaysia')) return 'Malaysia';
-    if (location.includes('jakarta') || location.includes('indonesia')) return 'Indonesia';
-    if (location.includes('manila') || location.includes('philippines')) return 'Philippines';
-    if (location.includes('seoul') || location.includes('korea')) return 'South Korea';
-    if (location.includes('taipei') || location.includes('taiwan')) return 'Taiwan';
-    if (location.includes('vietnam') || location.includes('ho chi minh')) return 'Vietnam';
-    
-    return null; // No fallback available
-  };
-
-  // Function to get country flag emoji
-  const getCountryFlag = (countryName) => {
-    if (!countryName) return '';
-    
-    const flagMap = {
-      'Hong Kong': '🇭🇰',
-      'Singapore': '🇸🇬',
-      'Japan': '🇯🇵',
-      'Thailand': '🇹🇭',
-      'Malaysia': '🇲🇾',
-      'Indonesia': '🇮🇩',
-      'Philippines': '🇵🇭',
-      'South Korea': '🇰🇷',
-      'Taiwan': '🇹🇼',
-      'Vietnam': '🇻🇳',
-    };
-    
-    return flagMap[countryName] || '🌍';
-  };
-
-  // Function to extract unique countries from activities
-  const extractUniqueCountries = (activities) => {
-    const countries = new Set();
-    
-    activities.forEach(activity => {
-      const countryName = getActivityCountry(activity);
-      if (countryName) {
-        countries.add(countryName);
-      }
-    });
-    
-    return Array.from(countries).sort();
-  };
 
   // Preload critical images (first 6 activities) for instant display
   useEffect(() => {
@@ -224,7 +159,7 @@ const ActivitiesPage = () => {
         const { activities, categories } = await fetchActivitiesFromDatabase(controller);
         
         // Apply initial filtering immediately
-        applyFilters(activities, categories, selectedCategoryFilter, searchQuery, selectedCountryFilter);
+        applyFilters(activities, categories, selectedCategoryFilter, searchQuery);
 
       } catch (err) {
         if (err.name !== 'AbortError') {
@@ -240,8 +175,8 @@ const ActivitiesPage = () => {
   }, []); // Only run once on mount
 
   // Enhanced filters function with instant search
-  const applyFilters = useCallback((activities, categories, categoryFilter, search, countryFilter) => {
-    console.log('🔍 DEBUG - Filter inputs:', { categoryFilter, search, countryFilter, activitiesCount: activities.length });
+  const applyFilters = useCallback((activities, categories, categoryFilter, search) => {
+    console.log('🔍 DEBUG - Filter inputs:', { categoryFilter, search, activitiesCount: activities.length });
     
     let filtered = [...activities];
 
@@ -300,24 +235,19 @@ const ActivitiesPage = () => {
       setCategoryData(null);
     }
 
-    // Enhanced search filter with multiple fields including country names
+    // Enhanced search filter with multiple fields
     if (search.trim()) {
       const searchLower = search.toLowerCase();
       const searchTerms = searchLower.split(' ').filter(term => term.length > 0);
       const beforeSearchCount = filtered.length;
       
       filtered = filtered.filter(activity => {
-        // Get country name for this activity
-        const countryName = getActivityCountry(activity);
-        
         const searchableText = [
           activity.title,
           activity.sub_title,
           activity.location,
-          countryName, // Include country name in search
           // Add more searchable fields if available
-        ].filter(Boolean) // Remove null/undefined values
-         .join(' ').toLowerCase();
+        ].join(' ').toLowerCase();
         
         // Check if all search terms are found in the searchable text
         return searchTerms.every(term => searchableText.includes(term));
@@ -327,22 +257,6 @@ const ActivitiesPage = () => {
         searchTerm: search,
         searchTerms: searchTerms,
         before: beforeSearchCount,
-        after: filtered.length
-      });
-    }
-
-    // Apply country filter
-    if (countryFilter) {
-      const beforeCountryCount = filtered.length;
-      
-      filtered = filtered.filter(activity => {
-        const countryName = getActivityCountry(activity);
-        return countryName === countryFilter;
-      });
-      
-      console.log('🔍 DEBUG - Country filter applied:', {
-        countryFilter,
-        before: beforeCountryCount,
         after: filtered.length
       });
     }
@@ -370,17 +284,9 @@ const ActivitiesPage = () => {
         categoryFilter: selectedCategoryFilter,
         totalActivities: allActivities.length
       });
-      applyFilters(allActivities, allCategories, selectedCategoryFilter, activeSearchQuery, selectedCountryFilter);
+      applyFilters(allActivities, allCategories, selectedCategoryFilter, activeSearchQuery);
     }
-  }, [selectedCategoryFilter, allActivities, allCategories, applyFilters, activeSearchQuery, selectedCountryFilter]);
-
-  // Update available countries when activities change
-  useEffect(() => {
-    if (allActivities.length > 0) {
-      const countries = extractUniqueCountries(allActivities);
-      setAvailableCountries(countries);
-    }
-  }, [allActivities]);
+  }, [selectedCategoryFilter, allActivities, allCategories, applyFilters, activeSearchQuery]);
 
   // Paginate filtered activities when page changes
   useEffect(() => {
@@ -435,18 +341,6 @@ const ActivitiesPage = () => {
     setIsCategoryFilterOpen(false);
   };
 
-  const handleCountryFilterChange = (countryName) => {
-    setSelectedCountryFilter(countryName);
-    const params = new URLSearchParams(searchParams.toString());
-    if (countryName) {
-      params.set('country', countryName);
-    } else {
-      params.delete('country');
-    }
-    params.set('page', '1'); // Reset to first page
-    router.push(`/activities?${params.toString()}`);
-    setIsCountryFilterOpen(false);
-  };
 
 
   // Simple search that only works on submit
@@ -500,14 +394,13 @@ const ActivitiesPage = () => {
 
   const clearAllFilters = () => {
     setSelectedCategoryFilter('');
-    setSelectedCountryFilter('');
     setSearchQuery('');
     setActiveSearchQuery('');
     setSortBy('popular'); // Reset to default sort option
     
     // Apply filters immediately (this will clear search)
     if (allActivities.length > 0) {
-      applyFilters(allActivities, allCategories, '', '', '');
+      applyFilters(allActivities, allCategories, '', '');
     }
     
     router.push('/activities');
@@ -535,16 +428,13 @@ const ActivitiesPage = () => {
       if (isCategoryFilterOpen && !event.target.closest('[data-category-filter]')) {
         setIsCategoryFilterOpen(false);
       }
-      if (isCountryFilterOpen && !event.target.closest('[data-country-filter]')) {
-        setIsCountryFilterOpen(false);
-      }
     };
 
-    if (isSortOpen || isCategoryFilterOpen || isCountryFilterOpen) {
+    if (isSortOpen || isCategoryFilterOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [isSortOpen, isCategoryFilterOpen, isCountryFilterOpen]);
+  }, [isSortOpen, isCategoryFilterOpen]);
 
   // Sort activities based on selected criteria
   const sortedActivities = React.useMemo(() => {
@@ -807,58 +697,10 @@ const ActivitiesPage = () => {
                 )}
               </div>
 
-              {/* Country Filter */}
-              <div className="relative" data-country-filter>
-                <button
-                  onClick={() => setIsCountryFilterOpen(!isCountryFilterOpen)}
-                  className="flex items-center gap-2 bg-white border border-gray-200 rounded-2xl px-6 py-4 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap"
-                >
-                  <MapPin className="h-5 w-5" />
-                  <span className="font-medium">
-                    {selectedCountryFilter 
-                      ? `${getCountryFlag(selectedCountryFilter)} ${selectedCountryFilter}`
-                      : 'All Countries'}
-                  </span>
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${isCountryFilterOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-
-                {isCountryFilterOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl py-2 z-50 border border-blue-100 max-h-96 overflow-y-auto">
-                    <button
-                      onClick={() => handleCountryFilterChange('')}
-                      className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                        !selectedCountryFilter 
-                          ? 'bg-blue-100 text-blue-600 font-medium' 
-                          : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
-                      }`}
-                    >
-                      All Countries
-                    </button>
-                    {availableCountries.map((country) => (
-                      <button
-                        key={country}
-                        onClick={() => handleCountryFilterChange(country)}
-                        className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                          selectedCountryFilter === country
-                            ? 'bg-blue-100 text-blue-600 font-medium' 
-                            : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span>{getCountryFlag(country)}</span>
-                          <span>{country}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* Active Filters */}
-            {(selectedCategoryFilter || searchQuery || selectedCountryFilter) && (
+            {(selectedCategoryFilter || searchQuery) && (
               <div className="flex items-center gap-2 mt-4 flex-wrap">
                 <span className="text-sm text-gray-600 font-medium">Active filters:</span>
                 {selectedCategoryFilter && categoryData && (
@@ -867,17 +709,6 @@ const ActivitiesPage = () => {
                     <button
                       onClick={() => handleCategoryFilterChange('')}
                       className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                )}
-                {selectedCountryFilter && (
-                  <div className="flex items-center gap-1 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
-                    <span>{getCountryFlag(selectedCountryFilter)} {selectedCountryFilter}</span>
-                    <button
-                      onClick={() => handleCountryFilterChange('')}
-                      className="ml-1 hover:bg-purple-200 rounded-full p-0.5"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -892,7 +723,7 @@ const ActivitiesPage = () => {
                         setActiveSearchQuery('');
                         // Apply filters immediately to clear search results
                         if (allActivities.length > 0) {
-                          applyFilters(allActivities, allCategories, selectedCategoryFilter, '', selectedCountryFilter);
+                          applyFilters(allActivities, allCategories, selectedCategoryFilter, '');
                         }
                         // Update URL
                         const params = new URLSearchParams(searchParams.toString());
@@ -1172,20 +1003,10 @@ const ActivitiesPage = () => {
                         {activity.sub_title}
                       </p>
 
-                      {/* Location & Country */}
+                      {/* Location */}
                       <div className="flex items-center gap-2 text-gray-500 mb-3">
                         <MapPin className="h-3 w-3" />
-                        <div className="flex flex-col">
-                          <span className="text-xs">{activity.location}</span>
-                          {getActivityCountry(activity) && (
-                            <div className="flex items-center gap-1">
-                              <span className="text-sm">{getCountryFlag(getActivityCountry(activity))}</span>
-                              <span className="text-xs font-medium text-blue-600">
-                                {getActivityCountry(activity)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
+                        <span className="text-xs">{activity.location}</span>
                       </div>
 
                       {/* Highlights */}
