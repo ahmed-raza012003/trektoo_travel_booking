@@ -118,7 +118,7 @@ class DumpKlookActivities extends Command
         $this->info("📊 Total activities dumped: {$totalFetched}");
         $this->info("💾 Database now contains " . Activity::count() . " activities");
 
-        return Command::SUCCESS;
+        return self::SUCCESS;
     }
 
     private function getEnvironmentConfig($environment, $requestedLimit)
