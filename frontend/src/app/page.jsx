@@ -8,6 +8,7 @@ const AdventureVideoSection = lazy(() => import('@/components/feature/QASection/
 const FAQ = lazy(() => import('@/components/feature/FAQSection/FAQ'));
 const WhyChooseUs = lazy(() => import('@/components/feature/WhyChooseUsSection/WhyChooseUs'));
 const FeaturedDestinations = lazy(() => import('@/components/feature/FeaturedDestinationsSection/FeaturedDestinations'));
+const PopularActivities = lazy(() => import('@/components/feature/PopularActivitiesSection/PopularActivities'));
 const TestimonialsSection = lazy(() => import('@/components/feature/TestimonialsSection/TestimonialsSection'));
 const InspirationSection = lazy(() => import('@/components/feature/InspirationSection/InspirationSection'));
 
@@ -21,7 +22,7 @@ export default function HomePage() {
       <main className="relative overflow-hidden">
         <HeroSection />
 
-        
+
         {/* Add the new Inspiration Section right after Hero */}
 
         <Suspense fallback={<ComponentLoader />}>
@@ -37,6 +38,20 @@ export default function HomePage() {
           <InspirationSection />
         </Suspense>
 
+
+
+        <Suspense fallback={<ComponentLoader />}>
+          <FeaturedDestinations />
+        </Suspense>
+
+        <Suspense fallback={<ComponentLoader />}>
+          <PopularActivities />
+        </Suspense>
+
+        {/* <Suspense fallback={<ComponentLoader />}>
+          <TestimonialsSection />
+        </Suspense> */}
+
         <Suspense fallback={<ComponentLoader />}>
           <AdventureVideoSection />
         </Suspense>
@@ -44,14 +59,6 @@ export default function HomePage() {
         <Suspense fallback={<ComponentLoader />}>
           <WhyChooseUs />
         </Suspense>
-
-        <Suspense fallback={<ComponentLoader />}>
-          <FeaturedDestinations />
-        </Suspense>
-
-        {/* <Suspense fallback={<ComponentLoader />}>
-          <TestimonialsSection />
-        </Suspense> */}
 
         <Suspense fallback={<ComponentLoader />}>
           <FAQ />
