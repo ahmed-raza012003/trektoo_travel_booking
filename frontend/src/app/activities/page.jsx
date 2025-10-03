@@ -55,7 +55,7 @@ const ActivitiesPage = () => {
   const [error, setError] = useState(null);
   const [hasInitialData, setHasInitialData] = useState(false);
   const [totalAvailableActivities, setTotalAvailableActivities] = useState(0);
-  const [isSearching, setIsSearching] = useState(false);
+  const [isSearchProcessing, setIsSearchProcessing] = useState(false);
 
   // Note: Images are now loaded directly from database - no need for complex image loading
 
@@ -320,30 +320,22 @@ const ActivitiesPage = () => {
 
 
 
-  // Simple search that only works on submit
+  // Dynamic search that works as you type
   const handleSearchChange = (query) => {
     setSearchQuery(query);
   };
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
+  // Debounced search effect
+  useEffect(() => {
+    if (searchQuery !== activeSearchQuery) {
+      setIsSearchProcessing(true);
+    }
     
-    // Show searching indicator
-    setIsSearching(true);
-    
-    // Set the active search query (this will trigger the useEffect to apply filters)
+    const timeoutId = setTimeout(() => {
     setActiveSearchQuery(searchQuery);
-    
-    // Execute search immediately
-    setTimeout(() => {
-      if (allActivities.length > 0) {
-        applyFilters(allActivities, allCategories, selectedCategoryFilter, searchQuery);
-      }
+      setIsSearchProcessing(false);
       
-      // Hide searching indicator
-      setIsSearching(false);
-      
-      // Update URL
+      // Update URL without page reload
       const params = new URLSearchParams(searchParams.toString());
       if (searchQuery.trim()) {
         params.set('search', searchQuery);
@@ -351,8 +343,15 @@ const ActivitiesPage = () => {
         params.delete('search');
       }
       params.set('page', '1');
-      router.replace(`/activities?${params.toString()}`);
-    }, 300); // Small delay for visual feedback
+      router.replace(`/activities?${params.toString()}`, { scroll: false });
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, activeSearchQuery, searchParams, router]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    // Search is already handled by handleSearchChange
   };
 
   const handleClearSearch = () => {
@@ -591,18 +590,11 @@ const ActivitiesPage = () => {
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search activities... (press Enter to search)"
+                  placeholder="Search activities..."
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="w-full pl-12 pr-20 py-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-lg text-gray-800 placeholder-gray-500"
                 />
-                {isSearching && (
-                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-                    <span className="text-sm text-gray-500 hidden sm:block">Searching...</span>
-                  </div>
-                )}
-                {!isSearching && (
                   <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
                     {searchQuery && (
                       <button
@@ -614,15 +606,14 @@ const ActivitiesPage = () => {
                         <X className="h-4 w-4 text-gray-400" />
                       </button>
                     )}
-                    <button
-                      type="submit"
-                      className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-colors"
-                      title="Search"
-                    >
+                  {/* <div className={`p-2 bg-blue-500 text-white rounded-full transition-all duration-200 ${isSearchProcessing ? 'animate-pulse' : ''}`}>
+                    {isSearchProcessing ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    ) : (
                       <Search className="h-4 w-4" />
-                    </button>
-                  </div>
                 )}
+                  </div> */}
+                </div>
               </form>
 
               {/* Category Filter */}
@@ -739,12 +730,19 @@ const ActivitiesPage = () => {
             ) : (
               <div className="flex items-center gap-3">
                 <div className="flex flex-col">
+                  {isSearchProcessing ? (
+                    <div className="flex items-center gap-2 text-lg text-gray-500 font-medium">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                      Searching...
+                    </div>
+                  ) : (
               <p className="text-lg text-gray-500 font-medium">
                 {totalActivities} activities found
-                {categoryData && ` in ${categoryData.name}${categoryData.sub_category && categoryData.sub_category.length > 0 ? '' : ''}`}
+                      {categoryData && ` in ${categoryData.name}${categoryData.sub_category && categoryData.sub_category.length > 0 ? '' : ''}`}
                     {searchQuery && ` for "${searchQuery}"`}
                   </p>
-                  {totalAvailableActivities > 0 && (
+                  )}
+                  {totalAvailableActivities > 0 && !isSearchProcessing && (
                     <p className="text-sm text-gray-400">
                       {allActivities.length.toLocaleString()} Total Activities
                     </p>
@@ -890,17 +888,26 @@ const ActivitiesPage = () => {
                     key={activity.activity_id}
                     variants={itemVariants}
                     custom={index}
-                    className={`group activity-card bg-white rounded-2xl overflow-hidden hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 border border-gray-100 relative cursor-pointer flex flex-col h-full ${viewMode === 'list' ? 'flex-row' : ''
-                      } hover:-translate-y-1`}
+                    className={`group activity-card bg-white rounded-2xl overflow-hidden hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 border border-gray-100 relative cursor-pointer hover:-translate-y-1 ${
+                      viewMode === 'list' 
+                        ? 'flex flex-row h-96' 
+                        : 'flex flex-col h-full'
+                    }`}
                   >
                     {/* Activity Image */}
                     <div 
-                      className={`relative overflow-hidden ${viewMode === 'list' ? 'w-72 flex-shrink-0 h-72' : 'h-64'}`}
+                      className={`relative overflow-hidden ${
+                        viewMode === 'list' 
+                          ? 'w-72 flex-shrink-0 h-full' 
+                          : 'h-64'
+                      }`}
                     >
                       <img
                         src={getActivityImage(activity)}
                         alt={activity.image_alt_text || activity.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ${
+                          viewMode === 'list' ? 'object-center' : ''
+                        }`}
                         loading="lazy"
                       />
 
@@ -949,76 +956,107 @@ const ActivitiesPage = () => {
                     </div>
 
                     {/* Activity Info */}
-                    <div className="p-6 flex-1 flex flex-col">
-                      {/* Title and Category */}
-                      <div className="mb-4">
-                        <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2 leading-tight">
+                    <div className={`flex-1 flex flex-col ${
+                      viewMode === 'list' ? 'p-5 pb-6 min-h-0' : 'p-6'
+                    }`}>
+                      {/* Top Content */}
+                      <div className="flex-1">
+                        {/* Title and Category */}
+                        <div className={`${viewMode === 'list' ? 'mb-4' : 'mb-4'}`}>
+                          <h3 className={`font-bold text-gray-900 group-hover:text-blue-600 transition-colors leading-tight ${
+                            viewMode === 'list' ? 'text-2xl mb-3' : 'text-xl line-clamp-2 mb-2'
+                          }`}>
                           {activity.title}
                         </h3>
-                        <p className="text-gray-600 line-clamp-2 text-sm leading-relaxed">
+                          <p className={`text-gray-600 leading-relaxed ${
+                            viewMode === 'list' ? 'text-base line-clamp-3' : 'line-clamp-2 text-sm'
+                          }`}>
                         {activity.sub_title}
                       </p>
-                      </div>
-
-                      {/* Location */}
-                      <div className="flex items-center gap-3 text-gray-600 mb-4">
-                        <div className="p-2 bg-blue-50 rounded-lg">
-                          <MapPin className="h-4 w-4 text-blue-600" />
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-gray-800">
-                            {activity.location_display || activity.location || 'Various Locations'}
-                          </span>
-                          {activity.country_name && (
-                            <span className="text-xs text-blue-600 font-semibold">
-                              {activity.country_name}
+
+                        {/* Location */}
+                        <div className={`flex items-center gap-3 text-gray-600 ${
+                          viewMode === 'list' ? 'mb-4' : 'mb-4'
+                        }`}>
+                          <div className="p-2 bg-blue-50 rounded-lg">
+                            <MapPin className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className={`font-medium text-gray-800 ${
+                              viewMode === 'list' ? 'text-base' : 'text-sm'
+                            }`}>
+                              {activity.location_display || activity.location || 'Various Locations'}
                             </span>
-                          )}
-                        </div>
+                            {activity.country_name && (
+                              <span className={`text-blue-600 font-semibold ${
+                                viewMode === 'list' ? 'text-sm' : 'text-xs'
+                              }`}>
+                                {activity.country_name}
+                              </span>
+                            )}
+                          </div>
                       </div>
 
-                      {/* Highlights */}
-                      <div className="space-y-2 mb-5 flex-1">
-                        {activity.highlights.slice(0, 2).map((highlight, idx) => (
-                          <div key={idx} className="flex items-start gap-3 text-sm text-gray-600">
-                            <div className="p-1 bg-blue-50 rounded-md mt-0.5">
-                              <Award className="h-3 w-3 text-blue-600" />
-                            </div>
-                            <span className="line-clamp-1 leading-relaxed">{highlight}</span>
+                        {/* Highlights */}
+                        <div className={`space-y-2 ${
+                          viewMode === 'list' ? 'mb-4' : 'mb-5'
+                        }`}>
+                          {activity.highlights.slice(0, viewMode === 'list' ? 3 : 2).map((highlight, idx) => (
+                            <div key={idx} className={`flex items-start gap-3 text-gray-600 ${
+                              viewMode === 'list' ? 'text-sm' : 'text-sm'
+                            }`}>
+                              <div className="p-1 bg-blue-50 rounded-md mt-0.5">
+                                <Award className="h-3 w-3 text-blue-600" />
+                              </div>
+                              <span className={`leading-relaxed ${
+                                viewMode === 'list' ? 'line-clamp-2' : 'line-clamp-1'
+                              }`}>{highlight}</span>
                           </div>
                         ))}
                       </div>
 
-                      {/* Availability */}
-                      <div className="flex items-center gap-2 mb-5">
-                        <div className="flex items-center gap-1.5 text-green-600">
-                          <Calendar className="h-4 w-4" />
-                          <span className="text-sm font-medium">
-                            Available: {activity.available_dates[0]}
-                          </span>
+                        {/* Availability */}
+                        <div className={`flex items-center gap-2 ${
+                          viewMode === 'list' ? 'mb-4' : 'mb-5'
+                        }`}>
+                          <div className="flex items-center gap-1.5 text-green-600">
+                            <Calendar className="h-4 w-4" />
+                            <span className={`font-medium ${
+                              viewMode === 'list' ? 'text-base' : 'text-sm'
+                            }`}>
+                          Available: {activity.available_dates[0]}
+                        </span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Action Button */}
+                      {/* Bottom Content - Button */}
+                      <div className="mt-auto pt-2">
                       <Link href={`/activity/${activity.activity_id}`}>
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
-                          className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3.5 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm relative overflow-hidden group/btn btn-shimmer"
-                        >
-                          <span className="relative z-10 flex items-center justify-center gap-2">
+                            className={`w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl relative overflow-hidden group/btn btn-shimmer ${
+                              viewMode === 'list' 
+                                ? 'py-4 px-8 text-base' 
+                                : 'py-3.5 px-6 text-sm'
+                            }`}
+                          >
+                            <span className="relative z-10 flex items-center justify-center gap-2">
                           View Details & Book
-                            <motion.div
-                              className="w-4 h-4"
-                              animate={{ x: [0, 4, 0] }}
-                              transition={{ repeat: Infinity, duration: 1.5 }}
-                            >
-                              →
-                            </motion.div>
-                          </span>
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />
+                              <motion.div
+                                className="w-4 h-4"
+                                animate={{ x: [0, 4, 0] }}
+                                transition={{ repeat: Infinity, duration: 1.5 }}
+                              >
+                                →
+                              </motion.div>
+                            </span>
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />
                         </motion.button>
                       </Link>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
