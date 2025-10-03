@@ -36,10 +36,18 @@ class DumpKlookActivities extends Command
      */
     public function handle()
     {
-        $this->info('🚀 Starting Klook activities data dump...');
-        
+        $environment = app()->environment();
         $force = $this->option('force');
         $limit = (int) $this->option('limit');
+        
+        // Environment-specific configuration
+        $config = $this->getEnvironmentConfig($environment, $limit);
+        
+        $this->info("🚀 Starting Klook activities data dump for {$environment} environment...");
+        $this->info("📊 Environment: {$environment}");
+        $this->info("📈 Limit: {$config['limit']} activities");
+        $this->info("⏰ Frequency: {$config['frequency']}");
+        $this->info("💡 Description: {$config['description']}");
         
         if ($force) {
             $this->info('🗑️  Clearing existing activities data...');
@@ -50,20 +58,20 @@ class DumpKlookActivities extends Command
         $page = 1;
         $hasMore = true;
         $batchSize = 100; // Klook API limit per page
-        $maxPages = ceil($limit / $batchSize);
+        $maxPages = ceil($config['limit'] / $batchSize);
 
-        $this->info("📊 Will fetch up to {$limit} activities (max {$maxPages} pages)");
+        $this->info("📊 Will fetch up to {$config['limit']} activities (max {$maxPages} pages)");
 
-        $progressBar = $this->output->createProgressBar($limit);
+        $progressBar = $this->output->createProgressBar($config['limit']);
         $progressBar->start();
 
-        while ($hasMore && $totalFetched < $limit && $page <= $maxPages) {
+        while ($hasMore && $totalFetched < $config['limit'] && $page <= $maxPages) {
             try {
                 $this->info("\n📡 Fetching page {$page}...");
                 
                 $response = $this->klookService->getActivities([
                     'page' => $page,
-                    'limit' => min($batchSize, $limit - $totalFetched)
+                    'limit' => min($batchSize, $config['limit'] - $totalFetched)
                 ]);
 
                 if (!$response['success']) {
@@ -91,10 +99,10 @@ class DumpKlookActivities extends Command
 
                 $page++;
 
-                // Add delay to respect API rate limits
-                if ($hasMore && $totalFetched < $limit) {
-                    $this->info("⏳ Waiting 1 second before next request...");
-                    sleep(1);
+                // Environment-specific delay
+                if ($hasMore && $totalFetched < $config['limit']) {
+                    $this->info("⏳ Waiting {$config['delay']} seconds before next request...");
+                    sleep($config['delay']);
                 }
 
             } catch (\Exception $e) {
@@ -106,11 +114,43 @@ class DumpKlookActivities extends Command
         $progressBar->finish();
         $this->newLine();
 
-        $this->info("🎉 Data dump completed!");
+        $this->info("🎉 Data dump completed for {$environment} environment!");
         $this->info("📊 Total activities dumped: {$totalFetched}");
         $this->info("💾 Database now contains " . Activity::count() . " activities");
 
         return Command::SUCCESS;
+    }
+
+    private function getEnvironmentConfig($environment, $requestedLimit)
+    {
+        $configs = [
+            'local' => [
+                'limit' => min($requestedLimit, 5000),
+                'frequency' => 'Every 2 hours',
+                'delay' => 1,
+                'description' => 'Development environment - smaller dataset for faster testing'
+            ],
+            'development' => [
+                'limit' => min($requestedLimit, 5000),
+                'frequency' => 'Every 2 hours',
+                'delay' => 1,
+                'description' => 'Development environment - smaller dataset for faster testing'
+            ],
+            'staging' => [
+                'limit' => min($requestedLimit, 10000),
+                'frequency' => 'Every 4 hours',
+                'delay' => 1,
+                'description' => 'Staging environment - medium dataset for testing'
+            ],
+            'production' => [
+                'limit' => min($requestedLimit, 50000),
+                'frequency' => 'Every 6 hours',
+                'delay' => 2,
+                'description' => 'Production environment - full dataset for live users'
+            ]
+        ];
+
+        return $configs[$environment] ?? $configs['local'];
     }
 
     private function processActivitiesBatch($activities)
