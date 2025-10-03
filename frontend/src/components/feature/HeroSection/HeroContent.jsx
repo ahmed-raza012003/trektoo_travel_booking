@@ -33,7 +33,7 @@ const serviceOptions = [
     id: 'hotels',
     label: 'Hotels',
     icon: Building,
-    available: true,
+    available: false,
     route: '/hotels-list',
     color: 'from-blue-500 to-blue-600',
     description: 'Find the perfect stay',
@@ -43,7 +43,7 @@ const serviceOptions = [
     label: 'Car Rentals',
     icon: Car,
     available: true,
-    route: '/car-rentals',
+    route: '/activities?category_id=182',
     color: 'from-blue-500 to-blue-600',
     description: 'Rent your perfect ride',
   },
@@ -52,14 +52,14 @@ const serviceOptions = [
     label: 'Activities',
     icon: Ticket,
     available: true,
-    route: '/activities-categories',
+    route: '/activities',
     color: 'from-blue-500 to-blue-600',
     description: 'Discover amazing activities',
   },
 ];
 
 function HeroContent() {
-  const [selectedService, setSelectedService] = useState('hotels');
+  const [selectedService, setSelectedService] = useState('cars');
   const [isGuestsDropdownOpen, setIsGuestsDropdownOpen] = useState(false);
   const [guests, setGuests] = useState({ children: 0, adult: 1 });
   const [selectedDateFrom, setSelectedDateFrom] = useState(null);
@@ -335,7 +335,7 @@ function HeroContent() {
 
             {/* Form Inputs */}
             <div className="p-6">
-              {selectedService !== 'activities' && (
+              {selectedService !== 'activities' && selectedService !== 'cars' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-10 gap-4 mb-6">
                   {/* Destination Input */}
                   <div className="sm:col-span-2 lg:col-span-3 relative" ref={searchInputRef}>
@@ -522,13 +522,23 @@ function HeroContent() {
               {/* Search Button */}
               {selectedService === 'activities' ? (
                 <motion.button
-                  onClick={() => router.push('/activities-categories')}
+                  onClick={() => router.push('/activities')}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-4 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-lg"
                 >
                   <Ticket className="w-5 h-5" />
                   Explore Activities
+                </motion.button>
+              ) : selectedService === 'cars' ? (
+                <motion.button
+                  onClick={() => router.push('/activities?category_id=182')}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-4 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-lg"
+                >
+                  <Car className="w-5 h-5" />
+                  Explore Car Rentals
                 </motion.button>
               ) : (
                 <motion.button
