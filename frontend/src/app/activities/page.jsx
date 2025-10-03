@@ -949,9 +949,9 @@ const ActivitiesPage = () => {
                           loading="lazy"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                          <Ticket className="h-24 w-24 text-blue-500" />
-                        </div>
+                      <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                        <Ticket className="h-24 w-24 text-blue-500" />
+                      </div>
                       )}
 
                       {/* Favorite Button */}
