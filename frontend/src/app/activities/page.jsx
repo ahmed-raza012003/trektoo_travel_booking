@@ -844,9 +844,13 @@ const ActivitiesPage = () => {
           {isLoading && (
             <div className="py-8">
               {viewMode === 'grid' ? (
-                <ActivityGridSkeleton items={6} />
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <CardSkeleton key={i} />
+                  ))}
+                </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-8">
                   {Array.from({ length: 6 }).map((_, i) => (
                     <CardSkeleton key={i} />
                   ))}
@@ -877,8 +881,8 @@ const ActivitiesPage = () => {
                 exit="hidden"
                 className={
                   viewMode === 'grid'
-                    ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6'
-                    : 'space-y-6'
+                    ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8'
+                    : 'space-y-8'
                 }
               >
                 {sortedActivities.map((activity, index) => (
@@ -886,76 +890,87 @@ const ActivitiesPage = () => {
                     key={activity.activity_id}
                     variants={itemVariants}
                     custom={index}
-                    className={`group bg-white rounded-3xl overflow-hidden hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 border border-gray-200 relative cursor-pointer flex flex-col h-full ${viewMode === 'list' ? 'flex-row' : ''
-                      }`}
+                    className={`group activity-card bg-white rounded-2xl overflow-hidden hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 border border-gray-100 relative cursor-pointer flex flex-col h-full ${viewMode === 'list' ? 'flex-row' : ''
+                      } hover:-translate-y-1`}
                   >
                     {/* Activity Image */}
                     <div 
-                      className={`relative overflow-hidden ${viewMode === 'list' ? 'w-64 flex-shrink-0 h-64' : 'h-56'}`}
+                      className={`relative overflow-hidden ${viewMode === 'list' ? 'w-72 flex-shrink-0 h-72' : 'h-64'}`}
                     >
                       <img
                         src={getActivityImage(activity)}
                         alt={activity.image_alt_text || activity.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         loading="lazy"
                       />
+
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                       {/* Favorite Button */}
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => handleFavoriteToggle(activity.activity_id)}
-                        className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200/50 hover:bg-white transition-all shadow-lg"
+                        className="absolute top-4 right-4 z-10 p-2.5 rounded-full bg-white/95 backdrop-blur-md border border-white/20 hover:bg-white transition-all shadow-xl hover:shadow-2xl"
                       >
                         <Heart
-                          className={`h-4 w-4 transition-colors ${favorites.has(activity.activity_id)
-                            ? 'text-red-500 fill-current'
-                            : 'text-gray-400'
+                          className={`h-5 w-5 transition-all duration-300 ${favorites.has(activity.activity_id)
+                            ? 'text-red-500 fill-current scale-110'
+                            : 'text-gray-600 hover:text-red-400'
                             }`}
                         />
                       </motion.button>
 
                       {/* Rating Badge */}
-                      <div className="absolute top-3 left-3">
-                        <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-sm shadow-lg">
-                          <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                          <span className="font-semibold text-gray-800">{activity.rating}</span>
-                          <span className="text-gray-500">({activity.review_count})</span>
+                      <div className="absolute top-4 left-4">
+                        <div className="flex items-center gap-1.5 bg-white/80 backdrop-blur-lg px-4 py-2 rounded-full text-sm shadow-xl border border-white/30">
+                          <Star className="h-4 w-4 text-amber-500 fill-current" />
+                          <span className="font-bold text-gray-800">{activity.rating}</span>
+                          <span className="text-gray-500 text-xs">({activity.review_count})</span>
                         </div>
                       </div>
 
                       {/* Duration Badge */}
-                      <div className="absolute bottom-3 left-3">
-                        <div className="flex items-center gap-2 bg-gray-800/80 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm">
+                      <div className="absolute bottom-4 left-4">
+                        <div className="flex items-center gap-2 bg-black/60 backdrop-blur-lg text-white px-4 py-2 rounded-full text-sm shadow-xl border border-white/20">
                           <Clock className="h-4 w-4" />
-                          <span>{activity.duration}</span>
+                          <span className="font-medium">{activity.duration}</span>
+                        </div>
+                      </div>
+
+                      {/* Price Badge */}
+                      <div className="absolute bottom-4 right-4">
+                        <div className="flex items-center gap-1 bg-black/60 backdrop-blur-lg text-white px-4 py-2 rounded-full text-sm shadow-xl border border-white/20">
+                          <DollarSign className="h-4 w-4" />
+                          <span className="font-bold text-lg">{activity.price}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Activity Info */}
                     <div className="p-6 flex-1 flex flex-col">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-500 transition-colors line-clamp-2 flex-1">
+                      {/* Title and Category */}
+                      <div className="mb-4">
+                        <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2 leading-tight">
                           {activity.title}
                         </h3>
-                        <div className="flex items-center gap-1 text-green-600 font-bold text-lg flex-shrink-0">
-                          <DollarSign className="h-5 w-5" />
-                          <span>{activity.price}</span>
-                        </div>
-                      </div>
-
-                      <p className="text-gray-600 mb-3 line-clamp-2 text-sm">
+                        <p className="text-gray-600 line-clamp-2 text-sm leading-relaxed">
                         {activity.sub_title}
                       </p>
+                      </div>
 
                       {/* Location */}
-                      <div className="flex items-center gap-2 text-gray-500 mb-3">
-                        <MapPin className="h-3 w-3" />
+                      <div className="flex items-center gap-3 text-gray-600 mb-4">
+                        <div className="p-2 bg-blue-50 rounded-lg">
+                          <MapPin className="h-4 w-4 text-blue-600" />
+                        </div>
                         <div className="flex flex-col">
-                          <span className="text-xs">{activity.location_display || activity.location || 'Various Locations'}</span>
+                          <span className="text-sm font-medium text-gray-800">
+                            {activity.location_display || activity.location || 'Various Locations'}
+                          </span>
                           {activity.country_name && (
-                            <span className="text-xs font-medium text-blue-600">
+                            <span className="text-xs text-blue-600 font-semibold">
                               {activity.country_name}
                             </span>
                           )}
@@ -963,21 +978,25 @@ const ActivitiesPage = () => {
                       </div>
 
                       {/* Highlights */}
-                      <div className="space-y-1 mb-4 flex-1">
+                      <div className="space-y-2 mb-5 flex-1">
                         {activity.highlights.slice(0, 2).map((highlight, idx) => (
-                          <div key={idx} className="flex items-center gap-2 text-xs text-gray-600">
-                            <Award className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                            <span className="line-clamp-1">{highlight}</span>
+                          <div key={idx} className="flex items-start gap-3 text-sm text-gray-600">
+                            <div className="p-1 bg-blue-50 rounded-md mt-0.5">
+                              <Award className="h-3 w-3 text-blue-600" />
+                            </div>
+                            <span className="line-clamp-1 leading-relaxed">{highlight}</span>
                           </div>
                         ))}
                       </div>
 
                       {/* Availability */}
-                      <div className="flex items-center gap-2 mb-4">
-                        <Calendar className="h-3 w-3 text-green-500" />
-                        <span className="text-xs text-green-600 font-medium">
-                          Available: {activity.available_dates[0]}
-                        </span>
+                      <div className="flex items-center gap-2 mb-5">
+                        <div className="flex items-center gap-1.5 text-green-600">
+                          <Calendar className="h-4 w-4" />
+                          <span className="text-sm font-medium">
+                            Available: {activity.available_dates[0]}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Action Button */}
@@ -985,9 +1004,19 @@ const ActivitiesPage = () => {
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
-                          className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2.5 px-4 rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl text-sm"
+                          className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3.5 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm relative overflow-hidden group/btn btn-shimmer"
                         >
+                          <span className="relative z-10 flex items-center justify-center gap-2">
                           View Details & Book
+                            <motion.div
+                              className="w-4 h-4"
+                              animate={{ x: [0, 4, 0] }}
+                              transition={{ repeat: Infinity, duration: 1.5 }}
+                            >
+                              →
+                            </motion.div>
+                          </span>
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />
                         </motion.button>
                       </Link>
                     </div>
