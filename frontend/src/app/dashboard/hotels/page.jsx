@@ -20,42 +20,42 @@ import {
   MoreVertical
 } from 'lucide-react';
 
-const HostelsPage = () => {
+const HotelsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  const hostels = [
+  const hotels = [
     {
       id: 1,
-      name: 'Tokyo Central Hostel',
+      name: 'Tokyo Central Hotel',
       location: 'Shibuya, Tokyo',
-      price: 45,
+      price: 145,
       currency: 'USD',
       rating: 4.6,
       reviews: 189,
       status: 'Active',
       bookings: 67,
       image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
-      amenities: ['WiFi', 'Parking', 'Breakfast', 'Laundry']
+      amenities: ['WiFi', 'Parking', 'Breakfast', 'Spa']
     },
     {
       id: 2,
-      name: 'Bangkok Backpackers',
-      location: 'Khao San Road, Bangkok',
-      price: 25,
+      name: 'Bangkok Luxury Hotel',
+      location: 'Sukhumvit, Bangkok',
+      price: 85,
       currency: 'USD',
       rating: 4.4,
       reviews: 234,
       status: 'Active',
       bookings: 89,
       image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=400&h=300&fit=crop',
-      amenities: ['WiFi', 'Pool', 'Bar', 'Tours']
+      amenities: ['WiFi', 'Pool', 'Restaurant', 'Concierge']
     },
     {
       id: 3,
-      name: 'Singapore Marina Hostel',
+      name: 'Singapore Marina Hotel',
       location: 'Marina Bay, Singapore',
-      price: 55,
+      price: 155,
       currency: 'USD',
       rating: 4.8,
       reviews: 156,
@@ -66,36 +66,36 @@ const HostelsPage = () => {
     },
     {
       id: 4,
-      name: 'Seoul Guesthouse',
+      name: 'Seoul Business Hotel',
       location: 'Gangnam, Seoul',
-      price: 38,
+      price: 98,
       currency: 'USD',
       rating: 4.5,
       reviews: 98,
       status: 'Active',
       bookings: 45,
       image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop',
-      amenities: ['WiFi', 'Kitchen', 'Laundry', 'Tours']
+      amenities: ['WiFi', 'Business Center', 'Laundry', 'Room Service']
     },
     {
       id: 5,
-      name: 'Hanoi Old Quarter Hostel',
+      name: 'Hanoi Heritage Hotel',
       location: 'Old Quarter, Hanoi',
-      price: 18,
+      price: 68,
       currency: 'USD',
       rating: 4.3,
       reviews: 67,
       status: 'Inactive',
       bookings: 12,
       image: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=400&h=300&fit=crop',
-      amenities: ['WiFi', 'Tours', 'Bike Rental', 'Common Room']
+      amenities: ['WiFi', 'Tours', 'Bike Rental', 'Cultural Events']
     }
   ];
 
-  const filteredHostels = hostels.filter(hostel => {
-    const matchesSearch = hostel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         hostel.location.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || hostel.status.toLowerCase() === filterStatus.toLowerCase();
+  const filteredHotels = hotels.filter(hotel => {
+    const matchesSearch = hotel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         hotel.location.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = filterStatus === 'all' || hotel.status.toLowerCase() === filterStatus.toLowerCase();
     return matchesSearch && matchesFilter;
   });
 
@@ -141,14 +141,14 @@ const HostelsPage = () => {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Hostels Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Hotels Management</h1>
           <p className="mt-2 text-gray-600">
-            Manage and monitor all your hostel accommodations
+            Manage and monitor all your hotel accommodations
           </p>
         </div>
         <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
           <Plus className="h-5 w-5 mr-2" />
-          Add Hostel
+          Add Hotel
         </button>
       </motion.div>
 
@@ -161,7 +161,7 @@ const HostelsPage = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search hostels..."
+                placeholder="Search hotels..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -191,48 +191,48 @@ const HostelsPage = () => {
         </div>
       </motion.div>
 
-      {/* Hostels Grid */}
+      {/* Hotels Grid */}
       <motion.div 
         variants={itemVariants}
         className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
       >
-        {filteredHostels.map((hostel) => (
-          <div key={hostel.id} className="bg-white shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-            {/* Hostel Image */}
+        {filteredHotels.map((hotel) => (
+          <div key={hotel.id} className="bg-white shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+            {/* Hotel Image */}
             <div className="relative h-48">
               <img
-                src={hostel.image}
-                alt={hostel.name}
+                src={hotel.image}
+                alt={hotel.name}
                 className="w-full h-full object-cover"
               />
               <div className="absolute top-4 right-4">
                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  hostel.status === 'Active' ? 'bg-green-100 text-green-800' :
-                  hostel.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                  hotel.status === 'Active' ? 'bg-green-100 text-green-800' :
+                  hotel.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
                   'bg-red-100 text-red-800'
                 }`}>
-                  {hostel.status}
+                  {hotel.status}
                 </span>
               </div>
             </div>
 
-            {/* Hostel Info */}
+            {/* Hotel Info */}
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{hostel.name}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{hotel.name}</h3>
               
               <div className="flex items-center text-gray-600 mb-2">
                 <MapPin className="h-4 w-4 mr-1" />
-                <span className="text-sm">{hostel.location}</span>
+                <span className="text-sm">{hotel.location}</span>
               </div>
 
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
                   <Star className="h-4 w-4 text-yellow-400 fill-current mr-1" />
-                  <span className="text-sm font-medium">{hostel.rating}</span>
-                  <span className="text-sm text-gray-500 ml-1">({hostel.reviews})</span>
+                  <span className="text-sm font-medium">{hotel.rating}</span>
+                  <span className="text-sm text-gray-500 ml-1">({hotel.reviews})</span>
                 </div>
                 <div className="text-lg font-bold text-gray-900">
-                  ${hostel.price}
+                  ${hotel.price}
                   <span className="text-sm text-gray-500">/night</span>
                 </div>
               </div>
@@ -240,22 +240,22 @@ const HostelsPage = () => {
               {/* Amenities */}
               <div className="mb-4">
                 <div className="flex flex-wrap gap-2">
-                  {hostel.amenities.slice(0, 3).map((amenity, index) => (
+                  {hotel.amenities.slice(0, 3).map((amenity, index) => (
                     <div key={index} className="flex items-center px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">
                       {getAmenityIcon(amenity)}
                       <span className="ml-1">{amenity}</span>
                     </div>
                   ))}
-                  {hostel.amenities.length > 3 && (
+                  {hotel.amenities.length > 3 && (
                     <div className="flex items-center px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">
-                      +{hostel.amenities.length - 3} more
+                      +{hotel.amenities.length - 3} more
                     </div>
                   )}
                 </div>
               </div>
 
               <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-                <span>{hostel.bookings} bookings</span>
+                <span>{hotel.bookings} bookings</span>
                 <span>Last updated: 1 day ago</span>
               </div>
 
@@ -279,19 +279,19 @@ const HostelsPage = () => {
       </motion.div>
 
       {/* Empty State */}
-      {filteredHostels.length === 0 && (
+      {filteredHotels.length === 0 && (
         <motion.div variants={itemVariants} className="text-center py-12">
           <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No hostels found</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No hotels found</h3>
           <p className="text-gray-500 mb-4">
             {searchQuery || filterStatus !== 'all' 
               ? 'Try adjusting your search or filter criteria.'
-              : 'Get started by adding your first hostel.'
+              : 'Get started by adding your first hotel.'
             }
           </p>
           <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             <Plus className="h-5 w-5 mr-2" />
-            Add Hostel
+            Add Hotel
           </button>
         </motion.div>
       )}
@@ -299,4 +299,4 @@ const HostelsPage = () => {
   );
 };
 
-export default HostelsPage;
+export default HotelsPage;

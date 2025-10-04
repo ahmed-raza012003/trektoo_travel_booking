@@ -16,36 +16,36 @@ import {
 const DashboardPage = () => {
   const stats = [
     {
-      name: 'Total Activities',
-      value: '1,234',
-      change: '+12%',
+      name: 'Number of Sales',
+      value: '3,450',
+      change: '+25%',
       changeType: 'positive',
       icon: Activity,
-      color: 'blue'
+      color: 'yellow'
     },
     {
-      name: 'Total Hostels',
-      value: '456',
-      change: '+8%',
-      changeType: 'positive',
-      icon: Building2,
-      color: 'green'
-    },
-    {
-      name: 'Total Users',
-      value: '8,901',
-      change: '+23%',
-      changeType: 'positive',
-      icon: Users,
-      color: 'purple'
-    },
-    {
-      name: 'Total Revenue',
-      value: '$45,678',
+      name: 'Sales Revenue',
+      value: '$35,256',
       change: '+15%',
       changeType: 'positive',
       icon: DollarSign,
-      color: 'yellow'
+      color: 'blue'
+    },
+    {
+      name: 'Average Price',
+      value: '$35,256',
+      change: '-15%',
+      changeType: 'negative',
+      icon: TrendingUp,
+      color: 'green'
+    },
+    {
+      name: 'Operations',
+      value: '15,893',
+      change: '',
+      changeType: 'neutral',
+      icon: Users,
+      color: 'purple'
     }
   ];
 
@@ -60,8 +60,8 @@ const DashboardPage = () => {
     },
     {
       id: 2,
-      name: 'Bangkok Hostel',
-      type: 'Hostel',
+      name: 'Bangkok Hotel',
+      type: 'Hotel',
       status: 'Active',
       bookings: 45,
       revenue: '$2,345'
@@ -76,8 +76,8 @@ const DashboardPage = () => {
     },
     {
       id: 4,
-      name: 'Seoul Guesthouse',
-      type: 'Hostel',
+      name: 'Seoul Hotel',
+      type: 'Hotel',
       status: 'Active',
       bookings: 34,
       revenue: '$1,890'
@@ -134,39 +134,41 @@ const DashboardPage = () => {
               key={stat.name}
               className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow duration-200"
             >
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      stat.color === 'blue' ? 'bg-blue-100' :
-                      stat.color === 'green' ? 'bg-green-100' :
-                      stat.color === 'purple' ? 'bg-purple-100' :
-                      'bg-yellow-100'
-                    }`}>
-                      <Icon className={`h-5 w-5 ${
-                        stat.color === 'blue' ? 'text-blue-600' :
-                        stat.color === 'green' ? 'text-green-600' :
-                        stat.color === 'purple' ? 'text-purple-600' :
-                        'text-yellow-600'
-                      }`} />
-                    </div>
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-500 mb-1">
+                      {stat.name}
+                    </p>
+                    <p className="text-3xl font-bold text-gray-900 mb-2">
+                      {stat.value}
+                    </p>
+                    {stat.change && (
+                      <div className={`flex items-center text-sm font-medium ${
+                        stat.changeType === 'positive' ? 'text-green-600' : 
+                        stat.changeType === 'negative' ? 'text-red-600' : 
+                        'text-gray-500'
+                      }`}>
+                        <span className="mr-1">
+                          {stat.changeType === 'positive' ? '↑' : 
+                           stat.changeType === 'negative' ? '↓' : ''}
+                        </span>
+                        {stat.change}
+                      </div>
+                    )}
                   </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        {stat.name}
-                      </dt>
-                      <dd className="flex items-baseline">
-                        <div className="text-2xl font-semibold text-gray-900">
-                          {stat.value}
-                        </div>
-                        <div className={`ml-2 flex items-baseline text-sm font-semibold ${
-                          stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {stat.change}
-                        </div>
-                      </dd>
-                    </dl>
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                    stat.color === 'blue' ? 'bg-blue-100' :
+                    stat.color === 'green' ? 'bg-green-100' :
+                    stat.color === 'purple' ? 'bg-purple-100' :
+                    'bg-yellow-100'
+                  }`}>
+                    <Icon className={`h-6 w-6 ${
+                      stat.color === 'blue' ? 'text-blue-600' :
+                      stat.color === 'green' ? 'text-green-600' :
+                      stat.color === 'purple' ? 'text-purple-600' :
+                      'text-yellow-600'
+                    }`} />
                   </div>
                 </div>
               </div>
@@ -223,7 +225,7 @@ const DashboardPage = () => {
           </button>
           <button className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
             <Building2 className="h-5 w-5 mr-2" />
-            Add Hostel
+            Add Hotel
           </button>
           <button className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
             <Users className="h-5 w-5 mr-2" />
