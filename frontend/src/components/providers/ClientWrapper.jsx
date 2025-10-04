@@ -10,6 +10,7 @@ import Navbar from '@/components/layout/Navbar/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import ErrorBoundary from '@/components/security/ErrorBoundary';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 // Create a new QueryClient instance for each session
 function createQueryClient() {
@@ -40,10 +41,14 @@ function createQueryClient() {
 export default function ClientWrapper({ children }) {
   const [queryClient] = useState(() => createQueryClient());
   const [isClient, setIsClient] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Check if we're in the dashboard
+  const isDashboard = pathname?.startsWith('/dashboard');
 
   // Show a loading state instead of null to prevent blank screen
   if (!isClient) {
@@ -56,10 +61,15 @@ export default function ClientWrapper({ children }) {
         <LoadingProvider>
           <ToastProvider>
             <AuthProvider>
-              <Topbar />
-              <Navbar />
+              {/* Only show main website header and footer if NOT in dashboard */}
+              {!isDashboard && (
+                <>
+                  <Topbar />
+                  <Navbar />
+                </>
+              )}
               <main className="relative overflow-hidden">{children}</main>
-              <Footer />
+              {!isDashboard && <Footer />}
             </AuthProvider>
           </ToastProvider>
         </LoadingProvider>
