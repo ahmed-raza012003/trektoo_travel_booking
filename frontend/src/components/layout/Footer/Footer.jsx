@@ -7,6 +7,7 @@ import {
   PagesLinks,
   NewsletterForm,
   ContactInfo,
+  PaymentMethods,
 } from './components/FooterComponents';
 
 const Footer = () => {
@@ -35,6 +36,9 @@ const Footer = () => {
           </div>
         </div>
       </div>
+      
+      {/* Payment Methods */}
+      <PaymentMethods />
       
       {/* Copyright - Full Width */}
       <div className="w-full border-t border-white/10 bg-black/20">

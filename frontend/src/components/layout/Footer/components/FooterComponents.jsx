@@ -391,4 +391,46 @@ const ContactInfo = () => {
   );
 };
 
-export { SupportBanner, CompanyInfo, PagesLinks, NewsletterForm, ContactInfo };
+const PaymentMethods = () => {
+  const paymentMethods = [
+    { name: 'Visa', image: '/images/Payments/visa.png' },
+    { name: 'Mastercard', image: '/images/Payments/mastercard.png' },
+    { name: 'American Express', image: '/images/Payments/american express.png' },
+    { name: 'PayPal', image: '/images/Payments/paypal.png' },
+    { name: 'Apple Pay', image: '/images/Payments/applepay.png' },
+    { name: 'Google Pay', image: '/images/Payments/gpay.png' },
+    { name: 'Stripe', image: '/images/Payments/stripe.png' },
+    { name: 'JCB', image: '/images/Payments/jcb.png' },
+    { name: 'Diners Club', image: '/images/Payments/dinersclub.png' },
+    { name: 'UnionPay', image: '/images/Payments/unionpay.png' },
+  ];
+
+  return (
+    <div className="w-full border-t border-white/10 bg-black/20">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="text-center mb-4">
+          <h4 className="text-sm font-semibold text-white mb-2">We Accept</h4>
+          <p className="text-xs text-gray-400">Secure payment methods for your convenience</p>
+        </div>
+        <div className="flex flex-wrap justify-center items-center gap-3">
+          {paymentMethods.map((method, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-center w-12 h-8 bg-white rounded-md p-1 hover:scale-105 transition-transform duration-200"
+              title={method.name}
+            >
+              <img
+                src={method.image}
+                alt={method.name}
+                className="max-w-full max-h-full object-contain"
+                loading="lazy"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export { SupportBanner, CompanyInfo, PagesLinks, NewsletterForm, ContactInfo, PaymentMethods };
