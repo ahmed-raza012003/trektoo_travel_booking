@@ -31,6 +31,94 @@ body {
   /* Matches hero overlay */
 }
 
+/* Hide Google Translate banner completely */
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate,
+.goog-te-ftab-frame,
+.goog-te-combo {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  z-index: -9999 !important;
+  opacity: 0 !important;
+}
+
+/* Remove Google Translate margin and padding */
+body {
+  top: 0 !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Prevent Google Translate from adding unwanted styles */
+body.goog-te-fading {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Hide Google Translate iframe completely */
+.goog-te-ftab-frame {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+}
+
+/* Hide original Google Translate widget */
+#google_translate_element {
+  display: none !important;
+}
+
+/* Style for translated text */
+.goog-te-translated {
+  font-family: inherit !important;
+}
+
+/* RTL support for Arabic */
+html[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] body {
+  direction: rtl;
+}
+
+/* Specific language direction fixes */
+html[lang="ar"],
+html[lang="ar"] * {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+iframe.goog-te-banner-frame,
+.goog-te-banner-frame,
+.goog-te-ftab-frame,
+.goog-te-combo,
+.goog-te-gadget,
+.goog-logo-link,
+.goog-te-spinner,
+.goog-te-spinner-pos,
+.skiptranslate {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  z-index: -9999 !important;
+}
+
+
 /* Add this to your global CSS file (e.g., globals.css) */
 
 @keyframes zoomIn {

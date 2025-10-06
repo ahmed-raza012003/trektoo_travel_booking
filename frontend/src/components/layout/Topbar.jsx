@@ -4,6 +4,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Link from 'next/link';
 import { FaFacebookF, FaInstagram, FaPhone, FaEnvelope } from 'react-icons/fa';
+import GoogleTranslate from '@/components/GoogleTranslate/GoogleTranslate';
 
 function Topbar() {
   return (
@@ -30,7 +31,7 @@ function Topbar() {
           </a>
         </div>
 
-        {/* Right Side: Links, Cart, and Social Icons */}
+        {/* Right Side: Links, Language, Cart, and Social Icons */}
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4 ml-auto sm:ml-0 flex-wrap">
           <Link
             href="/about"
@@ -44,6 +45,9 @@ function Topbar() {
           >
             Contact
           </Link>
+          
+          {/* Google Translate Language Selector */}
+          <GoogleTranslate />
 
           <div className="hidden sm:flex gap-2 md:gap-3">
             <a
