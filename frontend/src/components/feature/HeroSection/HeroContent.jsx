@@ -329,9 +329,9 @@ function HeroContent() {
           variants={containerVariants}
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
-          className="w-full max-w-5xl mx-auto mt-10"
+          className="w-full max-w-5xl mx-auto mt-10 notranslate"
         >
-          <div className="bg-white/10 backdrop-blur-none rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+          <div className="bg-white/10 backdrop-blur-none rounded-2xl shadow-2xl border border-white/20 overflow-hidden notranslate">
             {/* Service Tabs */}
             <div className="p-4 border-b border-white/10">
               <div className="flex flex-wrap justify-center gap-2">

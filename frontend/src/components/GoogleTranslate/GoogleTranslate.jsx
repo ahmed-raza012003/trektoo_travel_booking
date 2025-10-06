@@ -55,7 +55,8 @@ const GoogleTranslate = () => {
                 {
                     pageLanguage: 'en',
                     includedLanguages: 'en,ar,es,ru,de',
-                    autoDisplay: false
+                    autoDisplay: false,
+                    multilanguagePage: true
                 },
                 'google_translate_element'
             );
@@ -304,6 +305,11 @@ const GoogleTranslate = () => {
              top: -9999px !important;
              left: -9999px !important;
              z-index: -9999 !important;
+         }
+         
+         /* Prevent Google Translate from breaking interactive elements */
+         button, a, input, select, textarea {
+             font: inherit !important;
          }
          `}</style>
         </div>
