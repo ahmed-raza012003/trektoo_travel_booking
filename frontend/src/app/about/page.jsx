@@ -55,7 +55,7 @@ const AboutUsPage = () => {
   };
 
   return (
-    <main className="relative min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+    <main className="relative min-h-screen bg-white">
       {/* Background Pattern - Matching Landing Page */}
       <div className="absolute inset-0 opacity-5">
         <svg
@@ -278,7 +278,7 @@ const AboutUsPage = () => {
                 <div className="bg-gradient-to-br from-red-50 to-pink-50 p-6 rounded-xl border border-red-100">
                   <div className="text-3xl font-bold text-red-600 mb-2">2024</div>
                   <div className="text-lg text-gray-600 font-medium">Founded with a Vision</div>
-                </div>
+            </div>
           </motion.div>
 
               {/* Story Visual */}
@@ -339,7 +339,7 @@ const AboutUsPage = () => {
               </motion.div>
             </motion.div>
 
-            <motion.div
+          <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
@@ -375,7 +375,7 @@ const AboutUsPage = () => {
                         className={`w-20 h-20 bg-gradient-to-r ${item.gradient} rounded-full flex items-center justify-center mx-auto mb-6 text-white shadow-lg group-hover:shadow-lg transition-all duration-300`}
                       >
                         <item.icon className="w-10 h-10" />
-                      </div>
+                  </div>
                       <h3
                         className="text-2xl font-bold text-gray-800 mb-4 group-hover:text-blue-600 transition-colors duration-200"
                         style={{
@@ -406,7 +406,7 @@ const AboutUsPage = () => {
 
           {/* Core Values - Rich Design */}
           <section className="py-20 relative overflow-hidden">
-            <motion.div
+          <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
@@ -438,7 +438,7 @@ const AboutUsPage = () => {
                       />
                     </svg>
                   </span>
-                </h2>
+                  </h2>
               </motion.div>
               <motion.div variants={itemVariants}>
                 <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
@@ -453,38 +453,38 @@ const AboutUsPage = () => {
               animate={inView ? 'visible' : 'hidden'}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4"
             >
-              {[
-                {
-                  title: 'Perseverance',
-                  desc: 'We conquer obstacles to serve you better.',
+                {[
+                  {
+                    title: 'Perseverance',
+                    desc: 'We conquer obstacles to serve you better.',
                   icon: Shield,
-                  color: 'from-blue-500 to-blue-600',
+                    color: 'from-blue-500 to-blue-600',
                   bg: 'from-blue-50 to-blue-100'
-                },
-                {
-                  title: 'Transparency',
-                  desc: 'No hidden fees. No surprises.',
+                  },
+                  {
+                    title: 'Transparency',
+                    desc: 'No hidden fees. No surprises.',
                   icon: CheckCircle,
-                  color: 'from-emerald-500 to-emerald-600',
+                    color: 'from-emerald-500 to-emerald-600',
                   bg: 'from-emerald-50 to-emerald-100'
-                },
-                {
-                  title: 'Human-Centered',
-                  desc: "You're our priority, not a transaction.",
+                  },
+                  {
+                    title: 'Human-Centered',
+                    desc: "You're our priority, not a transaction.",
                   icon: Heart,
-                  color: 'from-purple-500 to-purple-600',
+                    color: 'from-purple-500 to-purple-600',
                   bg: 'from-purple-50 to-purple-100'
-                },
-                {
-                  title: 'Integrity',
-                  desc: 'Honest recommendations, accountable service.',
+                  },
+                  {
+                    title: 'Integrity',
+                    desc: 'Honest recommendations, accountable service.',
                   icon: Award,
-                  color: 'from-orange-500 to-orange-600',
+                    color: 'from-orange-500 to-orange-600',
                   bg: 'from-orange-50 to-orange-100'
-                },
-              ].map((value, index) => (
-                <motion.div
-                  key={index}
+                  },
+                ].map((value, index) => (
+                  <motion.div
+                    key={index}
                   variants={itemVariants}
                   whileHover={{ scale: 1.02, y: -3 }}
                   className="group relative bg-white rounded-3xl shadow-lg hover:shadow-lg hover:shadow-blue-500/10 overflow-hidden transition-all duration-300 border border-gray-200 hover:border-blue-500"
@@ -503,21 +503,21 @@ const AboutUsPage = () => {
                           "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                       }}
                     >
-                      {value.title}
-                    </h4>
+                        {value.title}
+                      </h4>
                     <p className="text-gray-600 leading-relaxed text-sm">
-                      {value.desc}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
+                        {value.desc}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+          </motion.div>
           </section>
 
 
           {/* Enhanced Journey Section */}
           <section className="py-20 relative overflow-hidden">
-            <motion.div
+          <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
@@ -549,7 +549,7 @@ const AboutUsPage = () => {
                       />
                     </svg>
                   </span>
-                </h2>
+                  </h2>
               </motion.div>
               <motion.div variants={itemVariants}>
                 <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
@@ -622,8 +622,8 @@ const AboutUsPage = () => {
                   progress: '100%'
                 }
               ].map((item, index) => (
-                <motion.div
-                  key={index}
+                  <motion.div
+                    key={index}
                   variants={itemVariants}
                   whileHover={{ scale: 1.02, y: -5 }}
                   className="group relative bg-white rounded-3xl shadow-lg hover:shadow-lg hover:shadow-blue-500/10 overflow-hidden transition-all duration-300 border border-gray-200 hover:border-blue-500"
@@ -672,19 +672,19 @@ const AboutUsPage = () => {
                           <div className={`w-1.5 h-1.5 bg-gradient-to-r ${item.color} rounded-full`}></div>
                           <span>{detail}</span>
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                ))}
+              </div>
+            </div>
 
                   {/* Background Gradient */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${item.bgColor} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
                 </motion.div>
               ))}
-            </motion.div>
+          </motion.div>
 
             {/* Journey Summary */}
-            <motion.div
-              variants={itemVariants}
+          <motion.div
+            variants={itemVariants}
               className="mt-16 text-center"
             >
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-3xl p-8 border border-purple-100">
@@ -705,7 +705,7 @@ const AboutUsPage = () => {
 
           {/* Fun Stats with Animations */}
           <section className="py-20 relative overflow-hidden">
-            <motion.div
+                <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
@@ -741,7 +741,7 @@ const AboutUsPage = () => {
               </motion.div>
             </motion.div>
 
-            <motion.div
+                  <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
@@ -775,9 +775,9 @@ const AboutUsPage = () => {
                   </motion.div>
                   <div className={`text-4xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent mb-2`}>
                     {stat.number}
-                  </div>
+                </div>
                   <div className="text-gray-600 font-medium">{stat.label}</div>
-                </motion.div>
+          </motion.div>
               ))}
             </motion.div>
           </section>
