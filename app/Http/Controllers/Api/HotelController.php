@@ -40,7 +40,7 @@ class HotelController extends Controller
             'children' => 'nullable|array|max:' . config('ratehawk.max_children_per_room', 4),
             'children.*' => 'integer|min:0|max:17',
             'residency' => 'required|string|size:2',
-            'region_id' => 'required|string',
+            'region_id' => 'required|integer',
             'language' => 'nullable|string|size:2',
             'currency' => 'nullable|string|size:3',
             'hotels_limit' => 'nullable|integer|max:100',
@@ -257,7 +257,18 @@ class HotelController extends Controller
      */
     public function getHotelPage(Request $request, string $hotelId): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        // Parse children parameter from URL format "8,12" to array [8, 12] BEFORE validation
+        $requestData = $request->all();
+        if (isset($requestData['children']) && is_string($requestData['children'])) {
+            $childrenString = $requestData['children'];
+            if (!empty($childrenString)) {
+                $requestData['children'] = array_map('intval', explode(',', $childrenString));
+            } else {
+                $requestData['children'] = [];
+            }
+        }
+
+        $validator = Validator::make($requestData, [
             'checkin' => 'required|date|after:today',
             'checkout' => 'required|date|after:checkin',
             'adults' => 'required|integer|min:1|max:' . config('ratehawk.max_guests_per_room', 6),
@@ -278,7 +289,8 @@ class HotelController extends Controller
         }
 
         try {
-            $result = $this->ratehawkService->getHotelPage($hotelId, $request->all());
+            
+            $result = $this->ratehawkService->getHotelPage($hotelId, $requestData);
 
             if (isset($result['success']) && $result['success'] || isset($result['status']) && $result['status'] === 'ok') {
                 return response()->json([
@@ -468,7 +480,7 @@ class HotelController extends Controller
     public function prebook(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'hash' => 'required|string|min:10'
+            'hash' => 'required|string|min:5'
         ]);
 
         if ($validator->fails()) {
