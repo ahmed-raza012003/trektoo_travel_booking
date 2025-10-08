@@ -121,31 +121,98 @@ class DumpRatehawkData extends Command
             $this->info("  📥 Downloading regions from: {$regionUrl}");
             
             // Download and process regions
+            $this->info("  📥 Downloading region data...");
             $regionData = file_get_contents($regionUrl);
             $tempFile = tempnam(sys_get_temp_dir(), 'regions_');
             file_put_contents($tempFile, $regionData);
-            $decompressed = shell_exec("zstd -d -c " . escapeshellarg($tempFile) . " 2>/dev/null");
+            
+            $this->info("  🔓 Decompressing region data...");
+            
+            // Use Python zstandard for streaming decompression to avoid memory issues
+            $tempDecompressedFile = tempnam(sys_get_temp_dir(), 'regions_decompressed_');
+            $tempFileNormalized = str_replace('\\', '/', $tempFile);
+            $tempDecompressedFileNormalized = str_replace('\\', '/', $tempDecompressedFile);
+            
+            $pythonScript = <<<PYTHON
+import os
+import sys
+try:
+    import zstandard as zstd
+    
+    input_file = '{$tempFileNormalized}'
+    output_file = '{$tempDecompressedFileNormalized}'
+    
+    with open(input_file, 'rb') as f:
+        dctx = zstd.ZstdDecompressor()
+        with open(output_file, 'wb') as out:
+            dctx.copy_stream(f, out)
+    print("SUCCESS")
+except ImportError:
+    print("zstandard not installed")
+except Exception as e:
+    print(f"Error: {e}")
+PYTHON;
+            $scriptFile = tempnam(sys_get_temp_dir(), 'decompress_') . '.py';
+            file_put_contents($scriptFile, $pythonScript);
+            $output = shell_exec("python " . escapeshellarg($scriptFile) . " 2>&1");
+            unlink($scriptFile);
             unlink($tempFile);
             
-            $lines = explode("\n", trim($decompressed));
+            if (!file_exists($tempDecompressedFile) || filesize($tempDecompressedFile) == 0) {
+                $this->error("  ❌ Region decompression failed!");
+                $this->error("  💡 Python zstandard output: " . $output);
+                throw new Exception('Failed to decompress region data');
+            }
+            
+            $this->info("  ✅ Region decompression successful!");
+            
+            // Process file line by line to avoid memory issues
+            $file = fopen($tempDecompressedFile, 'r');
+            if (!$file) {
+                throw new Exception('Failed to open decompressed file');
+            }
+            
             $regionCount = 0;
             
             // Clear existing regions if not resuming
             DB::table('ratehawk_regions')->truncate();
             
-            $processLines = $limit > 0 ? array_slice($lines, 0, $limit) : $lines;
-            
-            foreach ($processLines as $line) {
-                if (empty(trim($line))) continue;
+            while (($line = fgets($file)) !== false) {
+                if ($limit > 0 && $regionCount >= $limit) break;
+                
+                $line = trim($line);
+                if (empty($line)) continue;
                 
                 $region = json_decode($line, true);
-                if (!$region || !isset($region['id']) || !isset($region['name'])) continue;
+                
+                // Debug: Show first few lines to understand structure
+                if ($regionCount < 3) {
+                    $this->info("    🔍 Debug - Region Line " . ($regionCount + 1) . ": " . substr($line, 0, 200) . "...");
+                    $this->info("    🔍 Debug - Decoded keys: " . implode(', ', array_keys($region ?: [])));
+                }
+                
+                if (!$region || !isset($region['id']) || !isset($region['name'])) {
+                    if ($regionCount < 3) {
+                        $this->warn("    ⚠️  Skipping region - missing id or name");
+                    }
+                    continue;
+                }
+                
+                // Handle array fields properly
+                $name = is_array($region['name']) ? ($region['name']['en'] ?? reset($region['name'])) : $region['name'];
+                $countryName = null;
+                if (isset($region['country_name'])) {
+                    $countryName = is_array($region['country_name']) ? ($region['country_name']['en'] ?? reset($region['country_name'])) : $region['country_name'];
+                }
+                
+                // Get country_code (can be null now)
+                $countryCode = $region['country_code'] ?? null;
                 
                 DB::table('ratehawk_regions')->insert([
                     'id' => $region['id'],
-                    'name' => $region['name']['en'] ?? $region['name'],
-                    'country_code' => $region['country_code'] ?? null,
-                    'country_name' => $region['country_name']['en'] ?? $region['country_name'] ?? null,
+                    'name' => $name,
+                    'country_code' => $countryCode,
+                    'country_name' => $countryName,
                     'region_type' => $region['type'] ?? null,
                     'latitude' => $region['center']['latitude'] ?? null,
                     'longitude' => $region['center']['longitude'] ?? null,
@@ -154,6 +221,9 @@ class DumpRatehawkData extends Command
                 ]);
                 $regionCount++;
             }
+            
+            fclose($file);
+            unlink($tempDecompressedFile);
             
             $this->info("  ✅ Inserted {$regionCount} regions");
             
@@ -309,16 +379,99 @@ class DumpRatehawkData extends Command
             throw new Exception("Download failed. HTTP Code: {$httpCode}, Error: {$error}");
         }
         
-        // Decompress using streaming
-        $tempDecompressedFile = tempnam(sys_get_temp_dir(), 'hotels_decompressed_');
-        $decompressCommand = "zstd -d -c " . escapeshellarg($tempFile) . " > " . escapeshellarg($tempDecompressedFile) . " 2>/dev/null";
+        $this->info("  🔓 Decompressing hotel data using PHP...");
         
-        shell_exec($decompressCommand);
+        // Try PHP native decompression methods
+        $tempDecompressedFile = tempnam(sys_get_temp_dir(), 'hotels_decompressed_');
+        $decompressed = false;
+        
+        // Method 1: Try zstd PHP extension if available
+        if (function_exists('zstd_uncompress')) {
+            $this->info("    ✅ Using PHP zstd extension");
+            $compressed = file_get_contents($tempFile);
+            $decompressedData = zstd_uncompress($compressed);
+            if ($decompressedData !== false) {
+                file_put_contents($tempDecompressedFile, $decompressedData);
+                $decompressed = true;
+            }
+        }
+        
+        // Method 2: Try Python with zstandard (primary fallback)
+        if (!$decompressed) {
+            $this->info("    🔄 Trying Python zstandard...");
+            
+            // Use forward slashes and raw strings to avoid Windows path issues
+            $tempFileNormalized = str_replace('\\', '/', $tempFile);
+            $tempDecompressedFileNormalized = str_replace('\\', '/', $tempDecompressedFile);
+            
+            $pythonScript = <<<PYTHON
+import os
+import sys
+try:
+    import zstandard as zstd
+    
+    input_file = '{$tempFileNormalized}'
+    output_file = '{$tempDecompressedFileNormalized}'
+    
+    with open(input_file, 'rb') as f:
+        dctx = zstd.ZstdDecompressor()
+        with open(output_file, 'wb') as out:
+            dctx.copy_stream(f, out)
+    print("SUCCESS")
+except ImportError:
+    print("zstandard not installed")
+except Exception as e:
+    print(f"Error: {e}")
+PYTHON;
+            $scriptFile = tempnam(sys_get_temp_dir(), 'decompress_') . '.py';
+            file_put_contents($scriptFile, $pythonScript);
+            $output = shell_exec("python " . escapeshellarg($scriptFile) . " 2>&1");
+            unlink($scriptFile);
+            
+            if (file_exists($tempDecompressedFile) && filesize($tempDecompressedFile) > 0) {
+                $decompressed = true;
+                $this->info("    ✅ Python zstandard decompression successful");
+            } else {
+                $this->warn("    ⚠️  Python zstandard failed: " . $output);
+            }
+        }
+        
+        // Method 3: Try shell command (works on Linux/Windows with zstd installed)
+        if (!$decompressed && (stripos(PHP_OS, 'WIN') === 0)) {
+            $this->info("    🔄 Trying Windows zstd command...");
+            $decompressCommand = "zstd -d -c \"" . $tempFile . "\" > \"" . $tempDecompressedFile . "\" 2>&1";
+            $output = shell_exec($decompressCommand);
+            if (file_exists($tempDecompressedFile) && filesize($tempDecompressedFile) > 0) {
+                $decompressed = true;
+            } else {
+                $this->warn("    ⚠️  Windows zstd not available or failed: " . $output);
+            }
+        }
+        
+        // Method 4: Try Linux/Unix command
+        if (!$decompressed && (stripos(PHP_OS, 'WIN') === false)) {
+            $this->info("    🔄 Trying Unix zstd command...");
+            $decompressCommand = "zstd -d -c " . escapeshellarg($tempFile) . " > " . escapeshellarg($tempDecompressedFile) . " 2>&1";
+            $output = shell_exec($decompressCommand);
+            if (file_exists($tempDecompressedFile) && filesize($tempDecompressedFile) > 0) {
+                $decompressed = true;
+            } else {
+                $this->warn("    ⚠️  Unix zstd not available or failed: " . $output);
+            }
+        }
+        
         unlink($tempFile);
         
-        if (!file_exists($tempDecompressedFile) || filesize($tempDecompressedFile) == 0) {
-            throw new Exception('Failed to decompress hotel data');
+        if (!$decompressed || !file_exists($tempDecompressedFile) || filesize($tempDecompressedFile) == 0) {
+            $this->error("  ❌ All decompression methods failed!");
+            $this->error("  💡 Please install zstd:");
+            $this->error("     Windows: choco install zstandard  OR  winget install zstd");
+            $this->error("     Linux: apt-get install zstd  OR  yum install zstd");
+            $this->error("     macOS: brew install zstd");
+            throw new Exception('Failed to decompress hotel data - zstd not available');
         }
+        
+        $this->info("  ✅ Decompression successful!");
         
         // Process file line by line
         $file = fopen($tempDecompressedFile, 'r');
@@ -337,17 +490,30 @@ class DumpRatehawkData extends Command
             if (empty($line)) continue;
             
             $hotel = json_decode($line, true);
-            if (!$hotel || !isset($hotel['id']) || !isset($hotel['name'])) continue;
+            
+            // Debug: Show first few lines to understand structure
+            if ($processed < 3) {
+                $this->info("    🔍 Debug - Line " . ($processed + 1) . ": " . substr($line, 0, 200) . "...");
+                $this->info("    🔍 Debug - Decoded keys: " . implode(', ', array_keys($hotel ?: [])));
+            }
+            
+            if (!$hotel || !isset($hotel['id']) || !isset($hotel['name'])) {
+                if ($processed < 3) {
+                    $this->warn("    ⚠️  Skipping line - missing id or name");
+                }
+                continue;
+            }
             
             $processed++;
             
             try {
-                DB::table('hotel_cache')->updateOrInsert(
+                DB::table('ratehawk_hotels')->updateOrInsert(
                     ['hotel_id' => $hotel['id']],
                     [
                         'hotel_id' => $hotel['id'],
                         'name' => $hotel['name'],
                         'country_code' => $hotel['country_code'] ?? null,
+                        'country_name' => $hotel['country_name'] ?? null,
                         'city' => $hotel['city'] ?? null,
                         'address' => $hotel['address'] ?? null,
                         'latitude' => $hotel['latitude'] ?? null,
@@ -356,7 +522,15 @@ class DumpRatehawkData extends Command
                         'description' => $hotel['description'] ?? null,
                         'amenities' => isset($hotel['amenities']) ? json_encode($hotel['amenities']) : null,
                         'images' => isset($hotel['images']) ? json_encode($hotel['images']) : null,
+                        'facilities' => isset($hotel['facilities']) ? json_encode($hotel['facilities']) : null,
+                        'phone' => $hotel['phone'] ?? null,
+                        'email' => $hotel['email'] ?? null,
+                        'website' => $hotel['website'] ?? null,
+                        'rating' => $hotel['rating'] ?? null,
+                        'review_count' => $hotel['review_count'] ?? null,
+                        'is_active' => $hotel['is_active'] ?? true,
                         'raw_data' => $line,
+                        'last_updated' => now(),
                         'created_at' => now(),
                         'updated_at' => now()
                     ]
@@ -380,17 +554,55 @@ class DumpRatehawkData extends Command
     
     private function processHotelData($hotelData, $limit = 0)
     {
+        $this->info("  🔓 Decompressing hotel data...");
         $tempFile = tempnam(sys_get_temp_dir(), 'hotels_');
         file_put_contents($tempFile, $hotelData);
         
-        $decompressed = shell_exec("zstd -d -c " . escapeshellarg($tempFile) . " 2>/dev/null");
+        $decompressed = false;
+        $decompressedData = null;
+        
+        // Method 1: Try zstd PHP extension
+        if (function_exists('zstd_uncompress')) {
+            $this->info("    ✅ Using PHP zstd extension");
+            $decompressedData = zstd_uncompress($hotelData);
+            if ($decompressedData !== false) {
+                $decompressed = true;
+            }
+        }
+        
+        // Method 2: Try Windows zstd command
+        if (!$decompressed && (stripos(PHP_OS, 'WIN') === 0)) {
+            $this->info("    🔄 Trying Windows zstd command...");
+            $tempOut = tempnam(sys_get_temp_dir(), 'hotels_out_');
+            $command = "zstd -d -c \"" . $tempFile . "\" > \"" . $tempOut . "\" 2>&1";
+            shell_exec($command);
+            if (file_exists($tempOut) && filesize($tempOut) > 0) {
+                $decompressedData = file_get_contents($tempOut);
+                $decompressed = true;
+            }
+            @unlink($tempOut);
+        }
+        
+        // Method 3: Try Unix zstd command
+        if (!$decompressed) {
+            $this->info("    🔄 Trying Unix zstd command...");
+            $decompressedData = shell_exec("zstd -d -c " . escapeshellarg($tempFile) . " 2>&1");
+            if ($decompressedData && strlen($decompressedData) > 0) {
+                $decompressed = true;
+            }
+        }
+        
         unlink($tempFile);
         
-        if (!$decompressed) {
+        if (!$decompressed || !$decompressedData) {
+            $this->error("  ❌ Hotel decompression failed!");
+            $this->error("  💡 Please install zstd (see instructions above)");
             throw new Exception('Failed to decompress hotel data');
         }
         
-        $lines = explode("\n", trim($decompressed));
+        $this->info("  ✅ Hotel decompression successful!");
+        
+        $lines = explode("\n", trim($decompressedData));
         $processed = 0;
         $inserted = 0;
         $errors = 0;
@@ -406,12 +618,13 @@ class DumpRatehawkData extends Command
             $processed++;
             
             try {
-                DB::table('hotel_cache')->updateOrInsert(
+                DB::table('ratehawk_hotels')->updateOrInsert(
                     ['hotel_id' => $hotel['id']],
                     [
                         'hotel_id' => $hotel['id'],
                         'name' => $hotel['name'],
                         'country_code' => $hotel['country_code'] ?? null,
+                        'country_name' => $hotel['country_name'] ?? null,
                         'city' => $hotel['city'] ?? null,
                         'address' => $hotel['address'] ?? null,
                         'latitude' => $hotel['latitude'] ?? null,
@@ -420,7 +633,15 @@ class DumpRatehawkData extends Command
                         'description' => $hotel['description'] ?? null,
                         'amenities' => isset($hotel['amenities']) ? json_encode($hotel['amenities']) : null,
                         'images' => isset($hotel['images']) ? json_encode($hotel['images']) : null,
+                        'facilities' => isset($hotel['facilities']) ? json_encode($hotel['facilities']) : null,
+                        'phone' => $hotel['phone'] ?? null,
+                        'email' => $hotel['email'] ?? null,
+                        'website' => $hotel['website'] ?? null,
+                        'rating' => $hotel['rating'] ?? null,
+                        'review_count' => $hotel['review_count'] ?? null,
+                        'is_active' => $hotel['is_active'] ?? true,
                         'raw_data' => $line,
+                        'last_updated' => now(),
                         'created_at' => now(),
                         'updated_at' => now()
                     ]
