@@ -20,6 +20,9 @@ import {
   Heart,
   Award,
   CheckCircle,
+  Youtube,
+  Linkedin,
+  Camera,
 } from 'lucide-react';
 
 const ContactUsPage = () => {
@@ -88,13 +91,6 @@ const ContactUsPage = () => {
 
   const emailContacts = [
     {
-      icon: Mail,
-      title: 'General Inquiries',
-      value: 'trektoo2000@gmail.com',
-      description: 'For general questions and information',
-      gradient: 'from-indigo-500 to-blue-600',
-    },
-    {
       icon: Zap,
       title: 'Sales',
       value: 'sales@trektoo.com',
@@ -138,6 +134,27 @@ const ContactUsPage = () => {
       url: 'https://www.tiktok.com/@trektoo?_t=ZS-8yK2lqloH4r&_r=1',
       description: 'Quick travel tips and fun content',
       gradient: 'from-gray-800 to-black',
+    },
+    {
+      icon: Youtube,
+      title: 'YouTube',
+      url: 'https://www.youtube.com/@trektoo',
+      description: 'Travel vlogs and destination guides',
+      gradient: 'from-red-500 to-red-600',
+    },
+    {
+      icon: Linkedin,
+      title: 'LinkedIn',
+      url: 'https://www.linkedin.com/company/trektoo',
+      description: 'Professional updates and business insights',
+      gradient: 'from-blue-700 to-blue-800',
+    },
+    {
+      icon: Camera,
+      title: 'Snapchat',
+      url: 'https://www.snapchat.com/add/trektoo',
+      description: 'Real-time travel moments and stories',
+      gradient: 'from-yellow-500 to-yellow-600',
     },
   ];
 
