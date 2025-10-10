@@ -198,62 +198,26 @@ const Banner = () => {
           <div className="w-full lg:w-5/12 text-center lg:text-left space-y-8">
 
             {/* Main Heading */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-              Welcome to{' '}
-              <span className="bg-gradient-to-r from-blue-600 via-blue-600 to-blue-600 bg-clip-text text-transparent">
-                Trektoo
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
+              Everyone is{' '}
+              <span className="bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+                welcome
               </span>
             </h1>
 
             {/* Description */}
-            <p className="text-xl text-gray-600 leading-relaxed max-w-2xl">
+            <p className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-2xl mb-8">
               Your gateway to extraordinary adventures. We provide everything you need 
               for unforgettable journeys — from thrilling activities and seamless 
               transport to comfortable accommodations and expert guidance.
             </p>
 
-            {/* Features List */}
-            <div className="grid grid-cols-2 gap-4 text-left">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                </div>
-                <span className="text-gray-700 font-medium">Best Price Guarantee</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                </div>
-                <span className="text-gray-700 font-medium">24/7 Support</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  </svg>
-                </div>
-                <span className="text-gray-700 font-medium">Global Destinations</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                  </svg>
-                </div>
-                <span className="text-gray-700 font-medium">Secure Booking</span>
-              </div>
-            </div>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+            {/* CTA Button */}
+            <div className="flex justify-center lg:justify-start">
               <a
                 href="/about"
-                className="group inline-flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-4 rounded-2xl shadow-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
+                className="group inline-flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-xl shadow-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
               >
                 Explore About Trektoo
                 <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

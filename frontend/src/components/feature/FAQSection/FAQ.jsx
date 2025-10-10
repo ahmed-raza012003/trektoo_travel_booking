@@ -214,19 +214,14 @@ const FAQSection = () => {
               index={1}
             />
             <ExpandableItem
-              question="Why Choose Our Travel Agency?"
-              answer="With years of expertise, we curate personalized adventures to the world's most stunning destinations, delivering exceptional service and memorable experiences."
-              index={2}
-            />
-            <ExpandableItem
               question="What is the cancellation policy for tours?"
               answer="We offer flexible cancellation policies with full refunds available up to 48 hours before departure. For last-minute changes, we provide credit for future bookings. Special circumstances are always considered on a case-by-case basis."
-              index={3}
+              index={2}
             />
             <ExpandableItem
               question="Do you provide travel insurance?"
               answer="Yes, we offer comprehensive travel insurance packages that cover medical emergencies, trip cancellations, lost luggage, and more. We highly recommend our insurance to ensure peace of mind during your adventure."
-              index={4}
+              index={3}
             />
           </motion.div>
         </motion.div>

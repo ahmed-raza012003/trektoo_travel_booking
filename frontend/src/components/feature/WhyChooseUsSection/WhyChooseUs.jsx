@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { Globe, Compass, MapPin } from 'lucide-react';
+import { Compass, MapPin } from 'lucide-react';
 
 const WhyChooseUs = () => {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
@@ -106,7 +106,7 @@ const WhyChooseUs = () => {
           </motion.div>
           <motion.div variants={itemVariants}>
             <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
-              Transparent pricing, verified reviews, and 24/7 support. 
+              Transparent pricing, verified reviews, and dedicated support. 
               We make travel planning simple and trustworthy.
             </p>
           </motion.div>
@@ -116,70 +116,11 @@ const WhyChooseUs = () => {
           variants={containerVariants}
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
-          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          className="max-w-4xl mx-auto text-center"
         >
-          {/* FeatureCard - Safety */}
-          <motion.div
-            variants={itemVariants}
-            className="text-center p-6 rounded-3xl bg-white/80 backdrop-blur-md border border-blue-100/50 hover:border-blue-200 transition-all duration-300 group shadow-xl hover:shadow-2xl hover:shadow-blue-200/20"
-            whileHover={{ scale: 1.02 }}
-          >
-            <motion.div
-              className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white shadow-md hover:shadow-lg transition-all duration-300"
-              whileHover={{ rotate: 360 }}
-            >
-              <Compass className="w-10 h-10" />
-            </motion.div>
-            <h3 className="text-xl font-bold text-gray-800 mb-4 group-hover:text-blue-600 transition-colors duration-200">
-              Safety First
-            </h3>
-            <p className="text-gray-600 leading-relaxed text-base">
-              Your security is our top priority. We work exclusively with
-              verified, trusted partners to ensure every adventure is safe and
-              worry-free.
-            </p>
-          </motion.div>
-
-          {/* FeatureCard - Price */}
-          <motion.div
-            variants={itemVariants}
-            className="text-center p-6 rounded-3xl bg-white/80 backdrop-blur-md border border-blue-100/50 hover:border-blue-200 transition-all duration-300 group shadow-xl hover:shadow-2xl hover:shadow-blue-200/20"
-            whileHover={{ scale: 1.02 }}
-          >
-            <motion.div
-              className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white shadow-md hover:shadow-lg transition-all duration-300"
-              whileHover={{ rotate: 360 }}
-            >
-              <Globe className="w-10 h-10" />
-            </motion.div>
-            <h3 className="text-xl font-bold text-gray-800 mb-4 group-hover:text-blue-600 transition-colors duration-200">
-              Best Value
-            </h3>
-            <p className="text-gray-600 leading-relaxed text-base">
-              Get the most out of your travel budget with our competitive
-              pricing, exclusive deals, and transparent pricing with no hidden
-              fees.
-            </p>
-          </motion.div>
-
-          {/* FeatureCard - Experience */}
-          <motion.div
-            variants={itemVariants}
-            className="text-center p-6 rounded-3xl bg-white/80 backdrop-blur-md border border-blue-100/50 hover:border-blue-200 transition-all duration-300 group shadow-xl hover:shadow-2xl hover:shadow-blue-200/20"
-            whileHover={{ scale: 1.02 }}
-          >
-            <motion.div
-              className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white shadow-md hover:shadow-lg transition-all duration-300"
-              whileHover={{ rotate: 360 }}
-            >
-              <MapPin className="w-10 h-10" />
-            </motion.div>
-            <h3 className="text-xl font-bold text-gray-800 mb-4 group-hover:text-blue-600 transition-colors duration-200">
-              Local Experts
-            </h3>
-            <p className="text-gray-600 leading-relaxed text-base">
-              Discover hidden gems and authentic experiences with our network of
-              local experts who know the best-kept secrets of every destination.
+          <motion.div variants={itemVariants}>
+            <p className="text-xl text-gray-600 leading-relaxed">
+              Your security is our top priority as we work exclusively with verified, trusted partners to ensure every adventure is safe and worry-free. Get the most out of your travel budget with our competitive pricing, exclusive deals, and completely transparent pricing with no hidden fees. Discover hidden gems and authentic experiences with our network of local experts who know the best-kept secrets of every destination, ensuring your trip is truly memorable and unique.
             </p>
           </motion.div>
         </motion.div>
