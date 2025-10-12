@@ -437,17 +437,24 @@ class KlookApiService
                 $query->byCountry($params['country_id']);
             }
 
-            // Pagination
+            // Pagination with memory optimization
             $page = $params['page'] ?? 1;
-            $limit = $params['limit'] ?? 100; // Allow higher limits for database queries
+            $limit = $params['limit'] ?? 15000; // Default to 15k for better coverage
+            
+            // Cap at 20k to prevent memory issues
+            if ($limit > 20000) {
+                $limit = 20000;
+            }
+            
             $offset = ($page - 1) * $limit;
 
             $total = $query->count();
             $activities = $query->skip($offset)->take($limit)->get();
 
-            // Format response to match API structure
-            $formattedActivities = $activities->map(function ($activity) {
-                return [
+            // Format response to match API structure (memory optimized)
+            $formattedActivities = [];
+            foreach ($activities as $activity) {
+                $formattedActivities[] = [
                     'activity_id' => $activity->activity_id,
                     'title' => $activity->title,
                     'sub_title' => $activity->sub_title,
@@ -470,7 +477,7 @@ class KlookApiService
                     'location_display' => $activity->location_display,
                     'location' => $activity->location_display, // For backward compatibility
                 ];
-            })->toArray();
+            }
 
             return [
                 'success' => true,

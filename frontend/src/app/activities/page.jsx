@@ -80,8 +80,8 @@ const ActivitiesPage = () => {
         setError(null);
       setLoadingProgress(0);
 
-      // First, fetch categories
-      const categoriesRes = await fetch(`${API_BASE}/klook/categories`, {
+      // First, fetch categories from database
+      const categoriesRes = await fetch(`${API_BASE}/simple-categories`, {
         signal: controller.signal,
       });
       
@@ -89,9 +89,17 @@ const ActivitiesPage = () => {
       const categoriesJson = await categoriesRes.json();
       const categories = categoriesJson?.data?.categories || [];
       setAllCategories(categories);
+      
+      // Debug: Log available categories
+      console.log('🔍 DEBUG - Available categories from database:', categories.map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        sub_categories: cat.sub_category?.length || 0,
+        leaf_categories: cat.sub_category?.reduce((total, sub) => total + (sub.leaf_category?.length || 0), 0) || 0
+      })));
 
-      // Fetch all activities from database (fast!)
-      const activitiesRes = await fetch(`${API_BASE}/klook/activities?limit=2000`, {
+      // Fetch activities from database with higher limit
+      const activitiesRes = await fetch(`${API_BASE}/klook/activities?limit=15000`, {
             signal: controller.signal,
             headers: {
               'Accept': 'application/json',
@@ -108,6 +116,15 @@ const ActivitiesPage = () => {
         console.error('❌ Invalid API response format:', activitiesData);
         throw new Error('Invalid API response format');
       }
+
+      // Debug: Log sample activities to check category_id field
+      const sampleActivities = activitiesData.data.activity.activity_list.slice(0, 3);
+      console.log('🔍 DEBUG - Sample activities:', sampleActivities.map(activity => ({
+        id: activity.activity_id,
+        title: activity.title,
+        category_id: activity.category_id,
+        category_id_type: typeof activity.category_id
+      })));
 
       const allActivitiesData = activitiesData.data.activity.activity_list;
       const totalCount = activitiesData.data.activity.total || allActivitiesData.length;
@@ -159,18 +176,50 @@ const ActivitiesPage = () => {
 
     // Apply category filter
     if (categoryFilter) {
-      const targetCategory = categories.find(cat => cat.id == categoryFilter);
-        
-      if (targetCategory) {
-        setCategoryData(targetCategory);
-
-        // Get ALL valid category IDs from this category (including nested ones)
-        let validCategoryIds = [parseInt(categoryFilter)]; // Include main category ID
+      let targetCategory = null;
+      let validCategoryIds = [parseInt(categoryFilter)]; // Always include the clicked category ID
+      
+      // Search for the category in the hierarchy
+      const findCategoryInHierarchy = (categories, targetId) => {
+        for (const category of categories) {
+          // Check main category
+          if (category.id == targetId) {
+            return { category, type: 'main' };
+          }
           
-        // Recursive function to collect all nested category IDs
-        const collectCategoryIds = (category) => {
+          // Check sub-categories
           if (category.sub_category && Array.isArray(category.sub_category)) {
-            category.sub_category.forEach(sub => {
+            for (const subCategory of category.sub_category) {
+              if (subCategory.id == targetId) {
+                return { category: subCategory, type: 'sub', parent: category };
+              }
+              
+              // Check leaf categories
+              if (subCategory.leaf_category && Array.isArray(subCategory.leaf_category)) {
+                for (const leafCategory of subCategory.leaf_category) {
+                  if (leafCategory.id == targetId) {
+                    return { category: leafCategory, type: 'leaf', parent: subCategory, grandParent: category };
+                  }
+                }
+              }
+            }
+          }
+        }
+        return null;
+      };
+
+      const foundCategory = findCategoryInHierarchy(categories, categoryFilter);
+      
+      console.log('🔍 DEBUG - Looking for category ID:', categoryFilter);
+      console.log('🔍 DEBUG - Found category:', foundCategory);
+      
+      if (foundCategory) {
+        targetCategory = foundCategory.category;
+        
+        // If it's a main category, include all its sub and leaf categories
+        if (foundCategory.type === 'main') {
+          if (targetCategory.sub_category && Array.isArray(targetCategory.sub_category)) {
+            targetCategory.sub_category.forEach(sub => {
               validCategoryIds.push(parseInt(sub.id));
               
               if (sub.leaf_category && Array.isArray(sub.leaf_category)) {
@@ -178,31 +227,63 @@ const ActivitiesPage = () => {
                   validCategoryIds.push(parseInt(leaf.id));
                 });
               }
-              
-              // Recursively collect from nested subcategories if they exist
-              collectCategoryIds(sub);
             });
           }
-        };
+        }
+        // If it's a sub-category, include all its leaf categories
+        else if (foundCategory.type === 'sub') {
+          if (targetCategory.leaf_category && Array.isArray(targetCategory.leaf_category)) {
+            targetCategory.leaf_category.forEach(leaf => {
+              validCategoryIds.push(parseInt(leaf.id));
+            });
+          }
+        }
+        // If it's a leaf category, only include that specific category (already added above)
 
-        collectCategoryIds(targetCategory);
+        setCategoryData(targetCategory);
 
         // Remove duplicates
         validCategoryIds = [...new Set(validCategoryIds)];
 
-        console.log('🔍 DEBUG - Valid category IDs for category', categoryFilter, ':', validCategoryIds);
+        console.log('🔍 DEBUG - Category filter applied:', {
+          categoryName: targetCategory.name,
+          categoryType: foundCategory.type,
+          validIds: validCategoryIds,
+          totalActivities: filtered.length
+        });
+
+        // Debug: Check what category IDs actually exist in activities
+        const uniqueCategoryIds = [...new Set(filtered.map(activity => activity.category_id))].sort((a, b) => a - b);
+        console.log('🔍 DEBUG - Available category IDs in activities:', uniqueCategoryIds.slice(0, 20), '... (showing first 20)');
         
         const beforeFilterCount = filtered.length;
+        
+        // Debug: Show sample activities before filtering
+        const sampleBeforeFilter = filtered.slice(0, 3).map(activity => ({
+          id: activity.activity_id,
+          title: activity.title,
+          category_id: activity.category_id,
+          category_id_type: typeof activity.category_id
+        }));
+        console.log('🔍 DEBUG - Sample activities before filter:', sampleBeforeFilter);
+        
         filtered = filtered.filter(activity => {
           const activityCategoryId = parseInt(activity.category_id);
-          return validCategoryIds.includes(activityCategoryId);
+          const isMatch = validCategoryIds.includes(activityCategoryId);
+          
+          // Debug: Log first few matches/non-matches
+          if (sampleBeforeFilter.some(s => s.id === activity.activity_id)) {
+            console.log(`🔍 DEBUG - Activity ${activity.activity_id} (${activity.title}): category_id=${activityCategoryId}, validIds=${validCategoryIds}, match=${isMatch}`);
+          }
+          
+          return isMatch;
         });
         
-        console.log('🔍 DEBUG - Category filter applied:', {
-          targetCategory: targetCategory.name,
-          validIds: validCategoryIds,
+        console.log('🔍 DEBUG - Filter results:', {
           before: beforeFilterCount,
-          after: filtered.length
+          after: filtered.length,
+          categoryId: categoryFilter,
+          validCategoryIds: validCategoryIds
         });
       } else {
         console.log('🔍 DEBUG - Category not found:', categoryFilter);

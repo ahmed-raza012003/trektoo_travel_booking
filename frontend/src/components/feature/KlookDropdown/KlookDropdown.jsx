@@ -60,19 +60,19 @@ const KlookDropdown = () => {
     const buttonRef = useRef(null);
     const router = useRouter();
 
-    // Fetch categories dynamically from your API
+    // Fetch categories from database
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 setLoading(true);
-                const res = await fetch(`${API_BASE}/klook/categories`);
+                const res = await fetch(`${API_BASE}/simple-categories`);
                 const data = await res.json();
 
                 if (data.success && data.data.categories) {
                     setCategories(data.data.categories);
                 }
             } catch (error) {
-                console.error("Error fetching categories:", error);
+                console.error("Error fetching categories from database:", error);
             } finally {
                 setLoading(false);
             }
@@ -86,8 +86,15 @@ const KlookDropdown = () => {
     };
 
     const handleSubCategoryClick = (leafCategory, parentCategoryId) => {
-        // Navigate to activities page with the category_id
-        router.push(`/activities?category_id=${parentCategoryId}`);
+        // Navigate to activities page with the leaf category ID (not parent)
+        router.push(`/activities?category_id=${leafCategory.id}`);
+        setOpen(false);
+        setActiveCategory(null);
+    };
+
+    const handleSubCategoryMainClick = (subCategory, parentCategoryId) => {
+        // Navigate to activities page with the sub category ID
+        router.push(`/activities?category_id=${subCategory.id}`);
         setOpen(false);
         setActiveCategory(null);
     };
@@ -195,15 +202,18 @@ const KlookDropdown = () => {
                                         <div className="grid grid-cols-2 gap-x-8 gap-y-6 max-h-[500px] overflow-y-auto">
                                             {activeCategory.sub_category?.map((subCategory) => (
                                                 <div key={subCategory.id} className="space-y-2">
-                                                    <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wide mb-3">
+                                                    <button
+                                                        onClick={() => handleSubCategoryMainClick(subCategory, activeCategory.id)}
+                                                        className="w-full text-left text-sm font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded-md transition-colors block mb-3"
+                                                    >
                                                         {subCategory.name}
-                                                    </h4>
+                                                    </button>
                                                     <div className="space-y-1.5">
                                                         {subCategory.leaf_category?.map((leafCategory) => (
                                                             <button
                                                                 key={leafCategory.id}
                                                                 onClick={() => handleSubCategoryClick(leafCategory, activeCategory.id)}
-                                                                className="w-full text-left text-sm text-gray-600 hover:text-blue-500 transition-colors block"
+                                                                className="w-full text-left text-sm text-gray-600 hover:text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition-colors block"
                                                             >
                                                                 {leafCategory.name}
                                                             </button>
@@ -249,14 +259,14 @@ export const MobileKlookDropdown = () => {
         const fetchCategories = async () => {
             try {
                 setLoading(true);
-                const res = await fetch(`${API_BASE}/klook/categories`);
+                const res = await fetch(`${API_BASE}/simple-categories`);
                 const data = await res.json();
 
                 if (data.success && data.data.categories) {
                     setCategories(data.data.categories);
                 }
             } catch (error) {
-                console.error("Error fetching categories:", error);
+                console.error("Error fetching categories from database:", error);
             } finally {
                 setLoading(false);
             }
@@ -276,7 +286,14 @@ export const MobileKlookDropdown = () => {
     };
 
     const handleSubCategoryClick = (leafCategory, parentCategoryId) => {
-        router.push(`/activities?category_id=${parentCategoryId}`);
+        router.push(`/activities?category_id=${leafCategory.id}`);
+        setOpen(false);
+        setExpandedCategories(new Set());
+    };
+
+    const handleSubCategoryMainClick = (subCategory, parentCategoryId) => {
+        // Navigate to activities page with the sub category ID
+        router.push(`/activities?category_id=${subCategory.id}`);
         setOpen(false);
         setExpandedCategories(new Set());
     };
@@ -353,9 +370,12 @@ export const MobileKlookDropdown = () => {
                                             <div className="ml-6 mt-1 space-y-2 pb-2">
                                                 {category.sub_category.map((subCategory) => (
                                                     <div key={subCategory.id}>
-                                                        <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">
+                                                        <button
+                                                            onClick={() => handleSubCategoryMainClick(subCategory, category.id)}
+                                                            className="w-full text-left text-sm font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded-md transition-colors block mb-1"
+                                                        >
                                                             {subCategory.name}
-                                                        </h4>
+                                                        </button>
                                                         <div className="space-y-1">
                                                             {subCategory.leaf_category?.map((leafCategory) => (
                                                                 <button
