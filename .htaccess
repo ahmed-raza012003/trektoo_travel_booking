@@ -1,0 +1,18 @@
+# Increase PHP memory limit for large datasets
+php_value memory_limit 1024M
+php_value max_execution_time 300
+php_value max_input_vars 10000
+
+# Enable compression for large responses
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+</IfModule>
+
+# Cache control for API responses
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType application/json "access plus 1 hour"
+</IfModule>

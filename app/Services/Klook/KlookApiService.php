@@ -437,49 +437,53 @@ class KlookApiService
                 $query->byCountry($params['country_id']);
             }
 
-            // Pagination with memory optimization
+            // Pagination - allow loading all activities
             $page = $params['page'] ?? 1;
-            $limit = $params['limit'] ?? 15000; // Default to 15k for better coverage
+            $limit = $params['limit'] ?? 25000; // Default to 25k to cover all activities
             
-            // Cap at 20k to prevent memory issues
-            if ($limit > 20000) {
-                $limit = 20000;
+            // Allow up to 30k activities (future-proofing)
+            if ($limit > 30000) {
+                $limit = 30000;
             }
             
             $offset = ($page - 1) * $limit;
 
             $total = $query->count();
-            $activities = $query->skip($offset)->take($limit)->get();
-
-            // Format response to match API structure (memory optimized)
+            
+            // Use chunking for large datasets to prevent memory issues
             $formattedActivities = [];
-            foreach ($activities as $activity) {
-                $formattedActivities[] = [
-                    'activity_id' => $activity->activity_id,
-                    'title' => $activity->title,
-                    'sub_title' => $activity->sub_title,
-                    'supported_languages' => $activity->supported_languages ?? [],
-                    'city_id' => $activity->city_id,
-                    'country_id' => $activity->country_id,
-                    'category_id' => $activity->category_id,
-                    'price' => $activity->price,
-                    'currency' => $activity->currency,
-                    'vat_price' => $activity->vat_price,
-                    
-                    // Image data
-                    'primary_image_url' => $activity->primary_image_url,
-                    'image_alt_text' => $activity->image_alt_text,
-                    'all_images' => $activity->all_images ?? [],
-                    
-                    // Country/location data
-                    'country_name' => $activity->country_name,
-                    'city_name' => $activity->city_name,
-                    'location_display' => $activity->location_display,
-                    'location' => $activity->location_display, // For backward compatibility
-                ];
-            }
+            $chunkSize = 1000; // Process 1000 activities at a time
+            
+            $query->skip($offset)->take($limit)->chunk($chunkSize, function ($activities) use (&$formattedActivities) {
+                foreach ($activities as $activity) {
+                    $formattedActivities[] = [
+                        'activity_id' => $activity->activity_id,
+                        'title' => $activity->title,
+                        'sub_title' => $activity->sub_title,
+                        'supported_languages' => $activity->supported_languages ?? [],
+                        'city_id' => $activity->city_id,
+                        'country_id' => $activity->country_id,
+                        'category_id' => $activity->category_id,
+                        'price' => $activity->price,
+                        'currency' => $activity->currency,
+                        'vat_price' => $activity->vat_price,
+                        
+                        // Image data
+                        'primary_image_url' => $activity->primary_image_url,
+                        'image_alt_text' => $activity->image_alt_text,
+                        'all_images' => $activity->all_images ?? [],
+                        
+                        // Country/location data
+                        'country_name' => $activity->country_name,
+                        'city_name' => $activity->city_name,
+                        'location_display' => $activity->location_display,
+                        'location' => $activity->location_display, // For backward compatibility
+                    ];
+                }
+            });
 
-            return [
+            // Clear memory before returning large response
+            $response = [
                 'success' => true,
                 'data' => [
                     'success' => true,
@@ -492,6 +496,12 @@ class KlookApiService
                     ]
                 ]
             ];
+            
+            // Clear variables to free memory
+            unset($formattedActivities);
+            unset($activities);
+            
+            return $response;
 
         } catch (\Exception $e) {
             Log::error('Database Error - Activities: ' . $e->getMessage());

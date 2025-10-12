@@ -98,8 +98,8 @@ const ActivitiesPage = () => {
         leaf_categories: cat.sub_category?.reduce((total, sub) => total + (sub.leaf_category?.length || 0), 0) || 0
       })));
 
-      // Fetch activities from database with higher limit
-      const activitiesRes = await fetch(`${API_BASE}/klook/activities?limit=15000`, {
+      // Fetch ALL activities from database
+      const activitiesRes = await fetch(`${API_BASE}/klook/activities?limit=25000`, {
             signal: controller.signal,
             headers: {
               'Accept': 'application/json',
@@ -130,6 +130,7 @@ const ActivitiesPage = () => {
       const totalCount = activitiesData.data.activity.total || allActivitiesData.length;
       
       console.log(`🚀 Database loaded: ${allActivitiesData.length} activities instantly!`);
+      console.log(`📊 Total activities in database: ${totalCount}`);
       setTotalAvailableActivities(totalCount);
       setAllActivities(allActivitiesData);
       setHasInitialData(true);
