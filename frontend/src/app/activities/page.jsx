@@ -80,7 +80,11 @@ const ActivitiesPage = () => {
         setError(null);
       setLoadingProgress(0);
 
+        // Ensure minimum loading time for better UX
+        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 800));
+
       // First, fetch categories from database
+      setLoadingProgress(20);
       const categoriesRes = await fetch(`${API_BASE}/simple-categories`, {
         signal: controller.signal,
       });
@@ -89,6 +93,7 @@ const ActivitiesPage = () => {
       const categoriesJson = await categoriesRes.json();
       const categories = categoriesJson?.data?.categories || [];
       setAllCategories(categories);
+      setLoadingProgress(40);
       
       // Debug: Log available categories
       console.log('🔍 DEBUG - Available categories from database:', categories.map(cat => ({
@@ -99,6 +104,7 @@ const ActivitiesPage = () => {
       })));
 
       // Fetch ALL activities from database
+      setLoadingProgress(60);
       const activitiesRes = await fetch(`${API_BASE}/klook/activities?limit=25000`, {
             signal: controller.signal,
             headers: {
@@ -108,6 +114,7 @@ const ActivitiesPage = () => {
       });
 
       if (!activitiesRes.ok) throw new Error(`Activities fetch failed: ${activitiesRes.status}`);
+      setLoadingProgress(80);
       const activitiesData = await activitiesRes.json();
       
       console.log('🔍 DEBUG - API Response:', activitiesData);
@@ -126,6 +133,7 @@ const ActivitiesPage = () => {
         category_id_type: typeof activity.category_id
       })));
 
+      setLoadingProgress(90);
       const allActivitiesData = activitiesData.data.activity.activity_list;
       const totalCount = activitiesData.data.activity.total || allActivitiesData.length;
       
@@ -133,9 +141,16 @@ const ActivitiesPage = () => {
       console.log(`📊 Total activities in database: ${totalCount}`);
       setTotalAvailableActivities(totalCount);
       setAllActivities(allActivitiesData);
+      setLoadingProgress(100);
+      
+      // Small delay to show 100% progress
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Wait for minimum loading time
+      await minLoadingTime;
+      
       setHasInitialData(true);
       setIsLoading(false);
-      setLoadingProgress(100);
 
       return { activities: allActivitiesData, categories };
 
@@ -161,6 +176,7 @@ const ActivitiesPage = () => {
           console.error('Error fetching activities:', err);
           setError(`Failed to load activities: ${err.message}`);
         }
+        setHasInitialData(true);
         setIsLoading(false);
       }
     };
@@ -220,16 +236,16 @@ const ActivitiesPage = () => {
         // If it's a main category, include all its sub and leaf categories
         if (foundCategory.type === 'main') {
           if (targetCategory.sub_category && Array.isArray(targetCategory.sub_category)) {
-            targetCategory.sub_category.forEach(sub => {
+          targetCategory.sub_category.forEach(sub => {
               validCategoryIds.push(parseInt(sub.id));
               
               if (sub.leaf_category && Array.isArray(sub.leaf_category)) {
-                sub.leaf_category.forEach(leaf => {
+              sub.leaf_category.forEach(leaf => {
                   validCategoryIds.push(parseInt(leaf.id));
-                });
-              }
-            });
-          }
+              });
+            }
+          });
+        }
         }
         // If it's a sub-category, include all its leaf categories
         else if (foundCategory.type === 'sub') {
@@ -554,6 +570,91 @@ const ActivitiesPage = () => {
     );
   }
 
+  // Full page loader for initial data fetching
+  if (isLoading && !hasInitialData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center space-y-8 max-w-md mx-auto px-6"
+        >
+          {/* Main Loading Spinner */}
+          <div className="relative mx-auto w-24 h-24">
+            <div className="absolute inset-0 w-24 h-24 border-4 border-blue-200 rounded-full animate-spin border-t-blue-600"></div>
+            <div className="absolute inset-0 w-24 h-24 border-4 border-transparent rounded-full animate-ping border-t-blue-400"></div>
+            <div className="absolute inset-2 w-20 h-20 border-4 border-blue-100 rounded-full animate-spin border-t-blue-500"></div>
+          </div>
+          
+          {/* Loading Text */}
+          <div className="space-y-4">
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-2xl font-bold text-gray-800"
+            >
+              Fetching Activities
+            </motion.h2>
+            
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-gray-600 text-lg"
+            >
+              Discovering amazing experiences for you...
+            </motion.p>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="space-y-2"
+            >
+              <div className="flex items-center justify-between text-sm text-blue-600">
+                <span>Loading from database...</span>
+                <span className="font-semibold">{loadingProgress}%</span>
+              </div>
+              <div className="w-full bg-blue-100 rounded-full h-3 overflow-hidden">
+                <motion.div
+                  className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 h-3 rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${loadingProgress}%` }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                />
+              </div>
+            </motion.div>
+          </div>
+          
+          {/* Loading Dots */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="flex justify-center space-x-2"
+          >
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          </motion.div>
+          
+          {/* Fun Loading Messages */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="text-sm text-gray-500 space-y-1"
+          >
+            <p>✨ Finding the best activities...</p>
+            <p>🌟 Curating amazing experiences...</p>
+            <p>🎯 Matching your interests...</p>
+          </motion.div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden">
       {/* Background Pattern */}
@@ -617,15 +718,43 @@ const ActivitiesPage = () => {
           </motion.div>
           <motion.div variants={itemVariants}>
             {isLoading ? (
-              <div className="space-y-4">
-              <div className="h-8 bg-gray-200 rounded animate-pulse max-w-4xl mx-auto"></div>
-                <div className="max-w-md mx-auto">
-                  <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                    <span>Loading initial activities...</span>
-                    <span>Please wait</span>
+              <div className="space-y-6">
+                {/* Animated Loading Spinner */}
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <div className="relative">
+                    <div className="w-16 h-16 border-4 border-blue-100 rounded-full animate-spin border-t-blue-500"></div>
+                    <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-ping border-t-blue-300"></div>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full animate-pulse"></div>
+                  
+                  {/* Loading Text with Animation */}
+                  <div className="text-center space-y-2">
+                    <h3 className="text-lg font-semibold text-gray-800 animate-pulse">
+                      Loading Amazing Activities
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Discovering {totalActivities > 0 ? totalActivities : 'thousands of'} experiences for you...
+                    </p>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="w-full max-w-md mx-auto">
+                    <div className="flex items-center justify-between text-sm text-blue-600 mb-2">
+                      <span>Loading activities from database...</span>
+                      <span className="font-medium">{loadingProgress}%</span>
+                    </div>
+                    <div className="w-full bg-blue-100 rounded-full h-2 overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${loadingProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  {/* Loading Dots Animation */}
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                   </div>
                 </div>
               </div>
@@ -926,13 +1055,27 @@ const ActivitiesPage = () => {
               {viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <CardSkeleton key={i} />
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.1, duration: 0.5 }}
+                    >
+                      <CardSkeleton />
+                    </motion.div>
                   ))}
                 </div>
               ) : (
                 <div className="space-y-8">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <CardSkeleton key={i} />
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.1, duration: 0.5 }}
+                    >
+                      <CardSkeleton />
+                    </motion.div>
                   ))}
                 </div>
               )}
@@ -942,11 +1085,21 @@ const ActivitiesPage = () => {
           {/* Filter Loading Overlay */}
           {isFilterLoading && !isLoading && (
             <div className="relative">
-              <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-20 flex items-center justify-center rounded-2xl">
-                <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-full shadow-lg">
-                  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-blue-600 font-medium">Applying filters...</span>
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center rounded-2xl">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center gap-3 bg-white px-6 py-4 rounded-full shadow-xl border border-blue-100"
+                >
+                  <div className="relative">
+                    <div className="w-6 h-6 border-3 border-blue-200 rounded-full animate-spin border-t-blue-600"></div>
+                    <div className="absolute inset-0 w-6 h-6 border-3 border-transparent rounded-full animate-ping border-t-blue-400"></div>
                 </div>
+                  <div className="flex flex-col">
+                    <span className="text-blue-600 font-semibold text-sm">Applying filters...</span>
+                    <span className="text-blue-500 text-xs">Please wait</span>
+                  </div>
+                </motion.div>
               </div>
             </div>
           )}
@@ -974,7 +1127,7 @@ const ActivitiesPage = () => {
                       viewMode === 'list' 
                         ? 'flex flex-row h-96' 
                         : 'flex flex-col h-full'
-                    }`}
+                      }`}
                   >
                     {/* Activity Image */}
                     <div 
@@ -1057,7 +1210,7 @@ const ActivitiesPage = () => {
                       </p>
                         </div>
 
-                        {/* Location */}
+                      {/* Location */}
                         <div className={`flex items-center gap-3 text-gray-600 ${
                           viewMode === 'list' ? 'mb-4' : 'mb-4'
                         }`}>
@@ -1080,7 +1233,7 @@ const ActivitiesPage = () => {
                           </div>
                       </div>
 
-                        {/* Highlights */}
+                      {/* Highlights */}
                         <div className={`space-y-2 ${
                           viewMode === 'list' ? 'mb-4' : 'mb-5'
                         }`}>
@@ -1098,7 +1251,7 @@ const ActivitiesPage = () => {
                         ))}
                       </div>
 
-                        {/* Availability */}
+                      {/* Availability */}
                         <div className={`flex items-center gap-2 ${
                           viewMode === 'list' ? 'mb-4' : 'mb-5'
                         }`}>
