@@ -152,92 +152,50 @@ const KlookDropdown = () => {
             {open && (
                 <div
                     ref={dropdownRef}
-                    className="fixed top-[110px] left-0 right-0 mx-auto bg-white rounded-lg shadow-xl border border-gray-200 z-50 w-[900px] max-w-[calc(100vw-2rem)]"
+                    className="fixed top-[110px] left-0 right-0 mx-auto bg-white rounded-lg shadow-xl border border-gray-200 z-50 w-[900px] max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
                 >
                     {loading ? (
-                        <div className="flex items-center justify-center py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                        <div className="flex items-center justify-center py-6">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
                         </div>
                     ) : (
-                        <div className="flex">
-                            {/* Main Categories Column */}
-                            <div className="w-1/3 border-r border-gray-200 py-4">
-                                <div className="space-y-1 max-h-[500px] overflow-y-auto px-2">
-                                    {categories.map((category) => {
-                                        const IconComponent = getCategoryIcon(category.name, category.id);
-                                        const isActive = activeCategory?.id === category.id;
-
-                                        return (
-                                            <div key={category.id} className="relative">
-                                                <button
-                                                    onMouseEnter={() => handleCategoryHoverOnly(category)}
-                                                    onClick={(e) => handleMainCategoryClick(category, e)}
-                                                    className={`w-full flex items-center gap-3 p-3 rounded-md transition-all text-left ${
-                                                        isActive
-                                                            ? "bg-blue-50 text-blue-600"
-                                                            : "text-gray-700 hover:bg-gray-50"
-                                                    }`}
-                                                >
-                                                    <IconComponent size={20} className="flex-shrink-0 text-blue-500" />
-                                                    <span className="text-sm font-medium flex-1">{category.name}</span>
-                                                    {category.sub_category && category.sub_category.length > 0 && (
-                                                        <ChevronDown
-                                                            size={14}
-                                                            className={`ml-auto transition-transform ${
-                                                                isActive ? "-rotate-90" : ""
-                                                            }`}
-                                                        />
-                                                    )}
-                                                </button>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Sub Categories Column */}
-                            <div className="w-2/3 py-4 px-6">
-                                {activeCategory ? (
-                                    <div>
-                                        <div className="grid grid-cols-2 gap-x-8 gap-y-6 max-h-[500px] overflow-y-auto">
-                                            {activeCategory.sub_category?.map((subCategory) => (
-                                                <div key={subCategory.id} className="space-y-2">
-                                                    <button
-                                                        onClick={() => handleSubCategoryMainClick(subCategory, activeCategory.id)}
-                                                        className="w-full text-left text-sm font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded-md transition-colors block mb-3"
-                                                    >
-                                                        {subCategory.name}
-                                                    </button>
-                                                    <div className="space-y-1.5">
-                                                        {subCategory.leaf_category?.map((leafCategory) => (
-                                                            <button
-                                                                key={leafCategory.id}
-                                                                onClick={() => handleSubCategoryClick(leafCategory, activeCategory.id)}
-                                                                className="w-full text-left text-sm text-gray-600 hover:text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition-colors block"
-                                                            >
-                                                                {leafCategory.name}
-                                                            </button>
-                                                        ))}
-                                                    </div>
+                        <div className="p-4">
+                            {/* Grid Layout for Categories */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {categories.map((category) => {
+                                    const IconComponent = getCategoryIcon(category.name, category.id);
+                                    
+                                    return (
+                                        <div key={category.id} className="space-y-3">
+                                            {/* Main Category Header */}
+                                            <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
+                                                <div className="p-1.5 bg-blue-50 rounded-md">
+                                                    <IconComponent size={18} className="text-blue-600" />
                                                 </div>
-                                            ))}
-                                        </div>
-
-                                        {(!activeCategory.sub_category || activeCategory.sub_category.length === 0) && (
-                                            <div className="text-center py-12 text-gray-400">
-                                                <MapPin size={32} className="mx-auto mb-2 opacity-50" />
-                                                <p className="text-sm">No subcategories available</p>
+                                                <h3 className="text-sm font-bold text-gray-800">
+                                                    {category.name}
+                                                </h3>
                                             </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-center h-full text-gray-400">
-                                        <div className="text-center py-12">
-                                            <MapPin size={32} className="mx-auto mb-2 opacity-50" />
-                                            <p className="text-sm">Click on a category to see details</p>
+                                            
+                                            {/* Sub Categories List */}
+                                            <div className="space-y-1">
+                                                {category.sub_category && category.sub_category.length > 0 ? (
+                                                    category.sub_category.map((subCategory) => (
+                                                        <button
+                                                            key={subCategory.id}
+                                                            onClick={() => handleSubCategoryMainClick(subCategory, category.id)}
+                                                            className="w-full text-left text-xs text-gray-800 hover:text-blue-600 hover:bg-blue-50 px-2 py-1.5 rounded transition-colors block font-medium"
+                                                        >
+                                                            {subCategory.name}
+                                                        </button>
+                                                    ))
+                                                ) : (
+                                                    <p className="text-xs text-gray-400 italic">No subcategories</p>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
@@ -330,31 +288,33 @@ export const MobileKlookDropdown = () => {
             </button>
 
             {open && (
-                <div className="fixed inset-x-4 top-20 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 max-h-[calc(100vh-6rem)] overflow-y-auto mx-auto max-w-2xl">
+                <div className="fixed inset-x-4 top-20 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 p-3 z-50 max-h-[calc(100vh-6rem)] overflow-y-auto mx-auto max-w-2xl scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                     {loading ? (
-                        <div className="flex items-center justify-center py-4">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                        <div className="flex items-center justify-center py-3">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
                         </div>
                     ) : (
-                        <div className="space-y-2">
+                        <div className="space-y-4">
                             {categories.map((category) => {
                                 const IconComponent = getCategoryIcon(category.name, category.id);
                                 const isExpanded = expandedCategories.has(category.id);
 
                                 return (
-                                    <div key={category.id} className="border-b border-gray-100 last:border-b-0">
-                                        <div className="flex items-center">
-                                            <button
-                                                onClick={(e) => handleMainCategoryClick(category, e)}
-                                                className="flex-1 flex items-center gap-3 p-2 rounded-lg transition-all text-left text-gray-700 hover:bg-gray-50"
-                                            >
-                                                <IconComponent size={18} className="flex-shrink-0 text-blue-500" />
-                                                <span className="text-sm font-medium flex-1">{category.name}</span>
-                                            </button>
+                                    <div key={category.id} className="border-b border-gray-100 last:border-b-0 pb-3">
+                                        {/* Main Category Header */}
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="p-1.5 bg-blue-50 rounded-md">
+                                                    <IconComponent size={16} className="text-blue-600" />
+                                                </div>
+                                                <h3 className="text-sm font-bold text-gray-800">
+                                                    {category.name}
+                                                </h3>
+                                            </div>
                                             {category.sub_category && category.sub_category.length > 0 && (
                                                 <button
                                                     onClick={(e) => handleCategoryExpand(category, e)}
-                                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                                    className="p-1.5 hover:bg-gray-100 rounded-md transition-colors"
                                                 >
                                                     <ChevronDown
                                                         size={14}
@@ -366,28 +326,17 @@ export const MobileKlookDropdown = () => {
                                             )}
                                         </div>
 
+                                        {/* Sub Categories */}
                                         {isExpanded && category.sub_category && (
-                                            <div className="ml-6 mt-1 space-y-2 pb-2">
+                                            <div className="ml-6 space-y-1">
                                                 {category.sub_category.map((subCategory) => (
-                                                    <div key={subCategory.id}>
-                                                        <button
-                                                            onClick={() => handleSubCategoryMainClick(subCategory, category.id)}
-                                                            className="w-full text-left text-sm font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded-md transition-colors block mb-1"
-                                                        >
-                                                            {subCategory.name}
-                                                        </button>
-                                                        <div className="space-y-1">
-                                                            {subCategory.leaf_category?.map((leafCategory) => (
-                                                                <button
-                                                                    key={leafCategory.id}
-                                                                    onClick={() => handleSubCategoryClick(leafCategory, category.id)}
-                                                                    className="w-full text-left px-2 py-1 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                                >
-                                                                    {leafCategory.name}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
+                                                    <button
+                                                        key={subCategory.id}
+                                                        onClick={() => handleSubCategoryMainClick(subCategory, category.id)}
+                                                        className="w-full text-left text-xs text-gray-800 hover:text-blue-600 hover:bg-blue-50 px-2 py-1.5 rounded transition-colors block font-medium"
+                                                    >
+                                                        {subCategory.name}
+                                                    </button>
                                                 ))}
                                             </div>
                                         )}
