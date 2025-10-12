@@ -70,6 +70,88 @@ const ActivitiesPage = () => {
     return `https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop&crop=center`;
   };
 
+  // Function to get dynamic countries based on actual activities in the database
+  const getRelatedCountriesForCategory = (categoryId) => {
+    if (!allActivities || allActivities.length === 0) {
+      // Fallback countries if no activities loaded yet
+      return [
+        { id: 'japan', name: 'Japan', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'japan', activityCount: 0 },
+        { id: 'thailand', name: 'Thailand', image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'thailand', activityCount: 0 },
+        { id: 'singapore', name: 'Singapore', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'singapore', activityCount: 0 },
+        { id: 'south-korea', name: 'South Korea', image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'korea', activityCount: 0 },
+        { id: 'indonesia', name: 'Indonesia', image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'indonesia', activityCount: 0 },
+        { id: 'vietnam', name: 'Vietnam', image: 'https://images.unsplash.com/photo-1528127269322-539801943592?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'vietnam', activityCount: 0 }
+      ];
+    }
+
+    // Filter activities by category
+    const categoryActivities = allActivities.filter(activity => 
+      parseInt(activity.category_id) === parseInt(categoryId)
+    );
+
+    console.log(`🔍 DEBUG - Category ${categoryId} activities:`, categoryActivities.length);
+
+    // Define country mappings with their search terms
+    const countryMappings = [
+      { id: 'japan', name: 'Japan', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['japan', 'tokyo', 'kyoto', 'osaka', 'japanese'] },
+      { id: 'thailand', name: 'Thailand', image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['thailand', 'bangkok', 'chiang mai', 'phuket', 'thai'] },
+      { id: 'singapore', name: 'Singapore', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['singapore', 'singaporean'] },
+      { id: 'south-korea', name: 'South Korea', image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['korea', 'seoul', 'busan', 'korean', 'south korea'] },
+      { id: 'indonesia', name: 'Indonesia', image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['indonesia', 'bali', 'jakarta', 'yogyakarta', 'indonesian'] },
+      { id: 'vietnam', name: 'Vietnam', image: 'https://images.unsplash.com/photo-1528127269322-539801943592?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['vietnam', 'ho chi minh', 'hanoi', 'vietnamese'] },
+      { id: 'malaysia', name: 'Malaysia', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['malaysia', 'kuala lumpur', 'malaysian'] },
+      { id: 'philippines', name: 'Philippines', image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['philippines', 'manila', 'cebu', 'philippine'] },
+      { id: 'taiwan', name: 'Taiwan', image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['taiwan', 'taipei', 'taiwanese'] },
+      { id: 'hong-kong', name: 'Hong Kong', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['hong kong', 'hongkong'] }
+    ];
+
+    // Count activities for each country
+    const countriesWithCounts = countryMappings.map(country => {
+      const count = categoryActivities.filter(activity => {
+        const searchableText = [
+          activity.title,
+          activity.sub_title,
+          activity.location,
+          activity.location_display,
+          activity.country_name,
+          activity.city_name
+        ].join(' ').toLowerCase();
+        
+        return country.searchTerms.some(term => 
+          searchableText.includes(term.toLowerCase())
+        );
+      }).length;
+      
+      return {
+        ...country,
+        activityCount: count,
+        searchTerm: country.searchTerms[0] // Use first search term as primary
+      };
+    });
+
+    // Filter out countries with 0 activities and sort by count (descending)
+    const countriesWithActivities = countriesWithCounts
+      .filter(country => country.activityCount > 0)
+      .sort((a, b) => b.activityCount - a.activityCount)
+      .slice(0, 6); // Show top 6 countries
+
+    console.log(`🌍 DEBUG - Countries with activities for category ${categoryId}:`, countriesWithActivities);
+
+    // If no countries have activities, return fallback
+    if (countriesWithActivities.length === 0) {
+      return [
+        { id: 'japan', name: 'Japan', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'japan', activityCount: 0 },
+        { id: 'thailand', name: 'Thailand', image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'thailand', activityCount: 0 },
+        { id: 'singapore', name: 'Singapore', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'singapore', activityCount: 0 },
+        { id: 'south-korea', name: 'South Korea', image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'korea', activityCount: 0 },
+        { id: 'indonesia', name: 'Indonesia', image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'indonesia', activityCount: 0 },
+        { id: 'vietnam', name: 'Vietnam', image: 'https://images.unsplash.com/photo-1528127269322-539801943592?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'vietnam', activityCount: 0 }
+      ];
+    }
+
+    return countriesWithActivities;
+  };
+
 
   // Images are now loaded directly from database - no preloading needed
 
@@ -788,6 +870,91 @@ const ActivitiesPage = () => {
         </motion.div>
 
         {/* Search and Filter Section */}
+        {/* Related Countries Section - Only show for specific categories */}
+        {categoryId && (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="mb-12"
+          >
+            <motion.div variants={itemVariants} className="max-w-7xl mx-auto">
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                  Popular {categoryData?.name || 'Activities'} by Country
+                </h3>
+                <p className="text-gray-600">
+                  Discover amazing experiences in these popular destinations
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {getRelatedCountriesForCategory(categoryId).map((country, index) => (
+                  <motion.div
+                    key={country.id}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    transition={{ delay: index * 0.1 }}
+                    className="group relative"
+                  >
+                    <Link href={`/activities?category_id=${categoryId}&search=${country.searchTerm}`}>
+                      <div className="relative bg-white rounded-2xl shadow-lg hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300 border border-gray-100 cursor-pointer hover:-translate-y-2 overflow-hidden group/card">
+                        {/* Country Image */}
+                        <div className="relative h-32 overflow-hidden">
+                          <img
+                            src={country.image}
+                            alt={country.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                          
+                          {/* Gradient Overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                          
+                          {/* Activity Count Badge */}
+                          <div className="absolute top-2 right-2">
+                            <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-md">
+                              <span className="text-xs font-medium text-gray-800">
+                                {country.activityCount}+
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Country Name */}
+                          <div className="absolute bottom-2 left-2 right-2">
+                            <h4 className="text-white font-bold text-base mb-1 drop-shadow-lg">
+                              {country.name}
+                            </h4>
+                            <div className="flex items-center gap-1 text-white/90 text-xs">
+                              <MapPin className="h-3 w-3" />
+                              <span>Explore</span>
+                            </div>
+                          </div>
+
+                          {/* Hover Effect Overlay */}
+                          <div className="absolute inset-0 bg-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </div>
+                        
+                        {/* Country Name Below Card */}
+                        <div className="p-3 text-center">
+                          <h5 className="text-gray-800 font-semibold text-sm mb-1">
+                            {country.name}
+                          </h5>
+                          <div className="flex items-center justify-center gap-1 text-gray-500 text-xs">
+                            <MapPin className="h-3 w-3" />
+                            <span>{country.activityCount}+ Activities</span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
         <motion.div
           variants={containerVariants}
           initial="hidden"
