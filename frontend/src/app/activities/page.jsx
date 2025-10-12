@@ -91,53 +91,47 @@ const ActivitiesPage = () => {
 
     console.log(`🔍 DEBUG - Category ${categoryId} activities:`, categoryActivities.length);
 
-    // Define country mappings with their search terms
-    const countryMappings = [
-      { id: 'japan', name: 'Japan', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['japan', 'tokyo', 'kyoto', 'osaka', 'japanese'] },
-      { id: 'thailand', name: 'Thailand', image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['thailand', 'bangkok', 'chiang mai', 'phuket', 'thai'] },
-      { id: 'singapore', name: 'Singapore', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['singapore', 'singaporean'] },
-      { id: 'south-korea', name: 'South Korea', image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['korea', 'seoul', 'busan', 'korean', 'south korea'] },
-      { id: 'indonesia', name: 'Indonesia', image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['indonesia', 'bali', 'jakarta', 'yogyakarta', 'indonesian'] },
-      { id: 'vietnam', name: 'Vietnam', image: 'https://images.unsplash.com/photo-1528127269322-539801943592?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['vietnam', 'ho chi minh', 'hanoi', 'vietnamese'] },
-      { id: 'malaysia', name: 'Malaysia', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['malaysia', 'kuala lumpur', 'malaysian'] },
-      { id: 'philippines', name: 'Philippines', image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['philippines', 'manila', 'cebu', 'philippine'] },
-      { id: 'taiwan', name: 'Taiwan', image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['taiwan', 'taipei', 'taiwanese'] },
-      { id: 'hong-kong', name: 'Hong Kong', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerms: ['hong kong', 'hongkong'] }
-    ];
-
-    // Count activities for each country
-    const countriesWithCounts = countryMappings.map(country => {
-      const count = categoryActivities.filter(activity => {
-        const searchableText = [
-          activity.title,
-          activity.sub_title,
-          activity.location,
-          activity.location_display,
-          activity.country_name,
-          activity.city_name
-        ].join(' ').toLowerCase();
-        
-        return country.searchTerms.some(term => 
-          searchableText.includes(term.toLowerCase())
-        );
-      }).length;
+    // Extract unique countries from actual activities data
+    const countryMap = new Map();
+    
+    categoryActivities.forEach(activity => {
+      // Get country from various possible fields
+      const countryName = activity.country_name || 
+                         activity.location?.split(',')[1]?.trim() || 
+                         activity.location_display?.split(',')[1]?.trim() ||
+                         activity.city_name?.split(',')[1]?.trim() ||
+                         'Unknown';
       
-      return {
-        ...country,
-        activityCount: count,
-        searchTerm: country.searchTerms[0] // Use first search term as primary
-      };
+      if (countryName && countryName !== 'Unknown') {
+        const normalizedCountry = countryName.toLowerCase().trim();
+        
+        if (!countryMap.has(normalizedCountry)) {
+          // Create country object with image based on country name
+          const countryImage = getCountryImage(countryName);
+          const searchTerm = getCountrySearchTerm(countryName);
+          
+          countryMap.set(normalizedCountry, {
+            id: normalizedCountry.replace(/\s+/g, '-'),
+            name: countryName,
+            image: countryImage,
+            searchTerm: searchTerm,
+            activityCount: 0
+          });
+        }
+        
+        // Increment activity count
+        countryMap.get(normalizedCountry).activityCount++;
+      }
     });
 
-    // Filter out countries with 0 activities and sort by count (descending)
-    const countriesWithActivities = countriesWithCounts
-      .filter(country => country.activityCount > 0)
+    // Convert map to array and sort by activity count
+    const countriesWithActivities = Array.from(countryMap.values())
       .sort((a, b) => b.activityCount - a.activityCount)
       .slice(0, 6); // Show top 6 countries
 
-    console.log(`🌍 DEBUG - Countries with activities for category ${categoryId}:`, countriesWithActivities);
+    console.log(`🌍 DEBUG - Dynamic countries for category ${categoryId}:`, countriesWithActivities);
 
-    // If no countries have activities, return fallback
+    // If no countries found, return fallback
     if (countriesWithActivities.length === 0) {
       return [
         { id: 'japan', name: 'Japan', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'japan', activityCount: 0 },
@@ -150,6 +144,167 @@ const ActivitiesPage = () => {
     }
 
     return countriesWithActivities;
+  };
+
+  // Helper function to get country image based on country name
+  const getCountryImage = (countryName) => {
+    const countryImages = {
+      'japan': 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'thailand': 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'singapore': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'south korea': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'korea': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'indonesia': 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'vietnam': 'https://images.unsplash.com/photo-1528127269322-539801943592?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'malaysia': 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'philippines': 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'taiwan': 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'hong kong': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'china': 'https://magsworldwide.com/wp-content/uploads/2017/07/China-1-1.jpg',
+      'india': 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'australia': 'https://images.unsplash.com/photo-1523482580672-f109ba8cb9be?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'new zealand': 'https://images.unsplash.com/photo-1507699622108-4be3abd695ad?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'united states': 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'usa': 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'united kingdom': 'https://www.universitymagazine.ca/wp-content/uploads/2018/06/London.jpg',
+      'uk': 'https://www.universitymagazine.ca/wp-content/uploads/2018/06/London.jpg',
+      'france': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'germany': 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'italy': 'https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'spain': 'https://assets.vogue.com/photos/6603d64d13a27b5703522946/4:3/w_4000,h_3000,c_limit/509288876',
+      'netherlands': 'https://images.unsplash.com/photo-1512470876302-972faa2aa914?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'switzerland': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'austria': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'belgium': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'norway': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'sweden': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'denmark': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'finland': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'iceland': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'ireland': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'portugal': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'greece': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'turkey': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'russia': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'brazil': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'argentina': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'chile': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'mexico': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'canada': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'south africa': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'egypt': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'morocco': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'kenya': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'tanzania': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'uganda': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'sri lanka': 'https://i.natgeofe.com/n/6433f87f-9bc2-4ef6-861c-674c61d3d027/srilankacover.jpg',
+      'cambodia': 'https://www.eyeonasia.gov.sg/images/asean-countries/Cambodia%20snapshot%20cover.jpg',
+      'macau': 'https://welcometochina.com.au/wp-content/uploads/2010/06/macau-1140x646.jpg',
+      'rwanda': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'botswana': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'namibia': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'zimbabwe': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'zambia': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'madagascar': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'mauritius': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'seychelles': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'comoros': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'reunion': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'mayotte': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      // Gulf Countries
+      'united arab emirates': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'uae': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'dubai': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'abu dhabi': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'saudi arabia': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'qatar': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'kuwait': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'bahrain': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'oman': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'iraq': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'iran': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80'
+    };
+    
+    return countryImages[countryName.toLowerCase()] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop&crop=center';
+  };
+
+  // Helper function to get country search term
+  const getCountrySearchTerm = (countryName) => {
+    const searchTerms = {
+      'japan': 'japan',
+      'thailand': 'thailand',
+      'singapore': 'singapore',
+      'south korea': 'korea',
+      'korea': 'korea',
+      'indonesia': 'indonesia',
+      'vietnam': 'vietnam',
+      'malaysia': 'malaysia',
+      'philippines': 'philippines',
+      'taiwan': 'taiwan',
+      'hong kong': 'hong kong',
+      'china': 'china',
+      'india': 'india',
+      'australia': 'australia',
+      'new zealand': 'new zealand',
+      'united states': 'usa',
+      'usa': 'usa',
+      'united kingdom': 'uk',
+      'uk': 'uk',
+      'france': 'france',
+      'germany': 'germany',
+      'italy': 'italy',
+      'spain': 'spain',
+      'netherlands': 'netherlands',
+      'switzerland': 'switzerland',
+      'austria': 'austria',
+      'belgium': 'belgium',
+      'norway': 'norway',
+      'sweden': 'sweden',
+      'denmark': 'denmark',
+      'finland': 'finland',
+      'iceland': 'iceland',
+      'ireland': 'ireland',
+      'portugal': 'portugal',
+      'greece': 'greece',
+      'turkey': 'turkey',
+      'russia': 'russia',
+      'brazil': 'brazil',
+      'argentina': 'argentina',
+      'chile': 'chile',
+      'mexico': 'mexico',
+      'canada': 'canada',
+      'south africa': 'south africa',
+      'egypt': 'egypt',
+      'morocco': 'morocco',
+      'kenya': 'kenya',
+      'tanzania': 'tanzania',
+      'uganda': 'uganda',
+      'rwanda': 'rwanda',
+      'botswana': 'botswana',
+      'namibia': 'namibia',
+      'zimbabwe': 'zimbabwe',
+      'zambia': 'zambia',
+      'madagascar': 'madagascar',
+      'mauritius': 'mauritius',
+      'seychelles': 'seychelles',
+      'comoros': 'comoros',
+      'reunion': 'reunion',
+      'mayotte': 'mayotte',
+      // Gulf Countries
+      'united arab emirates': 'uae',
+      'uae': 'uae',
+      'dubai': 'dubai',
+      'abu dhabi': 'abu dhabi',
+      'saudi arabia': 'saudi arabia',
+      'qatar': 'qatar',
+      'kuwait': 'kuwait',
+      'bahrain': 'bahrain',
+      'oman': 'oman',
+      'iraq': 'iraq',
+      'iran': 'iran'
+    };
+    
+    return searchTerms[countryName.toLowerCase()] || countryName.toLowerCase();
   };
 
 
