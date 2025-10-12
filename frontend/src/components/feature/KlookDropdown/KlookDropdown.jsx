@@ -47,6 +47,7 @@ const getCategoryIcon = (categoryName, categoryId) => {
     if (name.includes('photo')) return Camera;
     if (name.includes('cafe')) return Coffee;
     if (name.includes('nature') || name.includes('park')) return Mountain;
+    if (name.includes('other services') || name.includes('other')) return Wifi;
 
     return MapPin; // default icon
 };
@@ -69,7 +70,17 @@ const KlookDropdown = () => {
                 const data = await res.json();
 
                 if (data.success && data.data.categories) {
-                    setCategories(data.data.categories);
+                    // Add "Other Services" category at the end
+                    const otherServicesCategory = {
+                        id: 'other-services',
+                        name: 'Other Services',
+                        sub_category: [
+                            { id: 'sim-cards', name: 'SIM Cards' },
+                            { id: 'wifi', name: 'WiFi' }
+                        ]
+                    };
+                    
+                    setCategories([...data.data.categories, otherServicesCategory]);
                 }
             } catch (error) {
                 console.error("Error fetching categories from database:", error);
@@ -93,6 +104,16 @@ const KlookDropdown = () => {
     };
 
     const handleSubCategoryMainClick = (subCategory, parentCategoryId) => {
+        // Handle special "Other Services" subcategories
+        if (subCategory.id === 'sim-cards') {
+            handleSimCardClick();
+            return;
+        }
+        if (subCategory.id === 'wifi') {
+            handleWifiClick();
+            return;
+        }
+        
         // Navigate to activities page with the sub category ID
         router.push(`/activities?category_id=${subCategory.id}`);
         setOpen(false);
@@ -107,6 +128,16 @@ const KlookDropdown = () => {
         router.push(`/activities?category_id=${category.id}`);
         setOpen(false);
         setActiveCategory(null);
+    };
+
+    const handleSimCardClick = () => {
+        setOpen(false);
+        router.push(`/activities?search=sim+card`);
+    };
+
+    const handleWifiClick = () => {
+        setOpen(false);
+        router.push(`/activities?search=wifi`);
     };
 
     const handleCategoryHoverOnly = (category) => {
@@ -221,7 +252,17 @@ export const MobileKlookDropdown = () => {
                 const data = await res.json();
 
                 if (data.success && data.data.categories) {
-                    setCategories(data.data.categories);
+                    // Add "Other Services" category at the end
+                    const otherServicesCategory = {
+                        id: 'other-services',
+                        name: 'Other Services',
+                        sub_category: [
+                            { id: 'sim-cards', name: 'SIM Cards' },
+                            { id: 'wifi', name: 'WiFi' }
+                        ]
+                    };
+                    
+                    setCategories([...data.data.categories, otherServicesCategory]);
                 }
             } catch (error) {
                 console.error("Error fetching categories from database:", error);
@@ -250,6 +291,16 @@ export const MobileKlookDropdown = () => {
     };
 
     const handleSubCategoryMainClick = (subCategory, parentCategoryId) => {
+        // Handle special "Other Services" subcategories
+        if (subCategory.id === 'sim-cards') {
+            handleSimCardClick();
+            return;
+        }
+        if (subCategory.id === 'wifi') {
+            handleWifiClick();
+            return;
+        }
+        
         // Navigate to activities page with the sub category ID
         router.push(`/activities?category_id=${subCategory.id}`);
         setOpen(false);
@@ -264,6 +315,16 @@ export const MobileKlookDropdown = () => {
         router.push(`/activities?category_id=${category.id}`);
         setOpen(false);
         setExpandedCategories(new Set());
+    };
+
+    const handleSimCardClick = () => {
+        setOpen(false);
+        router.push(`/activities?search=sim+card`);
+    };
+
+    const handleWifiClick = () => {
+        setOpen(false);
+        router.push(`/activities?search=wifi`);
     };
 
     const handleCategoryExpand = (category, event) => {
