@@ -75,12 +75,12 @@ const ActivitiesPage = () => {
     if (!allActivities || allActivities.length === 0) {
       // Fallback countries if no activities loaded yet
       return [
-        { id: 'japan', name: 'Japan', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'japan', activityCount: 0 },
-        { id: 'thailand', name: 'Thailand', image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'thailand', activityCount: 0 },
-        { id: 'singapore', name: 'Singapore', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'singapore', activityCount: 0 },
-        { id: 'south-korea', name: 'South Korea', image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'korea', activityCount: 0 },
+        { id: 'egypt', name: 'Egypt', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'egypt', activityCount: 0 },
+        { id: 'united-arab-emirates', name: 'UAE', image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'united arab emirates', activityCount: 0 },
+        { id: 'saudi-arabia', name: 'Saudi Arabia', image: 'https://wttc.org/getContentAsset/74b76f6a-feeb-433c-acbe-9b214eafe547/489c4c4e-cfe8-42ba-91b1-27fe878007dd/Riyadh-skyline,-Saudi-Arabia.webp?language=en', searchTerm: 'saudi', activityCount: 0 },
         { id: 'indonesia', name: 'Indonesia', image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'indonesia', activityCount: 0 },
-        { id: 'vietnam', name: 'Vietnam', image: 'https://images.unsplash.com/photo-1528127269322-539801943592?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'vietnam', activityCount: 0 }
+        { id: 'thailand', name: 'Thailand', image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'thailand', activityCount: 0 },
+        { id: 'singapore', name: 'Singapore', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'singapore', activityCount: 0 }
       ];
     }
 
@@ -134,12 +134,12 @@ const ActivitiesPage = () => {
     // If no countries found, return fallback
     if (countriesWithActivities.length === 0) {
       return [
-        { id: 'japan', name: 'Japan', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'japan', activityCount: 0 },
-        { id: 'thailand', name: 'Thailand', image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'thailand', activityCount: 0 },
-        { id: 'singapore', name: 'Singapore', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'singapore', activityCount: 0 },
-        { id: 'south-korea', name: 'South Korea', image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'korea', activityCount: 0 },
+        { id: 'egypt', name: 'Egypt', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'egypt', activityCount: 0 },
+        { id: 'united-arab-emirates', name: 'UAE', image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'united arab emirates', activityCount: 0 },
+        { id: 'saudi-arabia', name: 'Saudi Arabia', image: 'https://wttc.org/getContentAsset/74b76f6a-feeb-433c-acbe-9b214eafe547/489c4c4e-cfe8-42ba-91b1-27fe878007dd/Riyadh-skyline,-Saudi-Arabia.webp?language=en', searchTerm: 'saudi', activityCount: 0 },
         { id: 'indonesia', name: 'Indonesia', image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'indonesia', activityCount: 0 },
-        { id: 'vietnam', name: 'Vietnam', image: 'https://images.unsplash.com/photo-1528127269322-539801943592?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'vietnam', activityCount: 0 }
+        { id: 'thailand', name: 'Thailand', image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'thailand', activityCount: 0 },
+        { id: 'singapore', name: 'Singapore', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'singapore', activityCount: 0 }
       ];
     }
 
@@ -246,8 +246,8 @@ const ActivitiesPage = () => {
       'india': 'india',
       'australia': 'australia',
       'new zealand': 'new zealand',
-      'united states': 'usa',
-      'usa': 'usa',
+      'united states': 'united states',
+      'usa': 'united states',
       'united kingdom': 'uk',
       'uk': 'uk',
       'france': 'france',
@@ -291,8 +291,8 @@ const ActivitiesPage = () => {
       'reunion': 'reunion',
       'mayotte': 'mayotte',
       // Gulf Countries
-      'united arab emirates': 'uae',
-      'uae': 'uae',
+      'united arab emirates': 'united arab emirates',
+      'uae': 'united arab emirates',
       'dubai': 'dubai',
       'abu dhabi': 'abu dhabi',
       'saudi arabia': 'saudi arabia',
