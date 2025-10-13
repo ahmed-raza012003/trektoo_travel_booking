@@ -59,7 +59,7 @@ export default function RootLayout({ children }) {
 
         {/* Fonts */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Fredoka+One&display=swap"
           rel="stylesheet"
         />
 

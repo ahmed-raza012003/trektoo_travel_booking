@@ -25,18 +25,25 @@ export default function HomePage() {
         <HeroSection />
 
         {/* 2. WHY CHOOSE US - Build Trust Early (Best Practice: Airbnb, Booking.com) */}
-        <Suspense fallback={<ComponentLoader />}>
+        {/* <Suspense fallback={<ComponentLoader />}>
           <WhyChooseUs />
-        </Suspense>
+        </Suspense> */}
 
         {/* 3. BANNER - Promotional Announcements */}
-        <Suspense fallback={<ComponentLoader />}>
+        {/* <Suspense fallback={<ComponentLoader />}>
           <Banner />
-        </Suspense>
+        </Suspense> */}
+
+        
 
         {/* 4. OFFERS SECTION - Special Deals & Urgency (Best Practice: Expedia, Klook) */}
         <Suspense fallback={<ComponentLoader />}>
           <OffersSection />
+        </Suspense>.
+
+                {/* 6. ACTIVITIES BY COUNTRIES - Browse by Location (Best Practice: Booking.com) */}
+                <Suspense fallback={<ComponentLoader />}>
+          <ActivitiesByCountries />
         </Suspense>
 
         {/* 5. POPULAR ACTIVITIES - Social Proof (Best Practice: TripAdvisor, Klook) */}
@@ -44,15 +51,12 @@ export default function HomePage() {
           <PopularActivities />
         </Suspense>
 
-        {/* 6. ACTIVITIES BY COUNTRIES - Browse by Location (Best Practice: Booking.com) */}
-        <Suspense fallback={<ComponentLoader />}>
-          <ActivitiesByCountries />
-        </Suspense>
+
 
         {/* 7. Q&A / HOW IT WORKS - Educational Content */}
-        <Suspense fallback={<ComponentLoader />}>
+        {/* <Suspense fallback={<ComponentLoader />}>
           <AdventureVideoSection />
-        </Suspense>
+        </Suspense> */}
 
         {/* 8. FAQ - Comprehensive Questions at Bottom */}
         <Suspense fallback={<ComponentLoader />}>
