@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import API_BASE from '@/lib/api/klookApi';
+import categoriesCache from '@/lib/cache/categoriesCache';
 // Images are now loaded directly from database - no complex hook needed
 
 const LoadingSpinner = lazy(() => import('@/components/ui/LoadingSpinner').then(m => ({ default: m.LoadingSpinner })));
@@ -320,20 +321,40 @@ const ActivitiesPage = () => {
         // Ensure minimum loading time for better UX
         const minLoadingTime = new Promise(resolve => setTimeout(resolve, 800));
 
-      // First, fetch categories from database
+      // First, fetch categories from database with caching
       setLoadingProgress(20);
-      const categoriesRes = await fetch(`${API_BASE}/simple-categories`, {
-        signal: controller.signal,
-      });
       
-      if (!categoriesRes.ok) throw new Error(`Categories fetch failed: ${categoriesRes.status}`);
-      const categoriesJson = await categoriesRes.json();
-      const categories = categoriesJson?.data?.categories || [];
-      setAllCategories(categories);
+      // Check cache first
+      const cachedCategories = categoriesCache.getActivitiesPageCategories();
+      let filteredCategories;
+      
+      if (cachedCategories) {
+        console.log('📦 Using cached categories for activities page');
+        filteredCategories = cachedCategories;
+      } else {
+        console.log('🌐 Fetching categories from API for activities page');
+        const categoriesRes = await fetch(`${API_BASE}/simple-categories`, {
+          signal: controller.signal,
+        });
+        
+        if (!categoriesRes.ok) throw new Error(`Categories fetch failed: ${categoriesRes.status}`);
+        const categoriesJson = await categoriesRes.json();
+        const allCategoriesFromAPI = categoriesJson?.data?.categories || [];
+        
+        // Cache the raw categories first
+        if (allCategoriesFromAPI.length > 0) {
+          categoriesCache.setRawCategories(allCategoriesFromAPI);
+        }
+        
+        // Get filtered categories for activities page
+        filteredCategories = categoriesCache.getActivitiesPageCategories() || [];
+      }
+      
+      setAllCategories(filteredCategories);
       setLoadingProgress(40);
       
       // Debug: Log available categories
-      console.log('🔍 DEBUG - Available categories from database:', categories.map(cat => ({
+      console.log('🔍 DEBUG - Available categories from database:', filteredCategories.map(cat => ({
         id: cat.id,
         name: cat.name,
         sub_categories: cat.sub_category?.length || 0,
@@ -389,7 +410,7 @@ const ActivitiesPage = () => {
       setHasInitialData(true);
       setIsLoading(false);
 
-      return { activities: allActivitiesData, categories };
+      return { activities: allActivitiesData, categories: filteredCategories };
 
     } catch (err) {
       setIsLoading(false);
@@ -997,14 +1018,7 @@ const ActivitiesPage = () => {
               </div>
             ) : (
               <div className="space-y-4">
-              <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
-                {categoryData?.name 
-                  ? `Explore ${totalActivities} activities in ${categoryData.name}${categoryData.sub_category && categoryData.sub_category.length > 0 ? ' and all subcategories' : ''}`
-                    : searchQuery
-                    ? `Found ${totalActivities} activities matching "${searchQuery}"`
-                    : `Discover ${totalActivities} amazing experiences from our curated collection`
-                }
-              </p>
+              {/* Removed the "Explore X activities in Category" text */}
                 {isLoading && (
                   <div className="max-w-md mx-auto">
                     <div className="flex items-center justify-between text-sm text-blue-600 mb-2">
@@ -1025,90 +1039,7 @@ const ActivitiesPage = () => {
         </motion.div>
 
         {/* Search and Filter Section */}
-        {/* Related Countries Section - Only show for specific categories */}
-        {categoryId && (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="mb-12"
-          >
-            <motion.div variants={itemVariants} className="max-w-7xl mx-auto">
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                  Popular {categoryData?.name || 'Activities'} by Country
-                </h3>
-                <p className="text-gray-600">
-                  Discover amazing experiences in these popular destinations
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                {getRelatedCountriesForCategory(categoryId).map((country, index) => (
-                  <motion.div
-                    key={country.id}
-                    variants={itemVariants}
-                    initial="hidden"
-                    animate="visible"
-                    transition={{ delay: index * 0.1 }}
-                    className="group relative"
-                  >
-                    <Link href={`/activities?category_id=${categoryId}&search=${country.searchTerm}`}>
-                      <div className="relative bg-white rounded-2xl shadow-lg hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300 border border-gray-100 cursor-pointer hover:-translate-y-2 overflow-hidden group/card">
-                        {/* Country Image */}
-                        <div className="relative h-32 overflow-hidden">
-                          <img
-                            src={country.image}
-                            alt={country.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            loading="lazy"
-                          />
-                          
-                          {/* Gradient Overlay */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                          
-                          {/* Activity Count Badge */}
-                          <div className="absolute top-2 right-2">
-                            <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-md">
-                              <span className="text-xs font-medium text-gray-800">
-                                {country.activityCount}+
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Country Name */}
-                          <div className="absolute bottom-2 left-2 right-2">
-                            <h4 className="text-white font-bold text-base mb-1 drop-shadow-lg">
-                              {country.name}
-                            </h4>
-                            <div className="flex items-center gap-1 text-white/90 text-xs">
-                              <MapPin className="h-3 w-3" />
-                              <span>Explore</span>
-                            </div>
-                          </div>
-
-                          {/* Hover Effect Overlay */}
-                          <div className="absolute inset-0 bg-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        </div>
-                        
-                        {/* Country Name Below Card */}
-                        <div className="p-3 text-center">
-                          <h5 className="text-gray-800 font-semibold text-sm mb-1">
-                            {country.name}
-                          </h5>
-                          <div className="flex items-center justify-center gap-1 text-gray-500 text-xs">
-                            <MapPin className="h-3 w-3" />
-                            <span>{country.activityCount}+ Activities</span>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
+        {/* Removed Related Countries Section */}
 
         <motion.div
           variants={containerVariants}
@@ -1116,10 +1047,11 @@ const ActivitiesPage = () => {
           animate="visible"
           className="mb-8"
         >
-          <motion.div variants={itemVariants} className="max-w-4xl mx-auto">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
+          <motion.div variants={itemVariants} className="max-w-7xl mx-auto">
+            {/* Search and Filter Row */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mb-4">
               {/* Simple Search Bar */}
-              <form onSubmit={handleSearchSubmit} className="relative flex-1 w-full">
+              <form onSubmit={handleSearchSubmit} className="relative flex-1 min-w-0">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
@@ -1139,14 +1071,7 @@ const ActivitiesPage = () => {
                         <X className="h-4 w-4 text-gray-400" />
                       </button>
                     )}
-                  {/* <div className={`p-2 bg-blue-500 text-white rounded-full transition-all duration-200 ${isSearchProcessing ? 'animate-pulse' : ''}`}>
-                    {isSearchProcessing ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    ) : (
-                      <Search className="h-4 w-4" />
-                )}
-                  </div> */}
-                </div>
+                  </div>
               </form>
 
               {/* Category Filter */}
@@ -1188,21 +1113,17 @@ const ActivitiesPage = () => {
                             : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <span>{category.name}</span>
-                          <span className="text-xs text-gray-500">ID: {category.id}</span>
-                        </div>
+                        <span>{category.name}</span>
                       </button>
                     ))}
                   </div>
                 )}
               </div>
-
             </div>
 
-            {/* Active Filters */}
+            {/* Active Filters - Below Search Bar */}
             {(selectedCategoryFilter || searchQuery) && (
-              <div className="flex items-center gap-2 mt-4 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap mb-4">
                 <span className="text-sm text-gray-600 font-medium">Active filters:</span>
                 {selectedCategoryFilter && categoryData && (
                   <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
@@ -1217,7 +1138,7 @@ const ActivitiesPage = () => {
                 )}
                 {searchQuery && (
                   <div className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
-                    <span>"{searchQuery}" ({totalActivities} results)</span>
+                    <span>"{searchQuery}"</span>
                     <button
                       onClick={() => {
                         setSearchQuery('');
@@ -1246,127 +1167,86 @@ const ActivitiesPage = () => {
                 </button>
               </div>
             )}
-          </motion.div>
-        </motion.div>
 
-        {/* Controls Section */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="flex flex-col lg:flex-row gap-4 lg:gap-6 justify-between items-center mb-12"
-        >
-          {/* Activities count */}
-          <motion.div variants={itemVariants}>
-            {isLoading ? (
-              <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <div className="flex flex-col">
-                  {isSearchProcessing ? (
-                    <div className="flex items-center gap-2 text-lg text-gray-500 font-medium">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                      Searching...
-                    </div>
-                  ) : (
-              <p className="text-lg text-gray-500 font-medium">
-                {totalActivities} activities found
-                      {categoryData && ` in ${categoryData.name}${categoryData.sub_category && categoryData.sub_category.length > 0 ? '' : ''}`}
-                    {searchQuery && ` for "${searchQuery}"`}
-                  </p>
-                  )}
-                  {totalAvailableActivities > 0 && !isSearchProcessing && (
-                    <p className="text-sm text-gray-400">
-                      {allActivities.length.toLocaleString()} Total Activities
-                    </p>
-                  )}
-                </div>
-                {isFilterLoading && (
-                  <div className="flex items-center gap-2 text-sm text-blue-600">
-                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    <span>Filtering...</span>
+            {/* Controls - View Mode and Sort */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-end">
+              {/* View Mode Toggle */}
+              <div className="flex bg-white rounded-3xl p-2 border border-gray-200 shadow-lg">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-3 rounded-2xl transition-all ${viewMode === 'grid'
+                    ? 'bg-blue-500 text-white shadow-lg'
+                    : 'text-gray-600 hover:bg-blue-50'
+                    }`}
+                >
+                  <Grid className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-3 rounded-2xl transition-all ${viewMode === 'list'
+                    ? 'bg-blue-500 text-white shadow-lg'
+                    : 'text-gray-600 hover:bg-blue-50'
+                    }`}
+                >
+                  <List className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Sort Dropdown */}
+              <div className="relative" data-sort-dropdown>
+                <button
+                  onClick={() => setIsSortOpen(!isSortOpen)}
+                  className="flex items-center gap-2 bg-white border border-gray-200 rounded-3xl px-6 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <span className="font-medium">
+                    {sortBy === 'popular' ? 'Most Popular' :
+                     sortBy === 'rating' ? 'Highest Rated' :
+                     sortBy === 'price_low' ? 'Price: Low to High' :
+                     sortBy === 'price_high' ? 'Price: High to Low' :
+                     sortBy === 'reviews' ? 'Most Reviews' : 'Sort by'}
+                  </span>
+                  <svg
+                    className={`w-4 h-4 transition-transform ${isSortOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {isSortOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl py-2 z-50 border border-blue-100">
+                    {[
+                      { value: 'popular', label: 'Most Popular' },
+                      { value: 'rating', label: 'Highest Rated' },
+                      { value: 'price_low', label: 'Price: Low to High' },
+                      { value: 'price_high', label: 'Price: High to Low' },
+                      { value: 'reviews', label: 'Most Reviews' },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setSortBy(option.value);
+                          setIsSortOpen(false);
+                        }}
+                        className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                          sortBy === option.value 
+                            ? 'bg-blue-100 text-blue-600 font-medium' 
+                            : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
-            )}
-          </motion.div>
-
-          {/* Controls */}
-          <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 items-center">
-            {/* View Mode Toggle */}
-            <div className="flex bg-white rounded-3xl p-2 border border-gray-200 shadow-lg">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-3 rounded-2xl transition-all ${viewMode === 'grid'
-                  ? 'bg-blue-500 text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-blue-50'
-                  }`}
-              >
-                <Grid className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-3 rounded-2xl transition-all ${viewMode === 'list'
-                  ? 'bg-blue-500 text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-blue-50'
-                  }`}
-              >
-                <List className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Sort Dropdown */}
-            <div className="relative" data-sort-dropdown>
-              <button
-                onClick={() => setIsSortOpen(!isSortOpen)}
-                className="flex items-center gap-2 bg-white border border-gray-200 rounded-3xl px-6 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <span className="font-medium">
-                  {sortBy === 'popular' ? 'Most Popular' :
-                   sortBy === 'rating' ? 'Highest Rated' :
-                   sortBy === 'price_low' ? 'Price: Low to High' :
-                   sortBy === 'price_high' ? 'Price: High to Low' :
-                   sortBy === 'reviews' ? 'Most Reviews' : 'Sort by'}
-                </span>
-                <svg
-                  className={`w-4 h-4 transition-transform ${isSortOpen ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {isSortOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl py-2 z-50 border border-blue-100">
-                  {[
-                    { value: 'popular', label: 'Most Popular' },
-                    { value: 'rating', label: 'Highest Rated' },
-                    { value: 'price_low', label: 'Price: Low to High' },
-                    { value: 'price_high', label: 'Price: High to Low' },
-                    { value: 'reviews', label: 'Most Reviews' },
-                  ].map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setSortBy(option.value);
-                        setIsSortOpen(false);
-                      }}
-                      className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                        sortBy === option.value 
-                          ? 'bg-blue-100 text-blue-600 font-medium' 
-                          : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           </motion.div>
         </motion.div>
+
+        {/* Removed duplicate Controls Section */}
       </div>
 
       {/* Main Content */}

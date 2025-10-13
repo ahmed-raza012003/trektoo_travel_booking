@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import API_BASE from "@/lib/api/klookApi";
+import categoriesCache from "@/lib/cache/categoriesCache";
 
 // Icon mapping based on category names or IDs
 const getCategoryIcon = (categoryName, categoryId) => {
@@ -61,32 +62,32 @@ const KlookDropdown = () => {
     const buttonRef = useRef(null);
     const router = useRouter();
 
-    // Fetch categories from database
+    // Fetch categories from database with caching
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 setLoading(true);
+                
+                // Check cache first
+                const cachedCategories = categoriesCache.getGlobalDropdownCategories();
+                if (cachedCategories) {
+                    console.log('📦 Using cached categories for global dropdown');
+                    setCategories(cachedCategories);
+                    setLoading(false);
+                    return;
+                }
+
+                console.log('🌐 Fetching categories from API for global dropdown');
                 const res = await fetch(`${API_BASE}/simple-categories`);
                 const data = await res.json();
 
                 if (data.success && data.data.categories) {
-                    // Filter out Cruise and Hotel categories
-                    const filteredCategories = data.data.categories.filter(category => {
-                        const categoryName = category.name.toLowerCase();
-                        return !categoryName.includes('cruise') && !categoryName.includes('hotel');
-                    });
+                    // Cache the raw categories first
+                    categoriesCache.setRawCategories(data.data.categories);
                     
-                    // Add "Other Services" category at the end
-                    const otherServicesCategory = {
-                        id: 'other-services',
-                        name: 'Other Services',
-                        sub_category: [
-                            { id: 'sim-cards', name: 'SIM Cards' },
-                            { id: 'wifi', name: 'WiFi' }
-                        ]
-                    };
-                    
-                    setCategories([...filteredCategories, otherServicesCategory]);
+                    // Get filtered categories for global dropdown
+                    const finalCategories = categoriesCache.getGlobalDropdownCategories();
+                    setCategories(finalCategories);
                 }
             } catch (error) {
                 console.error("Error fetching categories from database:", error);
@@ -258,7 +259,7 @@ export const MobileKlookDropdown = () => {
                 const data = await res.json();
 
                 if (data.success && data.data.categories) {
-                    // Filter out Cruise and Hotel categories
+                    // Filter out only Cruise and Hotel categories for global dropdown
                     const filteredCategories = data.data.categories.filter(category => {
                         const categoryName = category.name.toLowerCase();
                         return !categoryName.includes('cruise') && !categoryName.includes('hotel');
