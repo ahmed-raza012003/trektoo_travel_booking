@@ -70,6 +70,12 @@ const KlookDropdown = () => {
                 const data = await res.json();
 
                 if (data.success && data.data.categories) {
+                    // Filter out Cruise and Hotel categories
+                    const filteredCategories = data.data.categories.filter(category => {
+                        const categoryName = category.name.toLowerCase();
+                        return !categoryName.includes('cruise') && !categoryName.includes('hotel');
+                    });
+                    
                     // Add "Other Services" category at the end
                     const otherServicesCategory = {
                         id: 'other-services',
@@ -80,7 +86,7 @@ const KlookDropdown = () => {
                         ]
                     };
                     
-                    setCategories([...data.data.categories, otherServicesCategory]);
+                    setCategories([...filteredCategories, otherServicesCategory]);
                 }
             } catch (error) {
                 console.error("Error fetching categories from database:", error);
@@ -252,6 +258,12 @@ export const MobileKlookDropdown = () => {
                 const data = await res.json();
 
                 if (data.success && data.data.categories) {
+                    // Filter out Cruise and Hotel categories
+                    const filteredCategories = data.data.categories.filter(category => {
+                        const categoryName = category.name.toLowerCase();
+                        return !categoryName.includes('cruise') && !categoryName.includes('hotel');
+                    });
+                    
                     // Add "Other Services" category at the end
                     const otherServicesCategory = {
                         id: 'other-services',
@@ -262,7 +274,7 @@ export const MobileKlookDropdown = () => {
                         ]
                     };
                     
-                    setCategories([...data.data.categories, otherServicesCategory]);
+                    setCategories([...filteredCategories, otherServicesCategory]);
                 }
             } catch (error) {
                 console.error("Error fetching categories from database:", error);
