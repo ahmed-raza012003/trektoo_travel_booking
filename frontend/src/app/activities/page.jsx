@@ -70,6 +70,243 @@ const ActivitiesPage = () => {
     return `https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop&crop=center`;
   };
 
+  // Function to get dynamic countries based on actual activities in the database
+  const getRelatedCountriesForCategory = (categoryId) => {
+    if (!allActivities || allActivities.length === 0) {
+      // Fallback countries if no activities loaded yet
+      return [
+        { id: 'egypt', name: 'Egypt', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'egypt', activityCount: 0 },
+        { id: 'united-arab-emirates', name: 'UAE', image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'united arab emirates', activityCount: 0 },
+        { id: 'saudi-arabia', name: 'Saudi Arabia', image: 'https://wttc.org/getContentAsset/74b76f6a-feeb-433c-acbe-9b214eafe547/489c4c4e-cfe8-42ba-91b1-27fe878007dd/Riyadh-skyline,-Saudi-Arabia.webp?language=en', searchTerm: 'saudi', activityCount: 0 },
+        { id: 'indonesia', name: 'Indonesia', image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'indonesia', activityCount: 0 },
+        { id: 'thailand', name: 'Thailand', image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'thailand', activityCount: 0 },
+        { id: 'singapore', name: 'Singapore', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'singapore', activityCount: 0 }
+      ];
+    }
+
+    // Filter activities by category
+    const categoryActivities = allActivities.filter(activity => 
+      parseInt(activity.category_id) === parseInt(categoryId)
+    );
+
+    console.log(`🔍 DEBUG - Category ${categoryId} activities:`, categoryActivities.length);
+
+    // Extract unique countries from actual activities data
+    const countryMap = new Map();
+    
+    categoryActivities.forEach(activity => {
+      // Get country from various possible fields
+      const countryName = activity.country_name || 
+                         activity.location?.split(',')[1]?.trim() || 
+                         activity.location_display?.split(',')[1]?.trim() ||
+                         activity.city_name?.split(',')[1]?.trim() ||
+                         'Unknown';
+      
+      if (countryName && countryName !== 'Unknown') {
+        const normalizedCountry = countryName.toLowerCase().trim();
+        
+        if (!countryMap.has(normalizedCountry)) {
+          // Create country object with image based on country name
+          const countryImage = getCountryImage(countryName);
+          const searchTerm = getCountrySearchTerm(countryName);
+          
+          countryMap.set(normalizedCountry, {
+            id: normalizedCountry.replace(/\s+/g, '-'),
+            name: countryName,
+            image: countryImage,
+            searchTerm: searchTerm,
+            activityCount: 0
+          });
+        }
+        
+        // Increment activity count
+        countryMap.get(normalizedCountry).activityCount++;
+      }
+    });
+
+    // Convert map to array and sort by activity count
+    const countriesWithActivities = Array.from(countryMap.values())
+      .sort((a, b) => b.activityCount - a.activityCount)
+      .slice(0, 6); // Show top 6 countries
+
+    console.log(`🌍 DEBUG - Dynamic countries for category ${categoryId}:`, countriesWithActivities);
+
+    // If no countries found, return fallback
+    if (countriesWithActivities.length === 0) {
+      return [
+        { id: 'egypt', name: 'Egypt', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'egypt', activityCount: 0 },
+        { id: 'united-arab-emirates', name: 'UAE', image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'united arab emirates', activityCount: 0 },
+        { id: 'saudi-arabia', name: 'Saudi Arabia', image: 'https://wttc.org/getContentAsset/74b76f6a-feeb-433c-acbe-9b214eafe547/489c4c4e-cfe8-42ba-91b1-27fe878007dd/Riyadh-skyline,-Saudi-Arabia.webp?language=en', searchTerm: 'saudi', activityCount: 0 },
+        { id: 'indonesia', name: 'Indonesia', image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'indonesia', activityCount: 0 },
+        { id: 'thailand', name: 'Thailand', image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'thailand', activityCount: 0 },
+        { id: 'singapore', name: 'Singapore', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', searchTerm: 'singapore', activityCount: 0 }
+      ];
+    }
+
+    return countriesWithActivities;
+  };
+
+  // Helper function to get country image based on country name
+  const getCountryImage = (countryName) => {
+    const countryImages = {
+      'japan': 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'thailand': 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'singapore': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'south korea': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'korea': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'indonesia': 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'vietnam': 'https://images.unsplash.com/photo-1528127269322-539801943592?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'malaysia': 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'philippines': 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'taiwan': 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'hong kong': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'china': 'https://magsworldwide.com/wp-content/uploads/2017/07/China-1-1.jpg',
+      'india': 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'australia': 'https://images.unsplash.com/photo-1523482580672-f109ba8cb9be?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'new zealand': 'https://images.unsplash.com/photo-1507699622108-4be3abd695ad?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'united states': 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'usa': 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'united kingdom': 'https://www.universitymagazine.ca/wp-content/uploads/2018/06/London.jpg',
+      'uk': 'https://www.universitymagazine.ca/wp-content/uploads/2018/06/London.jpg',
+      'france': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'germany': 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'italy': 'https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'spain': 'https://assets.vogue.com/photos/6603d64d13a27b5703522946/4:3/w_4000,h_3000,c_limit/509288876',
+      'netherlands': 'https://images.unsplash.com/photo-1512470876302-972faa2aa914?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'switzerland': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'austria': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'belgium': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'norway': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'sweden': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'denmark': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'finland': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'iceland': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'ireland': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'portugal': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'greece': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'turkey': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'russia': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'brazil': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'argentina': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'chile': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'mexico': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'canada': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'south africa': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'egypt': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'morocco': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'kenya': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'tanzania': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'uganda': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'sri lanka': 'https://i.natgeofe.com/n/6433f87f-9bc2-4ef6-861c-674c61d3d027/srilankacover.jpg',
+      'cambodia': 'https://www.eyeonasia.gov.sg/images/asean-countries/Cambodia%20snapshot%20cover.jpg',
+      'macau': 'https://welcometochina.com.au/wp-content/uploads/2010/06/macau-1140x646.jpg',
+      'rwanda': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'botswana': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'namibia': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'zimbabwe': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'zambia': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'madagascar': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'mauritius': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'seychelles': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'comoros': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'reunion': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'mayotte': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      // Gulf Countries
+      'united arab emirates': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'uae': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'dubai': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'abu dhabi': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'saudi arabia': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'qatar': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'kuwait': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'bahrain': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'oman': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'iraq': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+      'iran': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80'
+    };
+    
+    return countryImages[countryName.toLowerCase()] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop&crop=center';
+  };
+
+  // Helper function to get country search term
+  const getCountrySearchTerm = (countryName) => {
+    const searchTerms = {
+      'japan': 'japan',
+      'thailand': 'thailand',
+      'singapore': 'singapore',
+      'south korea': 'korea',
+      'korea': 'korea',
+      'indonesia': 'indonesia',
+      'vietnam': 'vietnam',
+      'malaysia': 'malaysia',
+      'philippines': 'philippines',
+      'taiwan': 'taiwan',
+      'hong kong': 'hong kong',
+      'china': 'china',
+      'india': 'india',
+      'australia': 'australia',
+      'new zealand': 'new zealand',
+      'united states': 'united states',
+      'usa': 'united states',
+      'united kingdom': 'uk',
+      'uk': 'uk',
+      'france': 'france',
+      'germany': 'germany',
+      'italy': 'italy',
+      'spain': 'spain',
+      'netherlands': 'netherlands',
+      'switzerland': 'switzerland',
+      'austria': 'austria',
+      'belgium': 'belgium',
+      'norway': 'norway',
+      'sweden': 'sweden',
+      'denmark': 'denmark',
+      'finland': 'finland',
+      'iceland': 'iceland',
+      'ireland': 'ireland',
+      'portugal': 'portugal',
+      'greece': 'greece',
+      'turkey': 'turkey',
+      'russia': 'russia',
+      'brazil': 'brazil',
+      'argentina': 'argentina',
+      'chile': 'chile',
+      'mexico': 'mexico',
+      'canada': 'canada',
+      'south africa': 'south africa',
+      'egypt': 'egypt',
+      'morocco': 'morocco',
+      'kenya': 'kenya',
+      'tanzania': 'tanzania',
+      'uganda': 'uganda',
+      'rwanda': 'rwanda',
+      'botswana': 'botswana',
+      'namibia': 'namibia',
+      'zimbabwe': 'zimbabwe',
+      'zambia': 'zambia',
+      'madagascar': 'madagascar',
+      'mauritius': 'mauritius',
+      'seychelles': 'seychelles',
+      'comoros': 'comoros',
+      'reunion': 'reunion',
+      'mayotte': 'mayotte',
+      // Gulf Countries
+      'united arab emirates': 'united arab emirates',
+      'uae': 'united arab emirates',
+      'dubai': 'dubai',
+      'abu dhabi': 'abu dhabi',
+      'saudi arabia': 'saudi arabia',
+      'qatar': 'qatar',
+      'kuwait': 'kuwait',
+      'bahrain': 'bahrain',
+      'oman': 'oman',
+      'iraq': 'iraq',
+      'iran': 'iran'
+    };
+    
+    return searchTerms[countryName.toLowerCase()] || countryName.toLowerCase();
+  };
+
 
   // Images are now loaded directly from database - no preloading needed
 
@@ -80,8 +317,12 @@ const ActivitiesPage = () => {
         setError(null);
       setLoadingProgress(0);
 
-      // First, fetch categories
-      const categoriesRes = await fetch(`${API_BASE}/klook/categories`, {
+        // Ensure minimum loading time for better UX
+        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 800));
+
+      // First, fetch categories from database
+      setLoadingProgress(20);
+      const categoriesRes = await fetch(`${API_BASE}/simple-categories`, {
         signal: controller.signal,
       });
       
@@ -89,9 +330,19 @@ const ActivitiesPage = () => {
       const categoriesJson = await categoriesRes.json();
       const categories = categoriesJson?.data?.categories || [];
       setAllCategories(categories);
+      setLoadingProgress(40);
+      
+      // Debug: Log available categories
+      console.log('🔍 DEBUG - Available categories from database:', categories.map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        sub_categories: cat.sub_category?.length || 0,
+        leaf_categories: cat.sub_category?.reduce((total, sub) => total + (sub.leaf_category?.length || 0), 0) || 0
+      })));
 
-      // Fetch all activities from database (fast!)
-      const activitiesRes = await fetch(`${API_BASE}/klook/activities?limit=2000`, {
+      // Fetch ALL activities from database
+      setLoadingProgress(60);
+      const activitiesRes = await fetch(`${API_BASE}/klook/activities?limit=25000`, {
             signal: controller.signal,
             headers: {
               'Accept': 'application/json',
@@ -100,6 +351,7 @@ const ActivitiesPage = () => {
       });
 
       if (!activitiesRes.ok) throw new Error(`Activities fetch failed: ${activitiesRes.status}`);
+      setLoadingProgress(80);
       const activitiesData = await activitiesRes.json();
       
       console.log('🔍 DEBUG - API Response:', activitiesData);
@@ -109,15 +361,33 @@ const ActivitiesPage = () => {
         throw new Error('Invalid API response format');
       }
 
+      // Debug: Log sample activities to check category_id field
+      const sampleActivities = activitiesData.data.activity.activity_list.slice(0, 3);
+      console.log('🔍 DEBUG - Sample activities:', sampleActivities.map(activity => ({
+        id: activity.activity_id,
+        title: activity.title,
+        category_id: activity.category_id,
+        category_id_type: typeof activity.category_id
+      })));
+
+      setLoadingProgress(90);
       const allActivitiesData = activitiesData.data.activity.activity_list;
       const totalCount = activitiesData.data.activity.total || allActivitiesData.length;
       
       console.log(`🚀 Database loaded: ${allActivitiesData.length} activities instantly!`);
+      console.log(`📊 Total activities in database: ${totalCount}`);
       setTotalAvailableActivities(totalCount);
       setAllActivities(allActivitiesData);
+      setLoadingProgress(100);
+      
+      // Small delay to show 100% progress
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Wait for minimum loading time
+      await minLoadingTime;
+      
       setHasInitialData(true);
       setIsLoading(false);
-      setLoadingProgress(100);
 
       return { activities: allActivitiesData, categories };
 
@@ -143,6 +413,7 @@ const ActivitiesPage = () => {
           console.error('Error fetching activities:', err);
           setError(`Failed to load activities: ${err.message}`);
         }
+        setHasInitialData(true);
         setIsLoading(false);
       }
     };
@@ -159,50 +430,114 @@ const ActivitiesPage = () => {
 
     // Apply category filter
     if (categoryFilter) {
-      const targetCategory = categories.find(cat => cat.id == categoryFilter);
-        
-      if (targetCategory) {
-        setCategoryData(targetCategory);
-
-        // Get ALL valid category IDs from this category (including nested ones)
-        let validCategoryIds = [parseInt(categoryFilter)]; // Include main category ID
+      let targetCategory = null;
+      let validCategoryIds = [parseInt(categoryFilter)]; // Always include the clicked category ID
+      
+      // Search for the category in the hierarchy
+      const findCategoryInHierarchy = (categories, targetId) => {
+        for (const category of categories) {
+          // Check main category
+          if (category.id == targetId) {
+            return { category, type: 'main' };
+          }
           
-        // Recursive function to collect all nested category IDs
-        const collectCategoryIds = (category) => {
+          // Check sub-categories
           if (category.sub_category && Array.isArray(category.sub_category)) {
-            category.sub_category.forEach(sub => {
+            for (const subCategory of category.sub_category) {
+              if (subCategory.id == targetId) {
+                return { category: subCategory, type: 'sub', parent: category };
+              }
+              
+              // Check leaf categories
+              if (subCategory.leaf_category && Array.isArray(subCategory.leaf_category)) {
+                for (const leafCategory of subCategory.leaf_category) {
+                  if (leafCategory.id == targetId) {
+                    return { category: leafCategory, type: 'leaf', parent: subCategory, grandParent: category };
+                  }
+                }
+              }
+            }
+          }
+        }
+        return null;
+      };
+
+      const foundCategory = findCategoryInHierarchy(categories, categoryFilter);
+      
+      console.log('🔍 DEBUG - Looking for category ID:', categoryFilter);
+      console.log('🔍 DEBUG - Found category:', foundCategory);
+      
+      if (foundCategory) {
+        targetCategory = foundCategory.category;
+        
+        // If it's a main category, include all its sub and leaf categories
+        if (foundCategory.type === 'main') {
+          if (targetCategory.sub_category && Array.isArray(targetCategory.sub_category)) {
+          targetCategory.sub_category.forEach(sub => {
               validCategoryIds.push(parseInt(sub.id));
               
               if (sub.leaf_category && Array.isArray(sub.leaf_category)) {
-                sub.leaf_category.forEach(leaf => {
+              sub.leaf_category.forEach(leaf => {
                   validCategoryIds.push(parseInt(leaf.id));
-                });
-              }
-              
-              // Recursively collect from nested subcategories if they exist
-              collectCategoryIds(sub);
+              });
+            }
+          });
+        }
+        }
+        // If it's a sub-category, include all its leaf categories
+        else if (foundCategory.type === 'sub') {
+          if (targetCategory.leaf_category && Array.isArray(targetCategory.leaf_category)) {
+            targetCategory.leaf_category.forEach(leaf => {
+              validCategoryIds.push(parseInt(leaf.id));
             });
           }
-        };
+        }
+        // If it's a leaf category, only include that specific category (already added above)
 
-        collectCategoryIds(targetCategory);
+        setCategoryData(targetCategory);
 
         // Remove duplicates
         validCategoryIds = [...new Set(validCategoryIds)];
 
-        console.log('🔍 DEBUG - Valid category IDs for category', categoryFilter, ':', validCategoryIds);
+        console.log('🔍 DEBUG - Category filter applied:', {
+          categoryName: targetCategory.name,
+          categoryType: foundCategory.type,
+          validIds: validCategoryIds,
+          totalActivities: filtered.length
+        });
+
+        // Debug: Check what category IDs actually exist in activities
+        const uniqueCategoryIds = [...new Set(filtered.map(activity => activity.category_id))].sort((a, b) => a - b);
+        console.log('🔍 DEBUG - Available category IDs in activities:', uniqueCategoryIds.slice(0, 20), '... (showing first 20)');
         
         const beforeFilterCount = filtered.length;
+        
+        // Debug: Show sample activities before filtering
+        const sampleBeforeFilter = filtered.slice(0, 3).map(activity => ({
+          id: activity.activity_id,
+          title: activity.title,
+          category_id: activity.category_id,
+          category_id_type: typeof activity.category_id
+        }));
+        console.log('🔍 DEBUG - Sample activities before filter:', sampleBeforeFilter);
+        
         filtered = filtered.filter(activity => {
           const activityCategoryId = parseInt(activity.category_id);
-          return validCategoryIds.includes(activityCategoryId);
+          const isMatch = validCategoryIds.includes(activityCategoryId);
+          
+          // Debug: Log first few matches/non-matches
+          if (sampleBeforeFilter.some(s => s.id === activity.activity_id)) {
+            console.log(`🔍 DEBUG - Activity ${activity.activity_id} (${activity.title}): category_id=${activityCategoryId}, validIds=${validCategoryIds}, match=${isMatch}`);
+          }
+          
+          return isMatch;
         });
         
-        console.log('🔍 DEBUG - Category filter applied:', {
-          targetCategory: targetCategory.name,
-          validIds: validCategoryIds,
+        console.log('🔍 DEBUG - Filter results:', {
           before: beforeFilterCount,
-          after: filtered.length
+          after: filtered.length,
+          categoryId: categoryFilter,
+          validCategoryIds: validCategoryIds
         });
       } else {
         console.log('🔍 DEBUG - Category not found:', categoryFilter);
@@ -472,6 +807,91 @@ const ActivitiesPage = () => {
     );
   }
 
+  // Full page loader for initial data fetching
+  if (isLoading && !hasInitialData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center space-y-8 max-w-md mx-auto px-6"
+        >
+          {/* Main Loading Spinner */}
+          <div className="relative mx-auto w-24 h-24">
+            <div className="absolute inset-0 w-24 h-24 border-4 border-blue-200 rounded-full animate-spin border-t-blue-600"></div>
+            <div className="absolute inset-0 w-24 h-24 border-4 border-transparent rounded-full animate-ping border-t-blue-400"></div>
+            <div className="absolute inset-2 w-20 h-20 border-4 border-blue-100 rounded-full animate-spin border-t-blue-500"></div>
+          </div>
+          
+          {/* Loading Text */}
+          <div className="space-y-4">
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-2xl font-bold text-gray-800"
+            >
+              Fetching Activities
+            </motion.h2>
+            
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-gray-600 text-lg"
+            >
+              Discovering amazing experiences for you...
+            </motion.p>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="space-y-2"
+            >
+              <div className="flex items-center justify-between text-sm text-blue-600">
+                <span>Loading from database...</span>
+                <span className="font-semibold">{loadingProgress}%</span>
+              </div>
+              <div className="w-full bg-blue-100 rounded-full h-3 overflow-hidden">
+                <motion.div
+                  className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 h-3 rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${loadingProgress}%` }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                />
+              </div>
+            </motion.div>
+          </div>
+          
+          {/* Loading Dots */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="flex justify-center space-x-2"
+          >
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          </motion.div>
+          
+          {/* Fun Loading Messages */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="text-sm text-gray-500 space-y-1"
+          >
+            <p>✨ Finding the best activities...</p>
+            <p>🌟 Curating amazing experiences...</p>
+            <p>🎯 Matching your interests...</p>
+          </motion.div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden">
       {/* Background Pattern */}
@@ -535,15 +955,43 @@ const ActivitiesPage = () => {
           </motion.div>
           <motion.div variants={itemVariants}>
             {isLoading ? (
-              <div className="space-y-4">
-              <div className="h-8 bg-gray-200 rounded animate-pulse max-w-4xl mx-auto"></div>
-                <div className="max-w-md mx-auto">
-                  <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                    <span>Loading initial activities...</span>
-                    <span>Please wait</span>
+              <div className="space-y-6">
+                {/* Animated Loading Spinner */}
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <div className="relative">
+                    <div className="w-16 h-16 border-4 border-blue-100 rounded-full animate-spin border-t-blue-500"></div>
+                    <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-ping border-t-blue-300"></div>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full animate-pulse"></div>
+                  
+                  {/* Loading Text with Animation */}
+                  <div className="text-center space-y-2">
+                    <h3 className="text-lg font-semibold text-gray-800 animate-pulse">
+                      Loading Amazing Activities
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Discovering {totalActivities > 0 ? totalActivities : 'thousands of'} experiences for you...
+                    </p>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="w-full max-w-md mx-auto">
+                    <div className="flex items-center justify-between text-sm text-blue-600 mb-2">
+                      <span>Loading activities from database...</span>
+                      <span className="font-medium">{loadingProgress}%</span>
+                    </div>
+                    <div className="w-full bg-blue-100 rounded-full h-2 overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${loadingProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  {/* Loading Dots Animation */}
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                   </div>
                 </div>
               </div>
@@ -577,6 +1025,91 @@ const ActivitiesPage = () => {
         </motion.div>
 
         {/* Search and Filter Section */}
+        {/* Related Countries Section - Only show for specific categories */}
+        {categoryId && (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="mb-12"
+          >
+            <motion.div variants={itemVariants} className="max-w-7xl mx-auto">
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                  Popular {categoryData?.name || 'Activities'} by Country
+                </h3>
+                <p className="text-gray-600">
+                  Discover amazing experiences in these popular destinations
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {getRelatedCountriesForCategory(categoryId).map((country, index) => (
+                  <motion.div
+                    key={country.id}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    transition={{ delay: index * 0.1 }}
+                    className="group relative"
+                  >
+                    <Link href={`/activities?category_id=${categoryId}&search=${country.searchTerm}`}>
+                      <div className="relative bg-white rounded-2xl shadow-lg hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300 border border-gray-100 cursor-pointer hover:-translate-y-2 overflow-hidden group/card">
+                        {/* Country Image */}
+                        <div className="relative h-32 overflow-hidden">
+                          <img
+                            src={country.image}
+                            alt={country.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                          
+                          {/* Gradient Overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                          
+                          {/* Activity Count Badge */}
+                          <div className="absolute top-2 right-2">
+                            <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-md">
+                              <span className="text-xs font-medium text-gray-800">
+                                {country.activityCount}+
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Country Name */}
+                          <div className="absolute bottom-2 left-2 right-2">
+                            <h4 className="text-white font-bold text-base mb-1 drop-shadow-lg">
+                              {country.name}
+                            </h4>
+                            <div className="flex items-center gap-1 text-white/90 text-xs">
+                              <MapPin className="h-3 w-3" />
+                              <span>Explore</span>
+                            </div>
+                          </div>
+
+                          {/* Hover Effect Overlay */}
+                          <div className="absolute inset-0 bg-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </div>
+                        
+                        {/* Country Name Below Card */}
+                        <div className="p-3 text-center">
+                          <h5 className="text-gray-800 font-semibold text-sm mb-1">
+                            {country.name}
+                          </h5>
+                          <div className="flex items-center justify-center gap-1 text-gray-500 text-xs">
+                            <MapPin className="h-3 w-3" />
+                            <span>{country.activityCount}+ Activities</span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -844,13 +1377,27 @@ const ActivitiesPage = () => {
               {viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <CardSkeleton key={i} />
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.1, duration: 0.5 }}
+                    >
+                      <CardSkeleton />
+                    </motion.div>
                   ))}
                 </div>
               ) : (
                 <div className="space-y-8">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <CardSkeleton key={i} />
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.1, duration: 0.5 }}
+                    >
+                      <CardSkeleton />
+                    </motion.div>
                   ))}
                 </div>
               )}
@@ -860,11 +1407,21 @@ const ActivitiesPage = () => {
           {/* Filter Loading Overlay */}
           {isFilterLoading && !isLoading && (
             <div className="relative">
-              <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-20 flex items-center justify-center rounded-2xl">
-                <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-full shadow-lg">
-                  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-blue-600 font-medium">Applying filters...</span>
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center rounded-2xl">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center gap-3 bg-white px-6 py-4 rounded-full shadow-xl border border-blue-100"
+                >
+                  <div className="relative">
+                    <div className="w-6 h-6 border-3 border-blue-200 rounded-full animate-spin border-t-blue-600"></div>
+                    <div className="absolute inset-0 w-6 h-6 border-3 border-transparent rounded-full animate-ping border-t-blue-400"></div>
                 </div>
+                  <div className="flex flex-col">
+                    <span className="text-blue-600 font-semibold text-sm">Applying filters...</span>
+                    <span className="text-blue-500 text-xs">Please wait</span>
+                  </div>
+                </motion.div>
               </div>
             </div>
           )}
@@ -892,7 +1449,7 @@ const ActivitiesPage = () => {
                       viewMode === 'list' 
                         ? 'flex flex-row h-96' 
                         : 'flex flex-col h-full'
-                    }`}
+                      }`}
                   >
                     {/* Activity Image */}
                     <div 
@@ -975,7 +1532,7 @@ const ActivitiesPage = () => {
                       </p>
                         </div>
 
-                        {/* Location */}
+                      {/* Location */}
                         <div className={`flex items-center gap-3 text-gray-600 ${
                           viewMode === 'list' ? 'mb-4' : 'mb-4'
                         }`}>
@@ -998,7 +1555,7 @@ const ActivitiesPage = () => {
                           </div>
                       </div>
 
-                        {/* Highlights */}
+                      {/* Highlights */}
                         <div className={`space-y-2 ${
                           viewMode === 'list' ? 'mb-4' : 'mb-5'
                         }`}>
@@ -1016,7 +1573,7 @@ const ActivitiesPage = () => {
                         ))}
                       </div>
 
-                        {/* Availability */}
+                      {/* Availability */}
                         <div className={`flex items-center gap-2 ${
                           viewMode === 'list' ? 'mb-4' : 'mb-5'
                         }`}>

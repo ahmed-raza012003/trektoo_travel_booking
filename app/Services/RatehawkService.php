@@ -224,14 +224,19 @@ class RatehawkService
      */
     public function searchHotelsByRegion(array $params): array
     {
+        $children = $params['children'] ?? [];
         $data = [
             'checkin' => $params['checkin'],
             'checkout' => $params['checkout'],
-                'adults' => $params['adults'],
-            'children' => $params['children'] ?? [],
             'residency' => $params['residency'],
-            'region_id' => $params['region_id'],
             'language' => $params['language'] ?? config('ratehawk.default_language', 'en'),
+            'guests' => [
+                [
+                    'adults' => $params['adults'],
+                    'children' => $children
+                ]
+            ],
+            'region_id' => (int) $params['region_id'], // Cast to integer for uint32
             'currency' => $params['currency'] ?? config('ratehawk.default_currency', 'USD'),
             'hotels_limit' => $params['hotels_limit'] ?? 50,
             'sort_by' => $params['sort_by'] ?? 'price',
@@ -253,16 +258,21 @@ class RatehawkService
      */
     public function searchHotelsByCoordinates(array $params): array
     {
+        $children = $params['children'] ?? [];
         $data = [
             'checkin' => $params['checkin'],
             'checkout' => $params['checkout'],
-                'adults' => $params['adults'],
-            'children' => $params['children'] ?? [],
             'residency' => $params['residency'],
-                'latitude' => $params['latitude'],
-                'longitude' => $params['longitude'],
-            'radius' => $params['radius'] ?? 10,
             'language' => $params['language'] ?? config('ratehawk.default_language', 'en'),
+            'guests' => [
+                [
+                    'adults' => $params['adults'],
+                    'children' => $children
+                ]
+            ],
+            'latitude' => $params['latitude'],
+            'longitude' => $params['longitude'],
+            'radius' => $params['radius'] ?? 10,
             'currency' => $params['currency'] ?? config('ratehawk.default_currency', 'USD'),
             'hotels_limit' => $params['hotels_limit'] ?? 50
         ];
@@ -345,16 +355,22 @@ class RatehawkService
      */
     public function getHotelPage(string $hotelId, array $params): array
     {
-        $data = array_merge([
+        $children = $params['children'] ?? [];
+        $data = [
             'hotel_id' => $hotelId,
             'checkin' => $params['checkin'],
             'checkout' => $params['checkout'],
-                'adults' => $params['adults'],
-            'children' => $params['children'] ?? [],
             'residency' => $params['residency'],
             'language' => $params['language'] ?? config('ratehawk.default_language', 'en'),
-            'currency' => $params['currency'] ?? config('ratehawk.default_currency', 'USD')
-        ], $params);
+            'guests' => [
+                [
+                    'adults' => $params['adults'],
+                    'children' => $children
+                ]
+            ],
+            'currency' => $params['currency'] ?? config('ratehawk.default_currency', 'USD'),
+            'rooms' => $params['rooms'] ?? 1
+        ];
 
         return $this->makeRequest('/search/hp/', $data);
     }
@@ -720,6 +736,8 @@ class RatehawkService
                 ];
 
             case '/hotel/prebook':
+                // Accept any hash format for testing
+                $hash = $data['hash'] ?? 'test_hash';
                 return [
                     'status' => 'ok',
                     'data' => [
@@ -732,7 +750,8 @@ class RatehawkService
                             'meal' => 'Breakfast included'
                         ],
                         'total_price' => 300.00,
-                        'currency' => $currency
+                        'currency' => $currency,
+                        'original_hash' => $hash
                     ]
                 ];
 
@@ -796,6 +815,139 @@ class RatehawkService
                     'status' => 'error',
                     'error' => 'Mock endpoint not implemented: ' . $endpoint
                 ];
+        }
+    }
+
+    /**
+     * Get filter values for search
+     */
+    public function getFilterValues(array $params = []): array
+    {
+        try {
+            $result = $this->makeRequest('/api/b2b/v3/hotel/filters/', $params);
+
+            if (isset($result['status']) && $result['status'] === 'ok') {
+                return [
+                    'success' => true,
+                    'data' => $result['data'] ?? []
+                ];
+            }
+
+            return [
+                'success' => false,
+                'error' => $result['error'] ?? 'Failed to get filter values'
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Get filter values error', [
+                'params' => $params,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'An error occurred while retrieving filter values'
+            ];
+        }
+    }
+
+    /**
+     * Create booking form
+     */
+    public function createBookingForm(array $data): array
+    {
+        try {
+            $result = $this->makeRequest('/api/b2b/v3/hotel/booking/form/', $data);
+
+            if (isset($result['status']) && $result['status'] === 'ok') {
+                return [
+                    'success' => true,
+                    'data' => $result['data'] ?? []
+                ];
+            }
+
+            return [
+                'success' => false,
+                'error' => $result['error'] ?? 'Failed to create booking form'
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Create booking form error', [
+                'data' => $data,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'An error occurred while creating booking form'
+            ];
+        }
+    }
+
+    /**
+     * Finish booking
+     */
+    public function finishBooking(array $data): array
+    {
+        try {
+            $result = $this->makeRequest('/api/b2b/v3/hotel/booking/finish/', $data);
+
+            if (isset($result['status']) && $result['status'] === 'ok') {
+                return [
+                    'success' => true,
+                    'data' => $result['data'] ?? []
+                ];
+            }
+
+            return [
+                'success' => false,
+                'error' => $result['error'] ?? 'Failed to finish booking'
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Finish booking error', [
+                'data' => $data,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'An error occurred while finishing booking'
+            ];
+        }
+    }
+
+    /**
+     * Cancel order
+     */
+    public function cancelOrder(string $partnerOrderId): array
+    {
+        try {
+            $data = ['partner_order_id' => $partnerOrderId];
+            $result = $this->makeRequest('/api/b2b/v3/hotel/booking/cancel/', $data);
+
+            if (isset($result['status']) && $result['status'] === 'ok') {
+                return [
+                    'success' => true,
+                    'data' => $result['data'] ?? []
+                ];
+            }
+
+            return [
+                'success' => false,
+                'error' => $result['error'] ?? 'Failed to cancel order'
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Cancel order error', [
+                'partner_order_id' => $partnerOrderId,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'An error occurred while cancelling order'
+            ];
         }
     }
 }

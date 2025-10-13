@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Klook\KlookTestController;
 use App\Http\Controllers\Api\HotelController;
 use App\Http\Controllers\Api\HotelBookingController;
 use App\Http\Controllers\Api\RatehawkWebhookController;
+use App\Http\Controllers\Api\CategoryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -180,6 +181,99 @@ Route::prefix('webhooks')->group(function () {
         Route::post('/booking-status', [RatehawkWebhookController::class, 'handleBookingStatus']);
         Route::post('/booking-changes', [RatehawkWebhookController::class, 'handleBookingChanges']);
     });
+});
+
+// Database Categories Routes
+Route::prefix('categories')->group(function () {
+    Route::get('/', [CategoryController::class, 'getCategories']);
+    Route::get('/level/{level}', [CategoryController::class, 'getCategoriesByLevel']);
+    Route::get('/search', [CategoryController::class, 'searchCategories']);
+    Route::get('/hierarchy/{categoryId}', [CategoryController::class, 'getCategoryHierarchy']);
+});
+
+// Test route for debugging
+Route::get('/test-categories', function () {
+    try {
+        $mainCategories = \App\Models\Category::where('level', 'main')->limit(3)->get();
+        return response()->json([
+            'success' => true,
+            'count' => $mainCategories->count(),
+            'categories' => $mainCategories->map(function($cat) {
+                return [
+                    'id' => $cat->category_id,
+                    'name' => $cat->name
+                ];
+            })
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
+});
+
+// Simple categories endpoint for testing
+Route::get('/simple-categories', function () {
+    try {
+        $mainCategories = \App\Models\Category::where('level', 'main')
+            ->orderBy('sort_order')
+            ->get();
+
+        $categories = $mainCategories->map(function ($mainCategory) {
+            $categoryData = [
+                'id' => $mainCategory->category_id,
+                'name' => $mainCategory->name,
+                'sub_category' => []
+            ];
+
+            // Get sub-categories for this main category
+            $subCategories = \App\Models\Category::where('main_category_id', $mainCategory->category_id)
+                ->where('level', 'sub')
+                ->orderBy('sort_order')
+                ->get();
+
+            foreach ($subCategories as $subCategory) {
+                $subCategoryData = [
+                    'id' => $subCategory->category_id,
+                    'name' => $subCategory->name,
+                    'leaf_category' => []
+                ];
+
+                // Get leaf categories for this sub-category
+                $leafCategories = \App\Models\Category::where('parent_id', $subCategory->category_id)
+                    ->where('level', 'leaf')
+                    ->orderBy('sort_order')
+                    ->get();
+
+                foreach ($leafCategories as $leafCategory) {
+                    $subCategoryData['leaf_category'][] = [
+                        'id' => $leafCategory->category_id,
+                        'name' => $leafCategory->name
+                    ];
+                }
+
+                $categoryData['sub_category'][] = $subCategoryData;
+            }
+
+            return $categoryData;
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'success' => true,
+                'categories' => $categories
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch categories from database',
+            'error' => $e->getMessage()
+        ], 500);
+    }
 });
 
 // routes/api.php

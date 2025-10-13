@@ -77,3 +77,34 @@ if (app()->environment('local', 'development')) {
         ->runInBackground()
         ->appendOutputTo(storage_path('logs/activities-refresh-staging.log'));
 }
+
+/*
+|--------------------------------------------------------------------------
+| Ratehawk Scheduled Tasks
+|--------------------------------------------------------------------------
+|
+| Scheduled tasks for Ratehawk integration
+|
+*/
+
+// Weekly Ratehawk data dump
+Schedule::command('ratehawk:dump --type=all --method=streaming')
+    ->weekly()
+    ->sundays()
+    ->at('02:00')
+    ->name('weekly-ratehawk-dump')
+    ->withoutOverlapping()
+    ->runInBackground();
+
+// Daily order status sync
+Schedule::command('ratehawk:orders:sync')
+    ->daily()
+    ->at('03:00')
+    ->name('daily-ratehawk-orders-sync')
+    ->withoutOverlapping();
+
+// Hourly cleanup of expired orders
+Schedule::command('ratehawk:orders:cleanup')
+    ->hourly()
+    ->name('hourly-ratehawk-orders-cleanup')
+    ->withoutOverlapping();
