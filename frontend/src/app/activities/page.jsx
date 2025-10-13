@@ -333,12 +333,12 @@ const ActivitiesPage = () => {
         filteredCategories = cachedCategories;
       } else {
         console.log('🌐 Fetching categories from API for activities page');
-        const categoriesRes = await fetch(`${API_BASE}/simple-categories`, {
-          signal: controller.signal,
-        });
-        
-        if (!categoriesRes.ok) throw new Error(`Categories fetch failed: ${categoriesRes.status}`);
-        const categoriesJson = await categoriesRes.json();
+      const categoriesRes = await fetch(`${API_BASE}/simple-categories`, {
+        signal: controller.signal,
+      });
+      
+      if (!categoriesRes.ok) throw new Error(`Categories fetch failed: ${categoriesRes.status}`);
+      const categoriesJson = await categoriesRes.json();
         const allCategoriesFromAPI = categoriesJson?.data?.categories || [];
         
         // Cache the raw categories first
@@ -681,26 +681,32 @@ const ActivitiesPage = () => {
     setSearchQuery(query);
   };
 
-  // Debounced search effect
+  // Debounced search effect with minimum 3 characters
   useEffect(() => {
     if (searchQuery !== activeSearchQuery) {
       setIsSearchProcessing(true);
     }
     
     const timeoutId = setTimeout(() => {
+      // Only search if query has at least 3 characters or is empty (to clear search)
+      if (searchQuery.trim().length >= 3 || searchQuery.trim().length === 0) {
     setActiveSearchQuery(searchQuery);
       setIsSearchProcessing(false);
       
       // Update URL without page reload
       const params = new URLSearchParams(searchParams.toString());
-      if (searchQuery.trim()) {
+        if (searchQuery.trim() && searchQuery.trim().length >= 3) {
         params.set('search', searchQuery);
       } else {
         params.delete('search');
       }
       params.set('page', '1');
       router.replace(`/activities?${params.toString()}`, { scroll: false });
-    }, 300); // 300ms debounce
+      } else {
+        // If less than 3 characters, don't search but stop processing indicator
+        setIsSearchProcessing(false);
+      }
+    }, 1000); // 1 second debounce
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery, activeSearchQuery, searchParams, router]);
@@ -1047,7 +1053,8 @@ const ActivitiesPage = () => {
           animate="visible"
           className="mb-8"
         >
-          <motion.div variants={itemVariants} className="max-w-7xl mx-auto">
+
+          <motion.div variants={itemVariants} className="max-w-7xl mx-auto relative z-10">
             {/* Search and Filter Row */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mb-4">
               {/* Simple Search Bar */}
@@ -1055,7 +1062,7 @@ const ActivitiesPage = () => {
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search activities..."
+                  placeholder="Search activities (min. 3 characters)..."
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="w-full pl-12 pr-20 py-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-lg text-gray-800 placeholder-gray-500"
@@ -1071,23 +1078,28 @@ const ActivitiesPage = () => {
                         <X className="h-4 w-4 text-gray-400" />
                       </button>
                     )}
-                  </div>
+                    {searchQuery.length > 0 && searchQuery.length < 3 && (
+                      <span className="text-xs text-gray-400">
+                        {3 - searchQuery.length} more
+                      </span>
+                    )}
+                </div>
               </form>
 
               {/* Category Filter */}
               <div className="relative" data-category-filter>
                 <button
                   onClick={() => setIsCategoryFilterOpen(!isCategoryFilterOpen)}
-                  className="flex items-center gap-2 bg-white border border-gray-200 rounded-2xl px-6 py-4 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap"
+                  className="flex items-center justify-center gap-2 bg-white border border-gray-200 rounded-2xl px-6 py-4 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap"
                 >
-                  <Filter className="h-5 w-5" />
+                  <Filter className="h-5 w-5 flex-shrink-0" />
                   <span className="font-medium">
                     {selectedCategoryFilter && categoryData?.name 
                       ? categoryData.name 
                       : 'All Categories'}
                   </span>
                   <ChevronDown
-                    className={`w-4 h-4 transition-transform ${isCategoryFilterOpen ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 flex-shrink-0 transition-transform ${isCategoryFilterOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
 
@@ -1113,7 +1125,7 @@ const ActivitiesPage = () => {
                             : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
                         }`}
                       >
-                        <span>{category.name}</span>
+                          <span>{category.name}</span>
                       </button>
                     ))}
                   </div>
@@ -1170,77 +1182,77 @@ const ActivitiesPage = () => {
 
             {/* Controls - View Mode and Sort */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-end">
-              {/* View Mode Toggle */}
-              <div className="flex bg-white rounded-3xl p-2 border border-gray-200 shadow-lg">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-3 rounded-2xl transition-all ${viewMode === 'grid'
-                    ? 'bg-blue-500 text-white shadow-lg'
-                    : 'text-gray-600 hover:bg-blue-50'
-                    }`}
-                >
-                  <Grid className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-3 rounded-2xl transition-all ${viewMode === 'list'
-                    ? 'bg-blue-500 text-white shadow-lg'
-                    : 'text-gray-600 hover:bg-blue-50'
-                    }`}
-                >
-                  <List className="h-5 w-5" />
-                </button>
-              </div>
+            {/* View Mode Toggle */}
+            <div className="flex bg-white rounded-3xl p-2 border border-gray-200 shadow-lg">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-3 rounded-2xl transition-all ${viewMode === 'grid'
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'text-gray-600 hover:bg-blue-50'
+                  }`}
+              >
+                <Grid className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-3 rounded-2xl transition-all ${viewMode === 'list'
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'text-gray-600 hover:bg-blue-50'
+                  }`}
+              >
+                <List className="h-5 w-5" />
+              </button>
+            </div>
 
-              {/* Sort Dropdown */}
-              <div className="relative" data-sort-dropdown>
-                <button
-                  onClick={() => setIsSortOpen(!isSortOpen)}
-                  className="flex items-center gap-2 bg-white border border-gray-200 rounded-3xl px-6 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            {/* Sort Dropdown */}
+            <div className="relative" data-sort-dropdown>
+              <button
+                onClick={() => setIsSortOpen(!isSortOpen)}
+                className="flex items-center gap-2 bg-white border border-gray-200 rounded-3xl px-6 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <span className="font-medium">
+                  {sortBy === 'popular' ? 'Most Popular' :
+                   sortBy === 'rating' ? 'Highest Rated' :
+                   sortBy === 'price_low' ? 'Price: Low to High' :
+                   sortBy === 'price_high' ? 'Price: High to Low' :
+                   sortBy === 'reviews' ? 'Most Reviews' : 'Sort by'}
+                </span>
+                <svg
+                  className={`w-4 h-4 transition-transform ${isSortOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <span className="font-medium">
-                    {sortBy === 'popular' ? 'Most Popular' :
-                     sortBy === 'rating' ? 'Highest Rated' :
-                     sortBy === 'price_low' ? 'Price: Low to High' :
-                     sortBy === 'price_high' ? 'Price: High to Low' :
-                     sortBy === 'reviews' ? 'Most Reviews' : 'Sort by'}
-                  </span>
-                  <svg
-                    className={`w-4 h-4 transition-transform ${isSortOpen ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
 
-                {isSortOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl py-2 z-50 border border-blue-100">
-                    {[
-                      { value: 'popular', label: 'Most Popular' },
-                      { value: 'rating', label: 'Highest Rated' },
-                      { value: 'price_low', label: 'Price: Low to High' },
-                      { value: 'price_high', label: 'Price: High to Low' },
-                      { value: 'reviews', label: 'Most Reviews' },
-                    ].map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={() => {
-                          setSortBy(option.value);
-                          setIsSortOpen(false);
-                        }}
-                        className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                          sortBy === option.value 
-                            ? 'bg-blue-100 text-blue-600 font-medium' 
-                            : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+              {isSortOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl py-2 z-50 border border-blue-100">
+                  {[
+                    { value: 'popular', label: 'Most Popular' },
+                    { value: 'rating', label: 'Highest Rated' },
+                    { value: 'price_low', label: 'Price: Low to High' },
+                    { value: 'price_high', label: 'Price: High to Low' },
+                    { value: 'reviews', label: 'Most Reviews' },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setSortBy(option.value);
+                        setIsSortOpen(false);
+                      }}
+                      className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                        sortBy === option.value 
+                          ? 'bg-blue-100 text-blue-600 font-medium' 
+                          : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
               </div>
             </div>
           </motion.div>
