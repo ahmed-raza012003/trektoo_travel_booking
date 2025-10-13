@@ -77,19 +77,19 @@ const CompanyInfo = () => {
           <svg className="w-4 h-4 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 24 24">
             <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
-          Trusted by 10K+ travelers
+          Trusted by thousands of travelers
         </div>
         <div className="flex items-center text-sm text-gray-300">
           <svg className="w-4 h-4 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 24 24">
             <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
-          50+ destinations covered
+          Multiple destinations covered worldwide
         </div>
         <div className="flex items-center text-sm text-gray-300">
           <svg className="w-4 h-4 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 24 24">
             <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
-          24/7 customer support
+          Round the clock customer support
         </div>
       </div>
       <div className="pt-4 border-t border-white/10">
@@ -98,6 +98,8 @@ const CompanyInfo = () => {
           <SocialIcon type="facebook" />
           <SocialIcon type="instagram" />
           <SocialIcon type="tiktok" />
+          <SocialIcon type="youtube" />
+          <SocialIcon type="linkedin" />
         </div>
       </div>
     </div>

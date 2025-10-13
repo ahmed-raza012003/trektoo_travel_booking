@@ -142,32 +142,8 @@ const Navbar = () => {
                 className="p-1.5 rounded-full text-gray-800 hover:bg-blue-100 transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Profile menu"
               >
-                {user?.avatar_url ? (
-                  <Image
-                    src={user.avatar_url}
-                    width={24}
-                    height={24}
-                    className="rounded-full"
-                    alt="Profile"
-                  />
-                ) : (
-                  <svg
-                    className="h-4 w-4 md:h-5 md:w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                )}
                 {user && (
-                  <span className="hidden md:inline text-sm">
+                  <span className="text-sm font-medium">
                     {user.first_name}
                   </span>
                 )}
