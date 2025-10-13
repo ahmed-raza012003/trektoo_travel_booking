@@ -24,56 +24,110 @@ const PopularActivities = () => {
     return `https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop&crop=center`;
   };
 
-  // Fetch random activities from database
+  // Fetch specific activities: SKI, SKY DIVING, DIVING, BALI CRUISE with caching
   useEffect(() => {
-    const fetchRandomActivities = async () => {
+    const fetchSpecificActivities = async () => {
       try {
+        // Check cache first
+        const cacheKey = 'top-picks-activities';
+        const cachedData = localStorage.getItem(cacheKey);
+        const cacheTimestamp = localStorage.getItem(`${cacheKey}-timestamp`);
+        
+        // Check if cache is valid (1 hour = 3600000 ms)
+        if (cachedData && cacheTimestamp && (Date.now() - parseInt(cacheTimestamp)) < 3600000) {
+          setActivities(JSON.parse(cachedData));
+          setLoading(false);
+          return;
+        }
+        
         setLoading(true);
         
-        // Fetch activities from database
-        const response = await fetch(`${API_BASE}/klook/activities?limit=50`, {
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch activities: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        if (data?.success && data?.data?.activity?.activity_list) {
-          const allActivities = data.data.activity.activity_list;
-          
-          // Get 3 random activities
-          const shuffled = [...allActivities].sort(() => 0.5 - Math.random());
-          const randomActivities = shuffled.slice(0, 3).map(activity => ({
-            ...activity,
-            // Ensure required fields exist
-            activity_id: activity.activity_id || activity.id || Math.random().toString(36),
-            title: activity.title || activity.name || 'Untitled Activity',
-            sub_title: activity.sub_title || activity.description || 'Amazing experience awaits',
-            price: activity.price || (Math.floor(Math.random() * 200) + 50),
-            currency: activity.currency || 'USD',
-            rating: activity.rating || (Math.random() * 1.5 + 3.5).toFixed(1),
-            review_count: activity.review_count || Math.floor(Math.random() * 500) + 10,
-            duration: activity.duration || `${Math.floor(Math.random() * 8) + 1} hours`,
-            location: activity.location || 'Various Locations',
-            highlights: activity.highlights || [
-              'Professional guide included',
-              'Small group experience',
-              'Instant confirmation',
-              'Free cancellation available'
+        // Predefined activities for Top Picks
+        const topPicksActivities = [
+          {
+            activity_id: 'ski-1',
+            title: 'Ski Adventure in the Alps',
+            sub_title: 'Experience world-class skiing with professional instructors',
+            price: 299,
+            currency: 'USD',
+            rating: '4.8',
+            review_count: 1247,
+            duration: '8 hours',
+            location: 'Switzerland, France',
+            highlights: [
+              'Professional ski instructor',
+              'All equipment included',
+              'Mountain lift passes',
+              'Hot chocolate breaks'
             ],
-            available_dates: activity.available_dates || ['Today', 'Tomorrow', 'This Weekend'],
-          }));
-          
-          setActivities(randomActivities);
-        } else {
-          throw new Error('Invalid API response format');
-        }
+            available_dates: ['Today', 'Tomorrow', 'This Weekend'],
+            primary_image_url: 'https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=800&h=600&fit=crop&crop=center'
+          },
+          {
+            activity_id: 'skydiving-1',
+            title: 'Ultimate Skydiving Experience',
+            sub_title: 'Jump from 15,000ft with tandem instructor',
+            price: 199,
+            currency: 'USD',
+            rating: '4.9',
+            review_count: 892,
+            duration: '3 hours',
+            location: 'Dubai, UAE',
+            highlights: [
+              'Tandem skydiving with instructor',
+              'Safety briefing included',
+              'Certificate of achievement',
+              'Video and photos package'
+            ],
+            available_dates: ['Today', 'Tomorrow', 'This Weekend'],
+            primary_image_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=600&fit=crop&crop=center'
+          },
+          {
+            activity_id: 'diving-1',
+            title: 'Scuba Diving Adventure',
+            sub_title: 'Explore underwater world with certified divers',
+            price: 149,
+            currency: 'USD',
+            rating: '4.7',
+            review_count: 1563,
+            duration: '6 hours',
+            location: 'Red Sea, Egypt',
+            highlights: [
+              'PADI certified instructor',
+              'All diving equipment',
+              'Underwater photography',
+              'Marine life spotting'
+            ],
+            available_dates: ['Today', 'Tomorrow', 'This Weekend'],
+            primary_image_url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop&crop=center'
+          },
+          {
+            activity_id: 'bali-cruise-1',
+            title: 'Bali Sunset Cruise Experience',
+            sub_title: 'Luxury yacht cruise with dinner and entertainment',
+            price: 89,
+            currency: 'USD',
+            rating: '4.6',
+            review_count: 2104,
+            duration: '4 hours',
+            location: 'Bali, Indonesia',
+            highlights: [
+              'Luxury yacht experience',
+              'Gourmet dinner included',
+              'Sunset viewing',
+              'Live entertainment'
+            ],
+            available_dates: ['Today', 'Tomorrow', 'This Weekend'],
+            primary_image_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&crop=center'
+          }
+        ];
+        
+        // Cache the results
+        localStorage.setItem(cacheKey, JSON.stringify(topPicksActivities));
+        localStorage.setItem(`${cacheKey}-timestamp`, Date.now().toString());
+        
+        setActivities(topPicksActivities);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching activities:', error);
         // Set fallback activities in case of error
@@ -123,7 +177,7 @@ const PopularActivities = () => {
       }
     };
 
-    fetchRandomActivities();
+    fetchSpecificActivities();
   }, []);
 
   const handleFavoriteToggle = (id) => {
@@ -160,7 +214,7 @@ const PopularActivities = () => {
   return (
     <section
       ref={ref}
-      className="py-20 bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden"
+      className="pt-20 pb-20 bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden"
       aria-labelledby="popular-activities-heading"
     >
       <div className="absolute inset-0 opacity-5">
@@ -192,7 +246,7 @@ const PopularActivities = () => {
       <div className="absolute bottom-20 right-10 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full blur-xl"></div>
       <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-gradient-to-br from-blue-300/10 to-blue-500/10 rounded-full blur-lg"></div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="container mx-auto px-10 w-[90vw] relative z-10">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -234,11 +288,11 @@ const PopularActivities = () => {
           variants={containerVariants}
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
         >
           {loading ? (
             // Loading skeleton
-            Array.from({ length: 3 }).map((_, i) => (
+            Array.from({ length: 4 }).map((_, i) => (
               <motion.div
                 key={i}
                 variants={itemVariants}
@@ -378,7 +432,7 @@ const PopularActivities = () => {
                         <span className="relative z-10 flex items-center justify-center gap-2">
                           View Details & Book
                           <motion.div
-                            className="w-4 h-4"
+                            className="w-4 h-4 flex items-center justify-center"
                             animate={{ x: [0, 4, 0] }}
                             transition={{ repeat: Infinity, duration: 1.5 }}
                           >
@@ -406,7 +460,7 @@ const PopularActivities = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-xl hover:shadow-2xl"
+              className="inline-flex items-center gap-2 bg-black text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-gray-800 transition-all duration-300 shadow-xl hover:shadow-2xl"
             >
               View All Activities
               <ArrowRight className="h-5 w-5" />

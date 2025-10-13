@@ -39,10 +39,10 @@ export default function HomePage() {
         {/* 4. OFFERS SECTION - Special Deals & Urgency (Best Practice: Expedia, Klook) */}
         <Suspense fallback={<ComponentLoader />}>
           <OffersSection />
-        </Suspense>.
+        </Suspense>
 
-                {/* 6. ACTIVITIES BY COUNTRIES - Browse by Location (Best Practice: Booking.com) */}
-                <Suspense fallback={<ComponentLoader />}>
+        {/* 6. ACTIVITIES BY COUNTRIES - Browse by Location (Best Practice: Booking.com) */}
+        <Suspense fallback={<ComponentLoader />}>
           <ActivitiesByCountries />
         </Suspense>
 

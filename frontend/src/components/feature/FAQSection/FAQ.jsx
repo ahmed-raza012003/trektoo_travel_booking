@@ -117,7 +117,7 @@ const FAQSection = () => {
   return (
     <section
       ref={ref}
-      className="py-20 bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden"
+      className="pt-20 pb-20 bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden"
       aria-labelledby="faq-section-heading"
     >
       {/* Background Pattern - Matching Hero Section */}

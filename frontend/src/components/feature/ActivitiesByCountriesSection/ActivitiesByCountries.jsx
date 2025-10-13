@@ -52,10 +52,22 @@ const ActivitiesByCountries = () => {
     }
   ];
 
-  // Fetch activity counts for each country
+  // Fetch activity counts for each country with caching
   useEffect(() => {
     const fetchCountryStats = async () => {
       try {
+        // Check cache first
+        const cacheKey = 'country-stats';
+        const cachedData = localStorage.getItem(cacheKey);
+        const cacheTimestamp = localStorage.getItem(`${cacheKey}-timestamp`);
+        
+        // Check if cache is valid (1 hour = 3600000 ms)
+        if (cachedData && cacheTimestamp && (Date.now() - parseInt(cacheTimestamp)) < 3600000) {
+          setCountryStats(JSON.parse(cachedData));
+          setLoading(false);
+          return;
+        }
+        
         setLoading(true);
         
         // Fetch all activities from database
@@ -93,6 +105,10 @@ const ActivitiesByCountries = () => {
             
             stats[country.id] = count;
           });
+          
+          // Cache the results
+          localStorage.setItem(cacheKey, JSON.stringify(stats));
+          localStorage.setItem(`${cacheKey}-timestamp`, Date.now().toString());
           
           setCountryStats(stats);
         } else {
@@ -140,7 +156,7 @@ const ActivitiesByCountries = () => {
   return (
     <section
       ref={ref}
-      className="py-20 bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden"
+      className="pt-20 pb-20 bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden"
       aria-labelledby="activities-by-countries-heading"
     >
       <div className="absolute inset-0 opacity-5">
@@ -172,7 +188,7 @@ const ActivitiesByCountries = () => {
       <div className="absolute bottom-20 right-10 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full blur-xl"></div>
       <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-gradient-to-br from-blue-300/10 to-blue-500/10 rounded-full blur-lg"></div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="container mx-auto px-10 w-[90vw] relative z-10">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -214,7 +230,7 @@ const ActivitiesByCountries = () => {
           variants={containerVariants}
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
-          className="grid grid-cols-4 gap-6 max-w-6xl mx-auto"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
         >
           {fixedCountries.map((country) => (
             <motion.div
@@ -223,9 +239,9 @@ const ActivitiesByCountries = () => {
               className="group relative"
             >
               <Link href={`/activities?search=${country.searchTerm}`}>
-                <div className="relative bg-white rounded-3xl shadow-2xl hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 border border-gray-100 cursor-pointer hover:-translate-y-3 overflow-hidden group/card">
+                <div className="relative bg-white rounded-3xl shadow-2xl hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 border border-gray-100 cursor-pointer hover:-translate-y-3 overflow-hidden group/card w-full">
                   {/* Country Image */}
-                  <div className="relative h-56 overflow-hidden">
+                  <div className="relative h-64 overflow-hidden">
                     <img
                       src={country.image}
                       alt={country.name}
