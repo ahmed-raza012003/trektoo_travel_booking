@@ -7,9 +7,6 @@ import {
   Phone,
   Mail,
   MessageCircle,
-  Facebook,
-  Instagram,
-  Music,
   MapPin,
   Clock,
   Users,
@@ -20,10 +17,17 @@ import {
   Heart,
   Award,
   CheckCircle,
-  Youtube,
-  Linkedin,
-  Camera,
 } from 'lucide-react';
+import { 
+  FaFacebookF, 
+  FaInstagram, 
+  FaTiktok, 
+  FaYoutube, 
+  FaLinkedinIn, 
+  FaSnapchat 
+} from 'react-icons/fa';
+
+// Using react-icons for reliable social media icons
 
 const ContactUsPage = () => {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
@@ -60,32 +64,32 @@ const ContactUsPage = () => {
       title: 'Call Center',
       value: '01063425677',
       description: 'General inquiries and bookings',
-      gradient: 'from-green-500 to-emerald-600',
-      hoverGradient: 'from-green-600 to-emerald-700',
+      gradient: 'from-blue-500 to-blue-500',
+      hoverGradient: 'from-blue-600 to-blue-600',
     },
     {
       icon: Users,
       title: 'Sales Department',
       value: '01092606758',
       description: 'Travel packages and special offers',
-      gradient: 'from-blue-500 to-cyan-600',
-      hoverGradient: 'from-blue-600 to-cyan-700',
+      gradient: 'from-blue-500 to-blue-500',
+      hoverGradient: 'from-blue-600 to-blue-600',
     },
     {
       icon: MessageCircle,
       title: 'Support',
       value: '0155 829 8719',
       description: 'Technical support and assistance',
-      gradient: 'from-purple-500 to-violet-600',
-      hoverGradient: 'from-purple-600 to-violet-700',
+      gradient: 'from-blue-500 to-blue-500',
+      hoverGradient: 'from-blue-600 to-blue-600',
     },
     {
       icon: Globe,
       title: 'UK Office',
       value: '+44 7308 656687',
       description: 'International support',
-      gradient: 'from-red-500 to-rose-600',
-      hoverGradient: 'from-red-600 to-rose-700',
+      gradient: 'from-blue-500 to-blue-500',
+      hoverGradient: 'from-blue-600 to-blue-600',
     },
   ];
 
@@ -95,66 +99,78 @@ const ContactUsPage = () => {
       title: 'Sales',
       value: 'sales@trektoo.com',
       description: 'For booking and sales inquiries',
-      gradient: 'from-orange-500 to-red-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
       icon: Shield,
       title: 'Support',
       value: 'support@trek-too.com',
       description: 'For technical support and help',
-      gradient: 'from-emerald-500 to-teal-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
       icon: Star,
       title: 'Information',
       value: 'Info@trektoo.com',
       description: 'For company information',
-      gradient: 'from-yellow-500 to-orange-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
   ];
 
   const socialMedia = [
     {
-      icon: Facebook,
+      icon: FaFacebookF,
       title: 'Facebook',
       url: 'https://www.facebook.com/trektoo2000',
       description: 'Follow us for updates and travel tips',
-      gradient: 'from-blue-600 to-blue-700',
+      bgColor: 'bg-[#1877F2]',
+      hoverBgColor: 'hover:bg-[#166FE5]',
+      textIcon: 'f',
     },
     {
-      icon: Instagram,
+      icon: FaInstagram,
       title: 'Instagram',
       url: 'https://www.instagram.com/trek_too?igsh=MTJ5NmY2YmI2OXdtOQ==',
       description: 'Travel inspiration and behind-the-scenes',
-      gradient: 'from-pink-500 to-purple-600',
+      bgColor: 'bg-gradient-to-br from-[#E4405F] to-[#C13584]',
+      hoverBgColor: 'hover:from-[#D7357A] hover:to-[#B02A6B]',
+      textIcon: '📷',
     },
     {
-      icon: Music,
+      icon: FaTiktok,
       title: 'TikTok',
       url: 'https://www.tiktok.com/@trektoo?_t=ZS-8yK2lqloH4r&_r=1',
       description: 'Quick travel tips and fun content',
-      gradient: 'from-gray-800 to-black',
+      bgColor: 'bg-[#000000]',
+      hoverBgColor: 'hover:bg-[#333333]',
+      textIcon: '♪',
     },
     {
-      icon: Youtube,
+      icon: FaYoutube,
       title: 'YouTube',
       url: 'https://www.youtube.com/@trektoo',
       description: 'Travel vlogs and destination guides',
-      gradient: 'from-red-500 to-red-600',
+      bgColor: 'bg-[#FF0000]',
+      hoverBgColor: 'hover:bg-[#E60000]',
+      textIcon: '▶',
     },
     {
-      icon: Linkedin,
+      icon: FaLinkedinIn,
       title: 'LinkedIn',
       url: 'https://www.linkedin.com/company/trektoo',
       description: 'Professional updates and business insights',
-      gradient: 'from-blue-700 to-blue-800',
+      bgColor: 'bg-[#0A66C2]',
+      hoverBgColor: 'hover:bg-[#004182]',
+      textIcon: 'in',
     },
     {
-      icon: Camera,
+      icon: FaSnapchat,
       title: 'Snapchat',
       url: 'https://www.snapchat.com/add/trektoo',
       description: 'Real-time travel moments and stories',
-      gradient: 'from-yellow-500 to-yellow-600',
+      bgColor: 'bg-[#FFFC00]',
+      hoverBgColor: 'hover:bg-[#E6E600]',
+      textIcon: '👻',
     },
   ];
 
@@ -200,7 +216,7 @@ const ContactUsPage = () => {
         className="relative z-10 pt-32 pb-16 px-4 sm:px-6 lg:px-8"
       >
         <div className="max-w-7xl mx-auto">
-          {/* Hero Section - Matching About Page Style */}
+          {/* 1. HERO SECTION - Introduction (Best Practice: All major sites) */}
           <section className="py-20 relative overflow-hidden">
           <motion.div
               variants={containerVariants}
@@ -245,7 +261,7 @@ const ContactUsPage = () => {
 
           </section>
 
-          {/* Phone Contacts - Rich Design */}
+          {/* 2. PHONE SUPPORT - Primary Contact (Best Practice: Booking.com, Expedia) */}
           <section className="py-20 relative overflow-hidden">
           <motion.div
               variants={containerVariants}
@@ -338,7 +354,7 @@ const ContactUsPage = () => {
           </motion.div>
           </section>
 
-          {/* Email Contacts - Rich Design */}
+          {/* 3. EMAIL SUPPORT - Secondary Contact (Best Practice: All major sites) */}
           <section className="py-20 relative overflow-hidden">
           <motion.div
               variants={containerVariants}
@@ -428,7 +444,7 @@ const ContactUsPage = () => {
           </motion.div>
           </section>
 
-          {/* Social Media - Rich Design */}
+          {/* 4. SOCIAL MEDIA - Community Engagement (Best Practice: Modern companies) */}
           <section className="py-20 relative overflow-hidden">
           <motion.div
               variants={containerVariants}
@@ -491,9 +507,13 @@ const ContactUsPage = () => {
                   >
                     <div className="p-6 text-center">
                       <div
-                        className={`w-12 h-12 bg-gradient-to-r ${social.gradient} rounded-xl flex items-center justify-center mx-auto mb-4 text-white shadow-sm group-hover:shadow-md transition-all duration-300`}
+                        className={`w-12 h-12 ${social.bgColor} ${social.hoverBgColor} rounded-xl flex items-center justify-center mx-auto mb-4 text-white shadow-sm group-hover:shadow-md transition-all duration-300 ${
+                          social.title === 'Snapchat' ? 'text-black' : ''
+                        }`}
                       >
-                        <IconComponent className="w-6 h-6" />
+                        <div className={`text-xl font-bold ${social.title === 'Snapchat' ? 'text-black' : 'text-white'}`}>
+                          {social.textIcon}
+                        </div>
                         </div>
                       <h3
                         className="text-lg font-bold text-gray-800 mb-2 group-hover:text-pink-600 transition-colors duration-200"
@@ -514,7 +534,7 @@ const ContactUsPage = () => {
             </motion.div>
           </section>
 
-          {/* Company Information - Rich Design */}
+          {/* 5. COMPANY INFORMATION - Legal & Trust (Best Practice: Bottom placement) */}
           <section className="py-20 relative overflow-hidden">
             <motion.div
               variants={containerVariants}
@@ -569,7 +589,7 @@ const ContactUsPage = () => {
                 className="group relative bg-white rounded-2xl shadow-md hover:shadow-lg overflow-hidden transition-all duration-300 border border-gray-100 hover:border-blue-300"
               >
                 <div className="p-8 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-gray-700 to-gray-900 rounded-xl flex items-center justify-center mx-auto mb-6 text-white shadow-sm">
+                  <div className="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-6 text-white shadow-sm">
                     <Shield className="w-8 h-8" />
                 </div>
                   <h3

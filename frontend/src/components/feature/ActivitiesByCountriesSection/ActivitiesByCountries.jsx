@@ -189,9 +189,9 @@ const ActivitiesByCountries = () => {
                 letterSpacing: '-0.02em',
               }}
             >
-              Activities by{' '}
+              Discover Activities by{' '}
               <span className="text-blue-600 relative">
-                Countries
+                Destination
                 <svg
                   className="absolute -bottom-2 left-0 w-full h-3"
                   viewBox="0 0 200 12"
@@ -208,19 +208,13 @@ const ActivitiesByCountries = () => {
               </span>
             </h2>
           </motion.div>
-          <motion.div variants={itemVariants}>
-            <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
-              Explore amazing activities and experiences across different countries 
-              and discover unique adventures worldwide
-            </p>
-          </motion.div>
         </motion.div>
 
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6"
+          className="grid grid-cols-4 gap-6 max-w-6xl mx-auto"
         >
           {fixedCountries.map((country) => (
             <motion.div
@@ -276,41 +270,10 @@ const ActivitiesByCountries = () => {
                       </div>
                     </div>
                   </div>
-
-                  {/* Bottom Info */}
-                  <div className="p-5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <MapPin className="h-4 w-4 text-blue-500" />
-                        <span className="text-sm font-medium">{country.name}</span>
-                      </div>
-                      
-                      
-                    </div>
-                  </div>
                 </div>
               </Link>
             </motion.div>
           ))}
-        </motion.div>
-
-        {/* View All Button */}
-        <motion.div
-          variants={itemVariants}
-          initial="hidden"
-          animate={inView ? 'visible' : 'hidden'}
-          className="text-center mt-12"
-        >
-          <Link href="/activities">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-xl hover:shadow-2xl"
-            >
-              View All Activities
-              <ArrowRight className="h-5 w-5" />
-            </motion.button>
-          </Link>
         </motion.div>
       </div>
     </section>

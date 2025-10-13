@@ -209,9 +209,9 @@ const PopularActivities = () => {
                 letterSpacing: '-0.02em',
               }}
             >
-              Some{' '}
+              Top Picks{' '}
               <span className="text-blue-600 relative">
-                Popular Activities
+                for You
                 <svg
                   className="absolute -bottom-2 left-0 w-full h-3"
                   viewBox="0 0 200 12"
@@ -227,12 +227,6 @@ const PopularActivities = () => {
                 </svg>
               </span>
             </h2>
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
-              Discover amazing experiences and adventures from our curated collection 
-              of handpicked activities
-            </p>
           </motion.div>
         </motion.div>
 

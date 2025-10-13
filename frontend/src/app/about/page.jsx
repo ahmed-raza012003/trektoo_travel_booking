@@ -11,7 +11,6 @@ import {
   Zap,
   Clock,
   Award,
-  Globe,
   Star,
   CheckCircle,
   Compass,
@@ -96,7 +95,7 @@ const AboutUsPage = () => {
         className="relative z-10 pt-32 pb-16 px-4 sm:px-6 lg:px-8"
       >
         <div className="max-w-7xl mx-auto">
-          {/* Hero Section - Matching Landing Page Style */}
+          {/* 1. HERO SECTION - Introduction */}
           <section className="py-20 relative overflow-hidden">
             <motion.div
               variants={containerVariants}
@@ -141,64 +140,9 @@ const AboutUsPage = () => {
               </motion.div>
             </motion.div>
 
-            {/* Stats Cards - Rich Design */}
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate={inView ? 'visible' : 'hidden'}
-              className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16 px-4"
-            >
-              {[
-                { 
-                  icon: Globe, 
-                  value: '50+', 
-                  label: 'Destinations',
-                  description: 'Amazing places to explore',
-                  color: 'from-emerald-500 to-emerald-600'
-                },
-                { 
-                  icon: Award, 
-                  value: '24/7', 
-                  label: 'Support',
-                  description: 'Always here to help',
-                  color: 'from-purple-500 to-purple-600'
-                },
-                { 
-                  icon: Star, 
-                  value: '2024', 
-                  label: 'Founded',
-                  description: 'Born from passion',
-                  color: 'from-blue-500 to-blue-600'
-                },
-              ].map((stat, index) => (
-                <motion.div
-                  key={index}
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.02, y: -3 }}
-                  className="group relative bg-white rounded-3xl shadow-lg hover:shadow-lg hover:shadow-blue-500/10 overflow-hidden transition-all duration-300 border border-gray-200 hover:border-blue-500"
-                >
-                  <div className="p-8 text-center">
-                    <div
-                      className={`w-20 h-20 bg-gradient-to-r ${stat.color} rounded-full flex items-center justify-center mx-auto mb-6 text-white shadow-lg group-hover:shadow-lg transition-all duration-300`}
-                    >
-                      <stat.icon className="w-10 h-10" />
-                    </div>
-                    <div className="text-4xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-                    {stat.value}
-                  </div>
-                    <div className="text-xl font-semibold text-gray-800 mb-2">
-                    {stat.label}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {stat.description}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
           </section>
 
-          {/* Our Story Section - Rich Design */}
+          {/* 2. WHY CHOOSE TREKTOO - Value Proposition Early (Best Practice: Airbnb, Stripe) */}
           <section className="py-20 relative overflow-hidden">
             <motion.div
               variants={containerVariants}
@@ -215,9 +159,9 @@ const AboutUsPage = () => {
                     letterSpacing: '-0.02em',
                   }}
                 >
-                  Our{' '}
-                  <span className="text-red-600 relative">
-                    Story
+                  Why Choose{' '}
+                  <span className="text-blue-600 relative">
+                    Trektoo?
                     <svg
                       className="absolute -bottom-2 left-0 w-full h-3"
                       viewBox="0 0 200 12"
@@ -235,68 +179,27 @@ const AboutUsPage = () => {
                 </h2>
               </motion.div>
               <motion.div variants={itemVariants}>
-                <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
-                  Born from resilience, built for everyone
+                <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium mb-12">
+                  We're not just another travel agency. Here's what makes us different
                 </p>
+              </motion.div>
             </motion.div>
-          </motion.div>
 
-          <motion.div
+            <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
+              className="max-w-4xl mx-auto text-center"
             >
-              {/* Story Content */}
-              <motion.div variants={itemVariants} className="space-y-6">
-              <div className="flex items-center mb-8">
-                  <div className="bg-gradient-to-r from-red-500 to-pink-600 p-4 rounded-2xl shadow-lg mr-6">
-                  <Heart className="h-8 w-8 text-white" />
-                </div>
-                <div>
-                    <h3
-                      className="text-2xl font-bold text-gray-900"
-                      style={{
-                        fontFamily:
-                          "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
-                      }}
-                    >
-                      Born from Resilience
-                    </h3>
-                    <div className="w-20 h-1 bg-gradient-to-r from-red-500 to-pink-500 rounded-full mt-2"></div>
-                  </div>
-                </div>
-                <p className="text-lg text-gray-600 leading-relaxed mb-6">
-                Trektoo emerged from personal hardship. When travel seemed
-                impossible due to limited resources, we refused to give up. We
-                built this platform to democratize travel — making it{' '}
-                <span className="font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  accessible, transparent, and effortless
-                </span>{' '}
-                for everyone.
-              </p>
-                <div className="bg-gradient-to-br from-red-50 to-pink-50 p-6 rounded-xl border border-red-100">
-                  <div className="text-3xl font-bold text-red-600 mb-2">2024</div>
-                  <div className="text-lg text-gray-600 font-medium">Founded with a Vision</div>
-            </div>
-          </motion.div>
-
-              {/* Story Visual */}
-              <motion.div variants={itemVariants} className="relative">
-                <div className="relative bg-gradient-to-br from-red-100 via-pink-100 to-purple-100 rounded-3xl p-8 h-96 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-32 h-32 bg-gradient-to-r from-red-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                      <Heart className="h-16 w-16 text-white" />
-                    </div>
-                    <h4 className="text-xl font-bold text-gray-800 mb-2">Passion-Driven</h4>
-                    <p className="text-gray-600">Built by travelers, for travelers</p>
-                  </div>
-                </div>
+              <motion.div variants={itemVariants}>
+                <p className="text-xl md:text-2xl text-gray-600 leading-relaxed font-medium">
+                  We're not just another travel agency. Born from real travel struggles, we understand the barriers that prevent people from exploring the world. With transparent pricing, budget-conscious deals, and dedicated customer care, we make travel accessible and effortless for everyone.
+                </p>
               </motion.div>
             </motion.div>
           </section>
 
-          {/* Mission & Vision - Rich Design */}
+          {/* 3. MISSION & VISION - Core Purpose (Best Practice: Booking.com) */}
           <section className="py-20 relative overflow-hidden">
             <motion.div
               variants={containerVariants}
@@ -343,68 +246,145 @@ const AboutUsPage = () => {
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
-              className="grid md:grid-cols-2 gap-6 px-4"
+              className="max-w-4xl mx-auto text-center"
             >
-              {[
-                {
-                  icon: Target,
-                title: 'Our Mission',
-                content:
-                  'Simplify travel planning with budget-friendly options and total pricing transparency.',
-                gradient: 'from-blue-500 to-cyan-500',
-                  features: ['Budget-friendly options', 'Transparent pricing', 'Easy planning']
-              },
-              {
-                  icon: Compass,
-                title: 'Our Vision',
-                content:
-                  'To be the first choice for seamless travel experiences across the Arab world.',
-                gradient: 'from-indigo-500 to-purple-500',
-                  features: ['Regional leader', 'Seamless experiences', 'Trusted choice']
-              },
-            ].map((item, index) => (
-              <motion.div
-                key={index}
-                  variants={itemVariants}
-                whileHover={{ scale: 1.02, y: -3 }}
-                className="group relative bg-white rounded-3xl shadow-lg hover:shadow-lg hover:shadow-blue-500/10 overflow-hidden transition-all duration-300 border border-gray-200 hover:border-blue-500"
-                >
-                  <div className="p-8">
-                    <div className="text-center mb-6">
-                      <div
-                        className={`w-20 h-20 bg-gradient-to-r ${item.gradient} rounded-full flex items-center justify-center mx-auto mb-6 text-white shadow-lg group-hover:shadow-lg transition-all duration-300`}
-                      >
-                        <item.icon className="w-10 h-10" />
-                  </div>
-                      <h3
-                        className="text-2xl font-bold text-gray-800 mb-4 group-hover:text-blue-600 transition-colors duration-200"
-                        style={{
-                          fontFamily:
-                            "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
-                        }}
-                      >
-                    {item.title}
+              <motion.div variants={itemVariants} className="space-y-8">
+                <div>
+                  <h3
+                    className="text-3xl font-bold text-gray-900 mb-4"
+                    style={{
+                      fontFamily:
+                        "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                    }}
+                  >
+                    Our Mission
                   </h3>
-                      <p className="text-gray-600 leading-relaxed text-base mb-6">
-                    {item.content}
+                  <p className="text-xl text-gray-600 leading-relaxed">
+                    To simplify travel planning with budget-friendly options and complete pricing transparency, making world-class adventures accessible to everyone regardless of their financial situation.
                   </p>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      {item.features.map((feature, idx) => (
-                        <div key={idx} className="flex items-center gap-3 text-gray-600">
-                          <div className={`w-2 h-2 bg-gradient-to-r ${item.gradient} rounded-full`}></div>
-                          <span className="text-sm font-medium">{feature}</span>
-                        </div>
-                      ))}
-                    </div>
+                </div>
+                
+                <div>
+                  <h3
+                    className="text-3xl font-bold text-gray-900 mb-4"
+                    style={{
+                      fontFamily:
+                        "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                    }}
+                  >
+                    Our Vision
+                  </h3>
+                  <p className="text-xl text-gray-600 leading-relaxed">
+                    To become the leading choice for seamless travel experiences across the world and beyond, building a community where every traveler can turn their dreams into reality.
+                  </p>
                 </div>
               </motion.div>
-            ))}
-          </motion.div>
+            </motion.div>
           </section>
 
-          {/* Core Values - Rich Design */}
+          {/* 4. OUR STORY - Brand Narrative (Best Practice: Airbnb) */}
+          <section className="py-20 relative overflow-hidden">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate={inView ? 'visible' : 'hidden'}
+              className="text-center mb-16"
+            >
+              <motion.div variants={itemVariants}>
+                <h2
+                  className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6"
+                  style={{
+                    fontFamily:
+                      "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Our{' '}
+                  <span className="text-red-600 relative">
+                    Story
+                    <svg
+                      className="absolute -bottom-2 left-0 w-full h-3"
+                      viewBox="0 0 200 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M2 10C50 2 100 2 198 10"
+                        stroke="#E0C097"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                </h2>
+                </motion.div>
+              <motion.div variants={itemVariants}>
+                <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
+                  Born from resilience, built for everyone
+                </p>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate={inView ? 'visible' : 'hidden'}
+              className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
+            >
+              {/* Story Content */}
+              <motion.div variants={itemVariants} className="space-y-6">
+              <div className="flex items-center mb-8">
+                  <div className="bg-blue-500 p-4 rounded-2xl shadow-lg mr-6">
+                  <Heart className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                    <h3
+                      className="text-2xl font-bold text-gray-900"
+                      style={{
+                        fontFamily:
+                          "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                      }}
+                    >
+                      Born from Resilience
+                    </h3>
+                    <div className="w-20 h-1 bg-gradient-to-r from-red-500 to-pink-500 rounded-full mt-2"></div>
+                  </div>
+                </div>
+                <p className="text-lg text-gray-600 leading-relaxed mb-6">
+                Trektoo emerged from personal hardship. When travel seemed
+                impossible due to limited resources, we refused to give up. We
+                built this platform to democratize travel — making it{' '}
+                <span className="font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  accessible, transparent, and effortless
+                </span>{' '}
+                for everyone.
+              </p>
+                <div className="bg-gradient-to-br from-red-50 to-pink-50 p-6 rounded-xl border border-red-100">
+                  <div className="text-3xl font-bold text-red-600 mb-2">2024</div>
+                  <div className="text-lg text-gray-600 font-medium">Founded with a Vision</div>
+            </div>
+          </motion.div>
+
+              {/* Story Visual */}
+              <motion.div variants={itemVariants} className="relative">
+                <div className="relative flex items-center justify-center h-96">
+                  <div className="text-center">
+                    <div className="w-48 h-48 flex items-center justify-center mx-auto mb-6">
+                      <img 
+                        src="/images/logo.png" 
+                        alt="Trektoo Logo" 
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <h4 className="text-xl font-bold text-gray-800 mb-2">Trektoo</h4>
+                    <p className="text-gray-600">Built by travelers, for travelers</p>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </section>
+
+          {/* 5. CORE VALUES - Principles (Best Practice: Shopify, Stripe) */}
           <section className="py-20 relative overflow-hidden">
           <motion.div
               variants={containerVariants}
@@ -458,29 +438,29 @@ const AboutUsPage = () => {
                     title: 'Perseverance',
                     desc: 'We conquer obstacles to serve you better.',
                   icon: Shield,
-                    color: 'from-blue-500 to-blue-600',
+                    color: 'from-blue-500 to-blue-500',
                   bg: 'from-blue-50 to-blue-100'
                   },
                   {
                     title: 'Transparency',
                     desc: 'No hidden fees. No surprises.',
                   icon: CheckCircle,
-                    color: 'from-emerald-500 to-emerald-600',
-                  bg: 'from-emerald-50 to-emerald-100'
+                    color: 'from-blue-500 to-blue-500',
+                  bg: 'from-blue-50 to-blue-100'
                   },
                   {
                     title: 'Human-Centered',
                     desc: "You're our priority, not a transaction.",
                   icon: Heart,
-                    color: 'from-purple-500 to-purple-600',
-                  bg: 'from-purple-50 to-purple-100'
+                    color: 'from-blue-500 to-blue-500',
+                  bg: 'from-blue-50 to-blue-100'
                   },
                   {
                     title: 'Integrity',
                     desc: 'Honest recommendations, accountable service.',
                   icon: Award,
-                    color: 'from-orange-500 to-orange-600',
-                  bg: 'from-orange-50 to-orange-100'
+                    color: 'from-blue-500 to-blue-500',
+                  bg: 'from-blue-50 to-blue-100'
                   },
                 ].map((value, index) => (
                   <motion.div
@@ -515,7 +495,7 @@ const AboutUsPage = () => {
           </section>
 
 
-          {/* Enhanced Journey Section */}
+          {/* 6. OUR JOURNEY - Timeline (Best Practice: Company storytelling) */}
           <section className="py-20 relative overflow-hidden">
           <motion.div
               variants={containerVariants}
@@ -569,10 +549,10 @@ const AboutUsPage = () => {
                 {
                   phase: 'Step 1',
                   year: '2024',
-                  title: 'The Idea 💡',
+                  title: 'The Idea',
                   description: 'The idea of Trektoo came into my mind. A vision to make travel accessible and effortless for everyone.',
                   details: ['Initial concept development', 'Market research', 'Planning the platform structure'],
-                  color: 'from-blue-500 to-blue-600',
+                  color: 'from-blue-500 to-blue-500',
                   bgColor: 'from-blue-50 to-blue-100',
                   icon: '💡',
                   progress: '15%'
@@ -580,44 +560,44 @@ const AboutUsPage = () => {
                 {
                   phase: 'Step 2',
                   year: '2024',
-                  title: 'Company Registration 🏢',
+                  title: 'Company Registration',
                   description: 'Officially registered Trektoo as a company and started building the foundation for our travel platform.',
                   details: ['Legal registration', 'Team formation', 'Initial funding'],
-                  color: 'from-purple-500 to-purple-600',
-                  bgColor: 'from-purple-50 to-purple-100',
-                  icon: '🏢',
+                  color: 'from-blue-500 to-blue-500',
+                  bgColor: 'from-blue-50 to-blue-100',
+                  icon: '📋',
                   progress: '30%'
                 },
                 {
                   phase: 'Step 3',
                   year: '2025',
-                  title: 'Activities Launch 🎯',
+                  title: 'Activities Launch',
                   description: 'Started with activities booking - our first service to help travelers discover amazing experiences.',
                   details: ['Activities integration', 'Partner agreements', 'User interface development'],
-                  color: 'from-green-500 to-green-600',
-                  bgColor: 'from-green-50 to-green-100',
-                  icon: '🎯',
+                  color: 'from-blue-500 to-blue-500',
+                  bgColor: 'from-blue-50 to-blue-100',
+                  icon: '🎫',
                   progress: '60%'
                 },
                 {
                   phase: 'Step 4',
                   year: '2025',
-                  title: 'Car Rentals 🚗',
+                  title: 'Car Rentals',
                   description: 'Next step: Adding car rental services to provide complete transportation solutions for travelers.',
                   details: ['Car rental partnerships', 'Booking system integration', 'Fleet management'],
-                  color: 'from-orange-500 to-orange-600',
-                  bgColor: 'from-orange-50 to-orange-100',
-                  icon: '🚗',
+                  color: 'from-blue-500 to-blue-500',
+                  bgColor: 'from-blue-50 to-blue-100',
+                  icon: '🚙',
                   progress: '80%'
                 },
                 {
                   phase: 'Step 5',
                   year: '2025',
-                  title: 'Hotel Booking 🏨',
+                  title: 'Hotel Booking',
                   description: 'Final milestone: Hotel booking integration to offer complete travel planning in one platform.',
                   details: ['Hotel partnerships', 'Room availability system', 'Complete travel packages'],
-                  color: 'from-indigo-500 to-indigo-600',
-                  bgColor: 'from-indigo-50 to-indigo-100',
+                  color: 'from-blue-500 to-blue-500',
+                  bgColor: 'from-blue-50 to-blue-100',
                   icon: '🏨',
                   progress: '100%'
                 }
@@ -625,7 +605,6 @@ const AboutUsPage = () => {
                   <motion.div
                     key={index}
                   variants={itemVariants}
-                  whileHover={{ scale: 1.02, y: -5 }}
                   className="group relative bg-white rounded-3xl shadow-lg hover:shadow-lg hover:shadow-blue-500/10 overflow-hidden transition-all duration-300 border border-gray-200 hover:border-blue-500"
                 >
                   {/* Progress Bar */}
@@ -703,7 +682,7 @@ const AboutUsPage = () => {
             </motion.div>
           </section>
 
-          {/* Fun Stats with Animations */}
+          {/* 7. FUN STATS - Achievements (Best Practice: Social proof at bottom) */}
           <section className="py-20 relative overflow-hidden">
                 <motion.div
               variants={containerVariants}
@@ -745,34 +724,21 @@ const AboutUsPage = () => {
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
-              className="grid grid-cols-2 md:grid-cols-4 gap-8"
+              className="grid grid-cols-1 md:grid-cols-3 gap-8"
             >
               {[
-                { emoji: '🏆', number: '98%', label: 'Success Rate', color: 'from-yellow-400 to-yellow-600' },
-                { emoji: '⚡', number: '<2s', label: 'Loading Time', color: 'from-blue-400 to-blue-600' },
-                { emoji: '🎯', number: '99.9%', label: 'Uptime', color: 'from-green-400 to-green-600' },
-                { emoji: '🔥', number: '24/7', label: 'Support', color: 'from-red-400 to-red-600' }
+                { emoji: '✓', number: '98%', label: 'Success Rate', color: 'from-green-500 to-green-600' },
+                { emoji: '📊', number: '99.9%', label: 'Uptime', color: 'from-blue-500 to-blue-600' },
+                { emoji: '🕐', number: '24/7', label: 'Support', color: 'from-purple-500 to-purple-600' }
               ].map((stat, index) => (
                 <motion.div
                   key={index}
                   variants={itemVariants}
-                  whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
                   className="text-center group"
                 >
-                  <motion.div
-                    animate={{ 
-                      rotate: [0, 10, -10, 0],
-                      scale: [1, 1.1, 1]
-                    }}
-                    transition={{ 
-                      duration: 3,
-                      repeat: Infinity,
-                      delay: index * 0.5
-                    }}
-                    className="text-6xl mb-4"
-                  >
+                  <div className="text-6xl mb-4">
                     {stat.emoji}
-                  </motion.div>
+                  </div>
                   <div className={`text-4xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent mb-2`}>
                     {stat.number}
                 </div>

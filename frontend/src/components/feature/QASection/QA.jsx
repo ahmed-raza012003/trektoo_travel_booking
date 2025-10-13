@@ -97,12 +97,32 @@ const AdventureVideoSection = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Heading */}
         <motion.div className="text-center mb-10 md:mb-16">
-          <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
-            Enjoy <span className="text-blue-600">Real Adventure</span>
+          <h2
+            className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6"
+            style={{
+              fontFamily:
+                "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Step Into{' '}
+            <span className="text-blue-600 relative">
+              Adventure
+              <svg
+                className="absolute -bottom-2 left-0 w-full h-3"
+                viewBox="0 0 200 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M2 10C50 2 100 2 198 10"
+                  stroke="#E0C097"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
           </h2>
-          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
-            Discover authentic experiences and let Trektoo guide you through every step of your journey.
-          </p>
         </motion.div>
 
         {/* Video */}
