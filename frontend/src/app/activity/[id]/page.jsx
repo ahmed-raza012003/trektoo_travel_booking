@@ -68,6 +68,31 @@ const ExpandableText = ({ children, maxHeight = 120 }) => {
 const ActivityDetailPage = () => {
     const { id } = useParams();
     const [activity, setActivity] = useState(null);
+    
+    // Add error boundary state
+    const [hasError, setHasError] = useState(false);
+    
+    // Global error handler to prevent generic error page
+    useEffect(() => {
+        const handleError = (error) => {
+            console.error("Global error caught:", error);
+            setHasError(true);
+        };
+        
+        const handleUnhandledRejection = (event) => {
+            console.error("Unhandled promise rejection:", event.reason);
+            setHasError(true);
+        };
+        
+        window.addEventListener('error', handleError);
+        window.addEventListener('unhandledrejection', handleUnhandledRejection);
+        
+        return () => {
+            window.removeEventListener('error', handleError);
+            window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+        };
+    }, []);
+    
     const [selectedPackage, setSelectedPackage] = useState(0);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [adultQuantity, setAdultQuantity] = useState(1);
@@ -89,6 +114,11 @@ const ActivityDetailPage = () => {
     const MARKUP_PERCENTAGE = 0.15;
     const applyMarkup = (price) => price * (1 + MARKUP_PERCENTAGE);
     const images = activity?.images || [];
+    
+    // Safety check to prevent null reference errors
+    if (activity && !activity.images) {
+        activity.images = [];
+    }
 
     // Helper function to check if there are any available time slots
     const hasAvailableTimeSlots = (schedules) => {
@@ -166,17 +196,44 @@ const ActivityDetailPage = () => {
         const fetchActivity = async () => {
             try {
                 setError(null);
-                const res = await fetch(`${API_BASE}/klook/activities/${id}`);
-                if (!res.ok) throw new Error(`Failed to fetch activity: ${res.status}`);
+                
+                // Add timeout to prevent hanging requests
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+                
+                const res = await fetch(`${API_BASE}/klook/activities/${id}`, {
+                    signal: controller.signal,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!res.ok) {
+                    if (res.status === 404) {
+                        setError("Activity not found");
+                        return;
+                    }
+                    setError("Activity not available");
+                    return;
+                }
+                
                 const json = await res.json();
-                if (json.success) {
+                
+                if (json.success && json.data?.activity) {
                     setActivity(json.data.activity);
                 } else {
-                    throw new Error(json.message || "Failed to load activity details");
+                    setError("Activity not available");
                 }
             } catch (error) {
                 console.error("Error fetching activity details:", error);
-                setError(error.message);
+                if (error.name === 'AbortError') {
+                    setError("Request timed out");
+                } else {
+                    setError("Activity not available");
+                }
             }
         };
         if (id) fetchActivity();
@@ -277,7 +334,7 @@ const ActivityDetailPage = () => {
     };
 
     // --- Loading State ---
-    if (!activity) {
+    if (!activity && !error) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-5">
@@ -309,6 +366,170 @@ const ActivityDetailPage = () => {
         );
     }
 
+    // --- Error Boundary State ---
+    if (hasError) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden mt-10">
+                <div className="flex items-center justify-center min-h-screen relative z-10 px-4">
+                    <div className="text-center max-w-2xl mx-auto">
+                        <div className="w-24 h-24 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg">
+                            <AlertCircle className="h-12 w-12 text-red-500" />
+                        </div>
+                        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                            Activity Not Available
+                        </h1>
+                        <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                            This activity is not available right now. Please try browsing other activities.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <button
+                                onClick={() => window.history.back()}
+                                className="px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-3"
+                            >
+                                <ArrowRight className="h-5 w-5 rotate-180" />
+                                Go Back
+                            </button>
+                            <button
+                                onClick={() => window.location.href = '/activities'}
+                                className="px-8 py-4 bg-white text-gray-800 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 shadow-lg hover:shadow-xl border border-gray-200 flex items-center justify-center gap-3"
+                            >
+                                <Ticket className="h-5 w-5" />
+                                Browse Activities
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // --- Activity Not Available State ---
+    if (error || !activity) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden mt-10">
+                {/* Background Pattern */}
+                <div className="absolute inset-0 opacity-5">
+                    <svg className="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <pattern id="grid-activity-not-found" width="20" height="20" patternUnits="userSpaceOnUse">
+                                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#2196F3" strokeWidth="0.3" />
+                            </pattern>
+                        </defs>
+                        <rect width="100" height="100" fill="url(#grid-activity-not-found)" />
+                    </svg>
+                </div>
+
+                {/* Decorative Elements */}
+                <div className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-blue-600/5 rounded-full blur-2xl"></div>
+                <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-br from-blue-500/5 to-blue-600/5 rounded-full blur-2xl"></div>
+                <div className="absolute top-1/2 left-1/3 w-24 h-24 bg-gradient-to-br from-blue-400/3 to-blue-500/3 rounded-full blur-xl"></div>
+
+                {/* Main Content */}
+                <div className="flex items-center justify-center min-h-screen relative z-10 px-4">
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6 }}
+                        className="text-center max-w-2xl mx-auto"
+                    >
+                        {/* Icon */}
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.2, duration: 0.5, type: "spring" }}
+                            className="w-24 h-24 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg"
+                        >
+                            <AlertCircle className="h-12 w-12 text-red-500" />
+                        </motion.div>
+
+                        {/* Title */}
+                        <motion.h1
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                            className="text-4xl md:text-5xl font-bold text-gray-900 mb-6"
+                        >
+                            Activity Not Available
+                        </motion.h1>
+
+                        {/* Description */}
+                        <motion.p
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4 }}
+                            className="text-xl text-gray-600 mb-8 leading-relaxed"
+                        >
+                            This activity is not available right now. It may have been removed or is temporarily unavailable.
+                        </motion.p>
+
+                        {/* Additional Info */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-8 shadow-lg border border-gray-200"
+                        >
+                            <div className="flex items-center justify-center gap-3 mb-4">
+                                <Info className="h-5 w-5 text-blue-600" />
+                                <span className="font-semibold text-gray-800">What you can do:</span>
+                            </div>
+                            <ul className="text-left text-gray-600 space-y-2">
+                                <li className="flex items-start gap-3">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                                    <span>Browse other amazing activities in the same category</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                                    <span>Try searching for similar experiences</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                                    <span>Check back later as availability may change</span>
+                                </li>
+                            </ul>
+                        </motion.div>
+
+                        {/* Action Buttons */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.6 }}
+                            className="flex flex-col sm:flex-row gap-4 justify-center"
+                        >
+                            <button
+                                onClick={() => window.history.back()}
+                                className="px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-3"
+                            >
+                                <ArrowRight className="h-5 w-5 rotate-180" />
+                                Go Back
+                            </button>
+                            <button
+                                onClick={() => window.location.href = '/activities'}
+                                className="px-8 py-4 bg-white text-gray-800 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 shadow-lg hover:shadow-xl border border-gray-200 flex items-center justify-center gap-3"
+                            >
+                                <Ticket className="h-5 w-5" />
+                                Browse Activities
+                            </button>
+                        </motion.div>
+
+                        {/* Error Details (Development Only) */}
+                        {error && process.env.NODE_ENV === 'development' && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.7 }}
+                                className="mt-8 p-4 bg-red-50 border border-red-200 rounded-xl"
+                            >
+                                <p className="text-sm text-red-600 font-medium mb-2">Development Error:</p>
+                                <p className="text-xs text-red-500 font-mono">{error}</p>
+                            </motion.div>
+                        )}
+                    </motion.div>
+                </div>
+            </div>
+        );
+    }
+
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -324,7 +545,9 @@ const ActivityDetailPage = () => {
 
     const totalQuantity = adultQuantity + childQuantity;
 
-    return (
+    // Wrap main component in try-catch to prevent generic error page
+    try {
+        return (
         <div className="min-h-screen bg-white relative overflow-hidden">
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-3">
@@ -613,50 +836,25 @@ const ActivityDetailPage = () => {
                             <div className="mb-12">
                                 <h3 className="text-xl font-semibold text-gray-900 mb-6">Package Type</h3>
 
-                                <div className="overflow-x-auto rounded-2xl border border-gray-200">
-                                    <table className="w-full min-w-max">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Package</th>
-                                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Group Size</th>
-                                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-200">
-                                            {activity.package_list?.map((pkg, idx) => (
-                                                <tr
-                                                    key={`package-${pkg.package_id}-${idx}`}
-                                                    className={`cursor-pointer transition-all duration-300 hover:bg-gray-50 ${selectedPackage === idx ? "bg-blue-50 border-l-4 border-l-blue-600" : ""}`}
-                                                    onClick={() => {
-                                                        setSelectedPackage(idx);
-                                                        setTravelDate("");
-                                                        setSelectedSchedule(null);
-                                                        setScheduleData(null);
-                                                    }}
-                                                >
-                                                    <td className="px-6 py-5">
-                                                        <h4 className="text-lg font-bold text-gray-900">{pkg.package_name}</h4>
-                                                    </td>
-                                                    <td className="px-6 py-5">
-                                                        <div className="flex items-center gap-2 text-gray-600">
-                                                            <Users className="h-5 w-5 flex-shrink-0" />
-                                                            <span className="text-base">{pkg.package_min_pax}–{pkg.package_max_pax} people</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-5">
-                                                        <span
-                                                            className={`inline-block px-5 py-2.5 text-sm font-semibold rounded-full transition-colors ${selectedPackage === idx
-                                                                ? "bg-blue-600 text-white"
-                                                                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                                                                }`}
-                                                        >
-                                                            {selectedPackage === idx ? "Selected" : "Select"}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                <div className="flex flex-wrap gap-4">
+                                    {activity.package_list?.map((pkg, idx) => (
+                                        <button
+                                            key={`package-${pkg.package_id}-${idx}`}
+                                            onClick={() => {
+                                                setSelectedPackage(idx);
+                                                setTravelDate("");
+                                                setSelectedSchedule(null);
+                                                setScheduleData(null);
+                                            }}
+                                            className={`px-6 py-4 rounded-xl font-semibold text-base transition-all duration-300 border-2 ${
+                                                selectedPackage === idx
+                                                    ? "bg-blue-600 text-white border-blue-600 shadow-lg transform scale-105"
+                                                    : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300 hover:shadow-md"
+                                            }`}
+                                        >
+                                            {pkg.package_name}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
 
@@ -1139,7 +1337,12 @@ const ActivityDetailPage = () => {
         }
       `}</style>
         </div>
-    );
+        );
+    } catch (error) {
+        console.error("Component error:", error);
+        setHasError(true);
+        return null; // This will trigger the error boundary state
+    }
 };
 
 export default ActivityDetailPage;

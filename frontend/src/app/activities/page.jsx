@@ -3,6 +3,167 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams, useRouter } from 'next/navigation';
+
+// Full Screen Loader Component
+const FullScreenLoader = ({ isVisible, progress = 0 }) => {
+  if (!isVisible) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-gradient-to-br from-blue-50 via-white to-orange-50 z-[9999] flex items-center justify-center"
+    >
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Sun */}
+        <motion.div
+          animate={{ 
+            rotate: 360,
+            scale: [1, 1.1, 1]
+          }}
+          transition={{ 
+            rotate: { duration: 20, repeat: Infinity, ease: "linear" },
+            scale: { duration: 3, repeat: Infinity, ease: "easeInOut" }
+          }}
+          className="absolute top-8 right-8 w-16 h-16 bg-gradient-to-br from-yellow-300 to-orange-400 rounded-full shadow-lg"
+        >
+          <div className="absolute inset-2 bg-gradient-to-br from-yellow-200 to-orange-300 rounded-full"></div>
+          {/* Sun rays */}
+          <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-1 h-4 bg-yellow-300 rounded-full"></div>
+          <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1 h-4 bg-yellow-300 rounded-full"></div>
+          <div className="absolute -left-2 top-1/2 transform -translate-y-1/2 w-4 h-1 bg-yellow-300 rounded-full"></div>
+          <div className="absolute -right-2 top-1/2 transform -translate-y-1/2 w-4 h-1 bg-yellow-300 rounded-full"></div>
+          <div className="absolute -top-1 -left-1 w-1 h-3 bg-yellow-300 rounded-full transform rotate-45"></div>
+          <div className="absolute -top-1 -right-1 w-1 h-3 bg-yellow-300 rounded-full transform -rotate-45"></div>
+          <div className="absolute -bottom-1 -left-1 w-1 h-3 bg-yellow-300 rounded-full transform -rotate-45"></div>
+          <div className="absolute -bottom-1 -right-1 w-1 h-3 bg-yellow-300 rounded-full transform rotate-45"></div>
+        </motion.div>
+
+        {/* Clouds */}
+        <motion.div
+          animate={{ x: [0, 50, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-16 left-8 w-12 h-6 bg-white/80 rounded-full"
+        >
+          <div className="absolute -top-2 left-2 w-8 h-8 bg-white/80 rounded-full"></div>
+          <div className="absolute -top-1 right-2 w-6 h-6 bg-white/80 rounded-full"></div>
+        </motion.div>
+
+        <motion.div
+          animate={{ x: [0, -30, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-12 right-16 w-10 h-5 bg-white/70 rounded-full"
+        >
+          <div className="absolute -top-1 left-1 w-6 h-6 bg-white/70 rounded-full"></div>
+          <div className="absolute -top-1 right-1 w-5 h-5 bg-white/70 rounded-full"></div>
+        </motion.div>
+
+        {/* Road */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-gray-600 to-gray-400">
+          {/* Road lines */}
+          <div className="absolute top-1/2 left-0 right-0 h-1 bg-yellow-400 transform -translate-y-1/2">
+            <div className="absolute left-0 top-0 w-8 h-full bg-yellow-400"></div>
+            <div className="absolute left-16 top-0 w-8 h-full bg-yellow-400"></div>
+            <div className="absolute left-32 top-0 w-8 h-full bg-yellow-400"></div>
+            <div className="absolute left-48 top-0 w-8 h-full bg-yellow-400"></div>
+            <div className="absolute left-64 top-0 w-8 h-full bg-yellow-400"></div>
+            <div className="absolute left-80 top-0 w-8 h-full bg-yellow-400"></div>
+            <div className="absolute left-96 top-0 w-8 h-full bg-yellow-400"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Car Animation */}
+      <motion.div
+        animate={{ x: [-100, 1200] }}
+        transition={{ 
+          duration: 4, 
+          repeat: Infinity, 
+          ease: "easeInOut",
+          delay: 0.5
+        }}
+        className="absolute bottom-20 w-16 h-8"
+      >
+        {/* Car Body */}
+        <div className="relative w-full h-full">
+          {/* Car body */}
+          <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-r from-red-500 to-red-600 rounded-t-lg shadow-lg">
+            <div className="absolute top-1 left-1 right-1 h-2 bg-red-400 rounded-t-sm"></div>
+          </div>
+          
+          {/* Windows */}
+          <div className="absolute top-1 left-1 w-3 h-3 bg-blue-200 rounded-sm"></div>
+          <div className="absolute top-1 right-1 w-3 h-3 bg-blue-200 rounded-sm"></div>
+          
+          {/* Wheels */}
+          <div className="absolute -bottom-1 left-1 w-3 h-3 bg-gray-800 rounded-full border-2 border-gray-600"></div>
+          <div className="absolute -bottom-1 right-1 w-3 h-3 bg-gray-800 rounded-full border-2 border-gray-600"></div>
+          
+          {/* Headlights */}
+          <div className="absolute top-2 left-0 w-1 h-1 bg-yellow-300 rounded-full"></div>
+          <div className="absolute top-2 right-0 w-1 h-1 bg-yellow-300 rounded-full"></div>
+        </div>
+      </motion.div>
+
+      {/* Loading Content */}
+      <div className="relative z-10 text-center">
+        <motion.div
+          animate={{ y: [0, -10, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="mb-8"
+        >
+          <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-xl">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-8 h-8 border-4 border-white border-t-transparent rounded-full"
+            ></motion.div>
+          </div>
+        </motion.div>
+
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="text-3xl font-bold text-gray-800 mb-4"
+        >
+          Finding Best Activities for You
+        </motion.h2>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="text-lg text-gray-600 mb-8"
+        >
+          Discovering amazing experiences...
+        </motion.p>
+
+        {/* Progress Bar */}
+        <div className="w-80 mx-auto">
+          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.5 }}
+              className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"
+            ></motion.div>
+          </div>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="text-sm text-gray-500 mt-2"
+          >
+            {progress}% Complete
+          </motion.p>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 import {
   Sparkles,
   MapPin,
@@ -52,11 +213,13 @@ const ActivitiesPage = () => {
   const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const [showFullScreenLoader, setShowFullScreenLoader] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState(null);
   const [hasInitialData, setHasInitialData] = useState(false);
   const [totalAvailableActivities, setTotalAvailableActivities] = useState(0);
   const [isSearchProcessing, setIsSearchProcessing] = useState(false);
+  const [loadingButtonId, setLoadingButtonId] = useState(null); // Track which button is loading
 
   // Note: Images are now loaded directly from database - no need for complex image loading
 
@@ -69,6 +232,134 @@ const ActivitiesPage = () => {
     
     // Fallback to default image
     return `https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop&crop=center`;
+  };
+
+  // Function to handle button click with loading state
+  const handleButtonClick = (activityId) => {
+    setLoadingButtonId(activityId);
+    // The Link will handle navigation, but we keep the loading state
+    // until the page actually changes
+  };
+
+  // Clear loading state when component unmounts or when navigation occurs
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      setLoadingButtonId(null);
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      setLoadingButtonId(null);
+    };
+  }, []);
+
+  // Function to get category-specific background image
+  const getCategoryBackgroundImage = (categoryData) => {
+    if (!categoryData) {
+      return 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&h=1080&fit=crop&crop=center';
+    }
+
+    const categoryBackgrounds = {
+      // Main Categories
+      'THINGS TO DO': 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&h=1080&fit=crop&crop=center',
+      'MOBILITY TRANSPORTATION': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&h=1080&fit=crop&crop=center',
+      'CAR SERVICES': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      'TRAVEL CONVENIENCE': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop&crop=center',
+      'FOOD & DINING': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      'HOTEL': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&h=1080&fit=crop&crop=center',
+      'Entertainment': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&crop=center',
+      'Transportation Pass': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&h=1080&fit=crop&crop=center',
+      'Cruise_': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Spa & Beauty
+      'Spa & Beauty': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
+      'Spa & Massage': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
+      'Salon & Beauty': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Theme Parks & Water Parks
+      'Theme Parks & Water Parks ': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      'Theme park': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      'Water Parks': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Attractions
+      'Attractions ': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Museums & Galleries': 'https://images.unsplash.com/photo-1555529902-1a05eb6c1cd2?w=1920&h=1080&fit=crop&crop=center',
+      'Aquariums': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Zoos & Animal Parks': 'https://images.unsplash.com/photo-1551963831-b3b1ca40c98e?w=1920&h=1080&fit=crop&crop=center',
+      'Gardens & Parks': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Observation Decks & Towers': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Castles & Palaces': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Ancient Ruins': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Cathedral & Churches': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Temples & Shrines': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Natural Landscape': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Activities & Experiences
+      'Activities & Experiences': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      'Wellness & Health': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
+      'Fitness & Sports': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
+      'Dining Experiences': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      'Surfing': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Kayaking': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Other Water Sports': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Biking & Segway & Scooter': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      'Go Karting & Racing': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      'Sightseeing Cruise': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Boats & Yachts & Catamarans': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Skydiving': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      'Golf': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      'Photography': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Cooking Classes': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      'Beverage Tastings': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      'Nightlife & Pub Crawls': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&crop=center',
+      'Hot Spring': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
+      'Diving & Snorkeling': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Hot Air Ballon': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      'Flight & Helicopter': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      'Skiing & Snow Sports': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      'Climbing': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Tours
+      'Tours': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Walking Tour': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Bicycle Tours': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      'Bus Tour': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&h=1080&fit=crop&crop=center',
+      'Car Tour': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      'Railway Tour': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&h=1080&fit=crop&crop=center',
+      'Cruise Tour': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Boat Tours': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Food & Drinks Tour': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Transportation
+      'Public Transfer - Non-API': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&h=1080&fit=crop&crop=center',
+      'Private Transfer - Non-API': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      'Car Rental - Non-API': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      'Charter - Non-API': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Travel Convenience
+      'Luggage Services': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop&crop=center',
+      'Travel Equipment Rental': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop&crop=center',
+      'VIP Fast Ticket Service': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop&crop=center',
+      'Lounge': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Food & Dining
+      'Food Coupon': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      'General Buffet': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      'Fine Dining': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      'Cafe & Dessert': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Entertainment
+      'Recurring Shows': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&crop=center',
+      'Exhibition': 'https://images.unsplash.com/photo-1555529902-1a05eb6c1cd2?w=1920&h=1080&fit=crop&crop=center',
+      'Movie': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&crop=center',
+      'Shopping': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&h=1080&fit=crop&crop=center',
+      'Carnival & Festival': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&crop=center',
+      'Events-TTD': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&crop=center'
+    };
+
+    return categoryBackgrounds[categoryData.name] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&h=1080&fit=crop&crop=center';
   };
 
   // Function to get dynamic countries based on actual activities in the database
@@ -424,6 +715,7 @@ const ActivitiesPage = () => {
 
     const initializeData = async () => {
       try {
+        setShowFullScreenLoader(true);
         const { activities, categories } = await fetchActivitiesFromDatabase(controller);
         
         // Apply initial filtering immediately
@@ -436,6 +728,11 @@ const ActivitiesPage = () => {
         }
         setHasInitialData(true);
         setIsLoading(false);
+      } finally {
+        // Hide full screen loader after 20 seconds
+        setTimeout(() => {
+          setShowFullScreenLoader(false);
+        }, 20000);
       }
     };
 
@@ -662,6 +959,7 @@ const ActivitiesPage = () => {
   };
 
   const handleCategoryFilterChange = (categoryId) => {
+    setShowFullScreenLoader(true);
     setSelectedCategoryFilter(categoryId);
     const params = new URLSearchParams(searchParams.toString());
     if (categoryId) {
@@ -672,6 +970,11 @@ const ActivitiesPage = () => {
     params.set('page', '1'); // Reset to first page
     router.push(`/activities?${params.toString()}`);
     setIsCategoryFilterOpen(false);
+    
+    // Hide loader after 20 seconds
+    setTimeout(() => {
+      setShowFullScreenLoader(false);
+    }, 20000);
   };
 
 
@@ -713,7 +1016,14 @@ const ActivitiesPage = () => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    // Search is already handled by handleSearchChange
+    if (searchQuery.trim()) {
+      setShowFullScreenLoader(true);
+      // Search is already handled by handleSearchChange
+      // Hide loader after 20 seconds
+      setTimeout(() => {
+        setShowFullScreenLoader(false);
+      }, 20000);
+    }
   };
 
   const handleClearSearch = () => {
@@ -877,7 +1187,7 @@ const ActivitiesPage = () => {
               className="space-y-2"
             >
               <div className="flex items-center justify-between text-sm text-blue-600">
-                <span>Loading from database...</span>
+                {/* <span>Loading from database...</span> */}
                 <span className="font-semibold">{loadingProgress}%</span>
               </div>
               <div className="w-full bg-blue-100 rounded-full h-3 overflow-hidden">
@@ -908,7 +1218,7 @@ const ActivitiesPage = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
-            className="text-sm text-gray-500 space-y-1"
+            className="text-sm text-white/80 space-y-1 drop-shadow-lg"
           >
             <p>✨ Finding the best activities...</p>
             <p>🌟 Curating amazing experiences...</p>
@@ -921,6 +1231,11 @@ const ActivitiesPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden">
+      {/* Full Screen Loader */}
+      <FullScreenLoader 
+        isVisible={showFullScreenLoader} 
+        progress={loadingProgress} 
+      />
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <svg
@@ -951,18 +1266,37 @@ const ActivitiesPage = () => {
       <div className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full blur-xl"></div>
       <div className="absolute bottom-20 right-10 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full blur-xl"></div>
 
-      {/* Header Section */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 pt-40">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="text-center mb-16"
+      {/* Header Section with Dynamic Background */}
+      <div className="relative overflow-hidden">
+        {/* Dynamic Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000 ease-in-out"
+          style={{
+            backgroundImage: `url(${getCategoryBackgroundImage(categoryData)})`,
+            backgroundPosition: 'center center',
+            backgroundSize: 'cover'
+          }}
         >
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/60"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/30 via-transparent to-purple-900/30"></div>
+          
+          {/* Bottom Blur Effect */}
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/80 via-black/40 to-transparent backdrop-blur-sm"></div>
+        </div>
+
+        {/* Content */}
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-32">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="text-center mb-16"
+          >
           <motion.div variants={itemVariants}>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 leading-tight mb-6">
-              Discover Amazing{' '}
-              <span className="text-blue-500 relative">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6 drop-shadow-2xl">
+              {categoryData ? `Discover Amazing ${categoryData.name}` : 'Discover Amazing'}{' '}
+              <span className="text-blue-600 relative">
                 Activities
                 <svg
                   className="absolute -bottom-2 left-0 w-full h-3"
@@ -972,7 +1306,7 @@ const ActivitiesPage = () => {
                 >
                   <path
                     d="M2 10C50 2 100 2 198 10"
-                    stroke="#E0C097"
+                    stroke="#FCD34D"
                     strokeWidth="4"
                     strokeLinecap="round"
                   />
@@ -992,23 +1326,23 @@ const ActivitiesPage = () => {
                   
                   {/* Loading Text with Animation */}
                   <div className="text-center space-y-2">
-                    <h3 className="text-lg font-semibold text-gray-800 animate-pulse">
+                    <h3 className="text-lg font-semibold text-white animate-pulse drop-shadow-lg">
                       Loading Amazing Activities
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white/90 drop-shadow-lg">
                       Discovering {totalActivities > 0 ? totalActivities : 'thousands of'} experiences for you...
                     </p>
                   </div>
                   
                   {/* Progress Bar */}
                   <div className="w-full max-w-md mx-auto">
-                    <div className="flex items-center justify-between text-sm text-blue-600 mb-2">
+                    <div className="flex items-center justify-between text-sm text-white/90 mb-2 drop-shadow-lg">
                       <span>Loading activities from database...</span>
                       <span className="font-medium">{loadingProgress}%</span>
                     </div>
-                    <div className="w-full bg-blue-100 rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden backdrop-blur-sm">
                       <div 
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                        className="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full transition-all duration-500 ease-out"
                         style={{ width: `${loadingProgress}%` }}
                       ></div>
                     </div>
@@ -1016,9 +1350,9 @@ const ActivitiesPage = () => {
                   
                   {/* Loading Dots Animation */}
                   <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                   </div>
                 </div>
               </div>
@@ -1044,9 +1378,7 @@ const ActivitiesPage = () => {
           </motion.div>
         </motion.div>
 
-        {/* Search and Filter Section */}
-        {/* Removed Related Countries Section */}
-
+        {/* Search and Filter Section - Now Inside Background */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -1054,7 +1386,7 @@ const ActivitiesPage = () => {
           className="mb-8"
         >
 
-          <motion.div variants={itemVariants} className="max-w-7xl mx-auto relative z-10">
+          <motion.div variants={itemVariants} className="max-w-7xl mx-auto relative z-10 overflow-visible">
             {/* Search and Filter Row */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mb-4">
               {/* Simple Search Bar */}
@@ -1104,7 +1436,7 @@ const ActivitiesPage = () => {
                 </button>
 
                 {isCategoryFilterOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl py-2 z-50 border border-blue-100 max-h-96 overflow-y-auto">
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl py-2 z-[9999] border border-blue-100 max-h-96 overflow-y-auto overflow-visible">
                     <button
                       onClick={() => handleCategoryFilterChange('')}
                       className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
@@ -1125,7 +1457,7 @@ const ActivitiesPage = () => {
                             : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
                         }`}
                       >
-                          <span>{category.name}</span>
+                        <span>{category.name}</span>
                       </button>
                     ))}
                   </div>
@@ -1136,20 +1468,20 @@ const ActivitiesPage = () => {
             {/* Active Filters - Below Search Bar */}
             {(selectedCategoryFilter || searchQuery) && (
               <div className="flex items-center gap-2 flex-wrap mb-4">
-                <span className="text-sm text-gray-600 font-medium">Active filters:</span>
+                <span className="text-sm text-white font-medium drop-shadow-lg">Active filters:</span>
                 {selectedCategoryFilter && categoryData && (
-                  <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                  <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm border border-white/30">
                     <span>{categoryData.name}</span>
                     <button
                       onClick={() => handleCategoryFilterChange('')}
-                      className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
+                      className="ml-1 hover:bg-white/20 rounded-full p-0.5"
                     >
                       <X className="h-3 w-3" />
                     </button>
                   </div>
                 )}
                 {searchQuery && (
-                  <div className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+                  <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm border border-white/30">
                     <span>"{searchQuery}"</span>
                     <button
                       onClick={() => {
@@ -1165,7 +1497,7 @@ const ActivitiesPage = () => {
                         params.set('page', '1');
                         router.replace(`/activities?${params.toString()}`);
                       }}
-                      className="ml-1 hover:bg-green-200 rounded-full p-0.5"
+                      className="ml-1 hover:bg-white/20 rounded-full p-0.5"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -1173,7 +1505,7 @@ const ActivitiesPage = () => {
                 )}
                 <button
                   onClick={clearAllFilters}
-                  className="text-sm text-gray-500 hover:text-gray-700 underline"
+                  className="text-sm text-white/90 hover:text-white underline drop-shadow-lg"
                 >
                   Clear all
                 </button>
@@ -1228,7 +1560,7 @@ const ActivitiesPage = () => {
               </button>
 
               {isSortOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl py-2 z-50 border border-blue-100">
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl py-2 z-[9999] border border-blue-100 overflow-visible">
                   {[
                     { value: 'popular', label: 'Most Popular' },
                     { value: 'rating', label: 'Highest Rated' },
@@ -1257,12 +1589,80 @@ const ActivitiesPage = () => {
             </div>
           </motion.div>
         </motion.div>
+        </div>
+      </div>
 
-        {/* Removed duplicate Controls Section */}
+      {/* Related Countries Section */}
+      <div className="relative mt-8">
+        {categoryData && (
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="mb-12"
+          >
+            <motion.div variants={itemVariants} className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                Explore {categoryData.name} in Popular Destinations
+              </h2>
+              <p className="text-gray-600 text-lg">
+                Discover amazing {categoryData.name.toLowerCase()} experiences around the world
+              </p>
+            </motion.div>
+
+            <motion.div
+              variants={containerVariants}
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6"
+            >
+              {getRelatedCountriesForCategory(categoryData.id).map((country, index) => (
+                <motion.div
+                  key={country.id}
+                  variants={itemVariants}
+                  custom={index}
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  className="group cursor-pointer"
+                  onClick={() => {
+                    // Navigate to activities with country filter
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set('search', country.searchTerm);
+                    params.set('page', '1');
+                    router.push(`/activities?${params.toString()}`);
+                  }}
+                >
+                  <div className="relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 h-48">
+                    <img
+                      src={country.image}
+                      alt={country.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                    
+                    {/* Gradient overlay for text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                    
+                    {/* Content overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                      <h3 className="font-bold text-lg drop-shadow-lg group-hover:text-blue-300 transition-colors">
+                        {country.name}
+                      </h3>
+                      {country.activityCount > 0 && (
+                        <p className="text-white/90 text-sm drop-shadow-md mt-1">
+                          {country.activityCount} experiences
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
+          </div>
+        )}
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 relative z-10">
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 relative z-10 ${searchQuery ? 'mt-12' : 'mt-8'}`}>
         <Suspense fallback={<div className="py-20 text-center">Loading...</div>}>
           {isLoading && (
             <div className="py-8">
@@ -1484,25 +1884,46 @@ const ActivitiesPage = () => {
                       <div className="mt-auto pt-2">
                       <Link href={`/activity/${activity.activity_id}`}>
                         <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                            className={`w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl relative overflow-hidden group/btn btn-shimmer ${
+                          whileHover={loadingButtonId === activity.activity_id ? {} : { scale: 1.02 }}
+                          whileTap={loadingButtonId === activity.activity_id ? {} : { scale: 0.98 }}
+                          onClick={() => handleButtonClick(activity.activity_id)}
+                          disabled={loadingButtonId === activity.activity_id}
+                          className={`w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl relative overflow-hidden group/btn btn-shimmer ${
+                            loadingButtonId === activity.activity_id 
+                              ? 'opacity-75 cursor-not-allowed' 
+                              : ''
+                          } ${
                               viewMode === 'list' 
                                 ? 'py-4 px-8 text-base' 
                                 : 'py-3.5 px-6 text-sm'
                             }`}
                           >
                             <span className="relative z-10 flex items-center justify-center gap-2">
-                          View Details & Book
-                              <motion.div
-                                className="w-4 h-4"
-                                animate={{ x: [0, 4, 0] }}
-                                transition={{ repeat: Infinity, duration: 1.5 }}
-                              >
-                                →
-                              </motion.div>
+                              {loadingButtonId === activity.activity_id ? (
+                                <>
+                                  <motion.div
+                                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                                    animate={{ rotate: 360 }}
+                                    transition={{ repeat: Infinity, duration: 1 }}
+                                  />
+                                  Loading...
+                                </>
+                              ) : (
+                                <>
+                                  View Details & Book
+                                  <motion.div
+                                    className="w-4 h-4"
+                                    animate={{ x: [0, 4, 0] }}
+                                    transition={{ repeat: Infinity, duration: 1.5 }}
+                                  >
+                                    →
+                                  </motion.div>
+                                </>
+                              )}
                             </span>
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />
+                            {loadingButtonId !== activity.activity_id && (
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />
+                            )}
                         </motion.button>
                       </Link>
                       </div>
@@ -1515,23 +1936,40 @@ const ActivitiesPage = () => {
             {!isLoading && sortedActivities.length === 0 && (
               <div className="text-center py-20">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="h-8 w-8 text-gray-400" />
+                  <Search className="h-8 w-8 text-gray-400" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">No activities found</h2>
                 <p className="text-gray-600 mb-6">
-                  {categoryData?.name
+                  {searchQuery && categoryData?.name
+                    ? `No activities found for "${searchQuery}" in ${categoryData.name} category.`
+                    : searchQuery
+                    ? `No activities found for "${searchQuery}".`
+                    : categoryData?.name
                     ? `No activities found in ${categoryData.name} category.`
                     : "No activities match your current filters."}
                 </p>
-                <Link href="/activities-categories">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-10 py-4 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition-all font-bold text-lg shadow-xl hover:shadow-2xl"
-                  >
-                    Browse All Categories
-                  </motion.button>
-                </Link>
+                <div className="space-y-4">
+                  <p className="text-gray-500 text-sm">
+                    Try adjusting your search or browse different categories
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button
+                      onClick={clearAllFilters}
+                      className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-medium"
+                    >
+                      Clear All Filters
+                    </button>
+                    <Link href="/activities-categories">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all font-medium shadow-lg hover:shadow-xl"
+                      >
+                        Browse All Categories
+                      </motion.button>
+                    </Link>
+                  </div>
+                </div>
               </div>
             )}
           </AnimatePresence>
@@ -1563,7 +2001,6 @@ const ActivitiesPage = () => {
             </motion.div>
           )}
 
-          
         </Suspense>
       </div>
     </div>
