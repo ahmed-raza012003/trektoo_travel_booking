@@ -836,50 +836,25 @@ const ActivityDetailPage = () => {
                             <div className="mb-12">
                                 <h3 className="text-xl font-semibold text-gray-900 mb-6">Package Type</h3>
 
-                                <div className="overflow-x-auto rounded-2xl border border-gray-200">
-                                    <table className="w-full min-w-max">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Package</th>
-                                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Group Size</th>
-                                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-200">
-                                            {activity.package_list?.map((pkg, idx) => (
-                                                <tr
-                                                    key={`package-${pkg.package_id}-${idx}`}
-                                                    className={`cursor-pointer transition-all duration-300 hover:bg-gray-50 ${selectedPackage === idx ? "bg-blue-50 border-l-4 border-l-blue-600" : ""}`}
-                                                    onClick={() => {
-                                                        setSelectedPackage(idx);
-                                                        setTravelDate("");
-                                                        setSelectedSchedule(null);
-                                                        setScheduleData(null);
-                                                    }}
-                                                >
-                                                    <td className="px-6 py-5">
-                                                        <h4 className="text-lg font-bold text-gray-900">{pkg.package_name}</h4>
-                                                    </td>
-                                                    <td className="px-6 py-5">
-                                                        <div className="flex items-center gap-2 text-gray-600">
-                                                            <Users className="h-5 w-5 flex-shrink-0" />
-                                                            <span className="text-base">{pkg.package_min_pax}–{pkg.package_max_pax} people</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-5">
-                                                        <span
-                                                            className={`inline-block px-5 py-2.5 text-sm font-semibold rounded-full transition-colors ${selectedPackage === idx
-                                                                ? "bg-blue-600 text-white"
-                                                                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                                                                }`}
-                                                        >
-                                                            {selectedPackage === idx ? "Selected" : "Select"}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                <div className="flex flex-wrap gap-4">
+                                    {activity.package_list?.map((pkg, idx) => (
+                                        <button
+                                            key={`package-${pkg.package_id}-${idx}`}
+                                            onClick={() => {
+                                                setSelectedPackage(idx);
+                                                setTravelDate("");
+                                                setSelectedSchedule(null);
+                                                setScheduleData(null);
+                                            }}
+                                            className={`px-6 py-4 rounded-xl font-semibold text-base transition-all duration-300 border-2 ${
+                                                selectedPackage === idx
+                                                    ? "bg-blue-600 text-white border-blue-600 shadow-lg transform scale-105"
+                                                    : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300 hover:shadow-md"
+                                            }`}
+                                        >
+                                            {pkg.package_name}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
 
