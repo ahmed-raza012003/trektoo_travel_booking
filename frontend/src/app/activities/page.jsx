@@ -78,25 +78,101 @@ const ActivitiesPage = () => {
     }
 
     const categoryBackgrounds = {
-      'Spa & Beauty': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
-      'Adventure': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
-      'Culture': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
-      'Food & Drink': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
-      'Nature': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      // Main Categories
+      'THINGS TO DO': 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&h=1080&fit=crop&crop=center',
+      'MOBILITY TRANSPORTATION': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&h=1080&fit=crop&crop=center',
+      'CAR SERVICES': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      'TRAVEL CONVENIENCE': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop&crop=center',
+      'FOOD & DINING': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      'HOTEL': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&h=1080&fit=crop&crop=center',
       'Entertainment': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&crop=center',
-      'Sports': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
-      'Shopping': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&h=1080&fit=crop&crop=center',
-      'Tours': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
-      'Transportation': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&h=1080&fit=crop&crop=center',
-      'Wellness': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
-      'Family': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
-      'Nightlife': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&crop=center',
+      'Transportation Pass': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&h=1080&fit=crop&crop=center',
+      'Cruise_': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Spa & Beauty
+      'Spa & Beauty': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
+      'Spa & Massage': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
+      'Salon & Beauty': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Theme Parks & Water Parks
+      'Theme Parks & Water Parks ': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      'Theme park': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      'Water Parks': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Attractions
+      'Attractions ': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Museums & Galleries': 'https://images.unsplash.com/photo-1555529902-1a05eb6c1cd2?w=1920&h=1080&fit=crop&crop=center',
+      'Aquariums': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Zoos & Animal Parks': 'https://images.unsplash.com/photo-1551963831-b3b1ca40c98e?w=1920&h=1080&fit=crop&crop=center',
+      'Gardens & Parks': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Observation Decks & Towers': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Castles & Palaces': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Ancient Ruins': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Cathedral & Churches': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Temples & Shrines': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Natural Landscape': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Activities & Experiences
+      'Activities & Experiences': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      'Wellness & Health': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
+      'Fitness & Sports': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
+      'Dining Experiences': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      'Surfing': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Kayaking': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Other Water Sports': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Biking & Segway & Scooter': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      'Go Karting & Racing': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      'Sightseeing Cruise': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Boats & Yachts & Catamarans': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Skydiving': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      'Golf': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
       'Photography': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
-      'Religious': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
-      'Educational': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
-      'Romantic': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
-      'Luxury': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
-      'Budget': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center'
+      'Cooking Classes': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      'Beverage Tastings': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      'Nightlife & Pub Crawls': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&crop=center',
+      'Hot Spring': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
+      'Diving & Snorkeling': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Hot Air Ballon': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      'Flight & Helicopter': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      'Skiing & Snow Sports': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      'Climbing': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Tours
+      'Tours': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Walking Tour': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Bicycle Tours': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      'Bus Tour': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&h=1080&fit=crop&crop=center',
+      'Car Tour': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      'Railway Tour': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&h=1080&fit=crop&crop=center',
+      'Cruise Tour': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Boat Tours': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&h=1080&fit=crop&crop=center',
+      'Food & Drinks Tour': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Transportation
+      'Public Transfer - Non-API': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&h=1080&fit=crop&crop=center',
+      'Private Transfer - Non-API': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      'Car Rental - Non-API': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      'Charter - Non-API': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Travel Convenience
+      'Luggage Services': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop&crop=center',
+      'Travel Equipment Rental': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop&crop=center',
+      'VIP Fast Ticket Service': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop&crop=center',
+      'Lounge': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Food & Dining
+      'Food Coupon': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      'General Buffet': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      'Fine Dining': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      'Cafe & Dessert': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      
+      // Sub Categories - Entertainment
+      'Recurring Shows': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&crop=center',
+      'Exhibition': 'https://images.unsplash.com/photo-1555529902-1a05eb6c1cd2?w=1920&h=1080&fit=crop&crop=center',
+      'Movie': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&crop=center',
+      'Shopping': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&h=1080&fit=crop&crop=center',
+      'Carnival & Festival': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&crop=center',
+      'Events-TTD': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&crop=center'
     };
 
     return categoryBackgrounds[categoryData.name] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&h=1080&fit=crop&crop=center';
@@ -996,6 +1072,9 @@ const ActivitiesPage = () => {
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/60"></div>
           <div className="absolute inset-0 bg-gradient-to-r from-blue-900/30 via-transparent to-purple-900/30"></div>
+          
+          {/* Bottom Blur Effect */}
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/80 via-black/40 to-transparent backdrop-blur-sm"></div>
         </div>
 
         {/* Content */}
@@ -1009,7 +1088,7 @@ const ActivitiesPage = () => {
           <motion.div variants={itemVariants}>
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6 drop-shadow-2xl">
               {categoryData ? `Discover Amazing ${categoryData.name}` : 'Discover Amazing'}{' '}
-              <span className="text-yellow-300 relative">
+              <span className="text-blue-600 relative">
                 Activities
                 <svg
                   className="absolute -bottom-2 left-0 w-full h-3"
@@ -1090,11 +1169,8 @@ const ActivitiesPage = () => {
             )}
           </motion.div>
         </motion.div>
-        </div>
-      </div>
 
-      {/* Search and Filter Section */}
-      <div className="relative">
+        {/* Search and Filter Section - Now Inside Background */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -1102,7 +1178,7 @@ const ActivitiesPage = () => {
           className="mb-8"
         >
 
-          <motion.div variants={itemVariants} className="max-w-7xl mx-auto relative z-10">
+          <motion.div variants={itemVariants} className="max-w-7xl mx-auto relative z-10 overflow-visible">
             {/* Search and Filter Row */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mb-4">
               {/* Simple Search Bar */}
@@ -1152,7 +1228,7 @@ const ActivitiesPage = () => {
                 </button>
 
                 {isCategoryFilterOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl py-2 z-50 border border-blue-100 max-h-96 overflow-y-auto">
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl py-2 z-[9999] border border-blue-100 max-h-96 overflow-y-auto overflow-visible">
                     <button
                       onClick={() => handleCategoryFilterChange('')}
                       className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
@@ -1173,7 +1249,7 @@ const ActivitiesPage = () => {
                             : 'text-gray-900 hover:bg-blue-100 hover:text-gray-900'
                         }`}
                       >
-                          <span>{category.name}</span>
+                        <span>{category.name}</span>
                       </button>
                     ))}
                   </div>
@@ -1184,20 +1260,20 @@ const ActivitiesPage = () => {
             {/* Active Filters - Below Search Bar */}
             {(selectedCategoryFilter || searchQuery) && (
               <div className="flex items-center gap-2 flex-wrap mb-4">
-                <span className="text-sm text-gray-600 font-medium">Active filters:</span>
+                <span className="text-sm text-white font-medium drop-shadow-lg">Active filters:</span>
                 {selectedCategoryFilter && categoryData && (
-                  <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                  <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm border border-white/30">
                     <span>{categoryData.name}</span>
                     <button
                       onClick={() => handleCategoryFilterChange('')}
-                      className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
+                      className="ml-1 hover:bg-white/20 rounded-full p-0.5"
                     >
                       <X className="h-3 w-3" />
                     </button>
                   </div>
                 )}
                 {searchQuery && (
-                  <div className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+                  <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm border border-white/30">
                     <span>"{searchQuery}"</span>
                     <button
                       onClick={() => {
@@ -1213,7 +1289,7 @@ const ActivitiesPage = () => {
                         params.set('page', '1');
                         router.replace(`/activities?${params.toString()}`);
                       }}
-                      className="ml-1 hover:bg-green-200 rounded-full p-0.5"
+                      className="ml-1 hover:bg-white/20 rounded-full p-0.5"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -1221,7 +1297,7 @@ const ActivitiesPage = () => {
                 )}
                 <button
                   onClick={clearAllFilters}
-                  className="text-sm text-gray-500 hover:text-gray-700 underline"
+                  className="text-sm text-white/90 hover:text-white underline drop-shadow-lg"
                 >
                   Clear all
                 </button>
@@ -1276,7 +1352,7 @@ const ActivitiesPage = () => {
               </button>
 
               {isSortOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl py-2 z-50 border border-blue-100">
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl py-2 z-[9999] border border-blue-100 overflow-visible">
                   {[
                     { value: 'popular', label: 'Most Popular' },
                     { value: 'rating', label: 'Highest Rated' },
@@ -1305,6 +1381,7 @@ const ActivitiesPage = () => {
             </div>
           </motion.div>
         </motion.div>
+        </div>
       </div>
 
       {/* Related Countries Section */}
