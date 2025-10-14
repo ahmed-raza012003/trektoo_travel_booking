@@ -1793,9 +1793,12 @@ const ActivitiesPage = () => {
                       </div>
 
                       {/* 27% Off Badge */}
-                      <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
-                        <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-xl border border-red-400/30 backdrop-blur-sm">
-                          27% OFF
+                      <div className="absolute top-4 right-4 z-20">
+                        <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-2xl border border-blue-500/30 backdrop-blur-sm transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                          <div className="flex flex-col items-center">
+                            <span className="text-xs opacity-90">SAVE</span>
+                            <span className="text-lg font-black">27%</span>
+                          </div>
                         </div>
                       </div>
 
