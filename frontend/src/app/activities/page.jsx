@@ -1792,6 +1792,13 @@ const ActivitiesPage = () => {
                         </div>
                       </div>
 
+                      {/* 27% Off Badge */}
+                      <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
+                        <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-xl border border-red-400/30 backdrop-blur-sm">
+                          27% OFF
+                        </div>
+                      </div>
+
                       {/* Duration Badge */}
                       <div className="absolute bottom-4 left-4">
                         <div className="flex items-center gap-2 bg-black/60 backdrop-blur-lg text-white px-4 py-2 rounded-full text-sm shadow-xl border border-white/20">
