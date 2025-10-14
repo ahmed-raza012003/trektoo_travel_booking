@@ -71,6 +71,37 @@ const ActivitiesPage = () => {
     return `https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop&crop=center`;
   };
 
+  // Function to get category-specific background image
+  const getCategoryBackgroundImage = (categoryData) => {
+    if (!categoryData) {
+      return 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&h=1080&fit=crop&crop=center';
+    }
+
+    const categoryBackgrounds = {
+      'Spa & Beauty': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
+      'Adventure': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920&h=1080&fit=crop&crop=center',
+      'Culture': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Food & Drink': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1920&h=1080&fit=crop&crop=center',
+      'Nature': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Entertainment': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&crop=center',
+      'Sports': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
+      'Shopping': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&h=1080&fit=crop&crop=center',
+      'Tours': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Transportation': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&h=1080&fit=crop&crop=center',
+      'Wellness': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
+      'Family': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Nightlife': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&crop=center',
+      'Photography': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Religious': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Educational': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center',
+      'Romantic': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
+      'Luxury': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&h=1080&fit=crop&crop=center',
+      'Budget': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center'
+    };
+
+    return categoryBackgrounds[categoryData.name] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&h=1080&fit=crop&crop=center';
+  };
+
   // Function to get dynamic countries based on actual activities in the database
   const getRelatedCountriesForCategory = (categoryId) => {
     if (!allActivities || allActivities.length === 0) {
@@ -908,7 +939,7 @@ const ActivitiesPage = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
-            className="text-sm text-gray-500 space-y-1"
+            className="text-sm text-white/80 space-y-1 drop-shadow-lg"
           >
             <p>✨ Finding the best activities...</p>
             <p>🌟 Curating amazing experiences...</p>
@@ -951,18 +982,34 @@ const ActivitiesPage = () => {
       <div className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full blur-xl"></div>
       <div className="absolute bottom-20 right-10 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full blur-xl"></div>
 
-      {/* Header Section */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 pt-40">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="text-center mb-16"
+      {/* Header Section with Dynamic Background */}
+      <div className="relative overflow-hidden">
+        {/* Dynamic Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000 ease-in-out"
+          style={{
+            backgroundImage: `url(${getCategoryBackgroundImage(categoryData)})`,
+            backgroundPosition: 'center center',
+            backgroundSize: 'cover'
+          }}
         >
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/60"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/30 via-transparent to-purple-900/30"></div>
+        </div>
+
+        {/* Content */}
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 pt-40">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="text-center mb-16"
+          >
           <motion.div variants={itemVariants}>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 leading-tight mb-6">
-              Discover Amazing{' '}
-              <span className="text-blue-500 relative">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6 drop-shadow-2xl">
+              {categoryData ? `Discover Amazing ${categoryData.name}` : 'Discover Amazing'}{' '}
+              <span className="text-yellow-300 relative">
                 Activities
                 <svg
                   className="absolute -bottom-2 left-0 w-full h-3"
@@ -972,7 +1019,7 @@ const ActivitiesPage = () => {
                 >
                   <path
                     d="M2 10C50 2 100 2 198 10"
-                    stroke="#E0C097"
+                    stroke="#FCD34D"
                     strokeWidth="4"
                     strokeLinecap="round"
                   />
@@ -992,23 +1039,23 @@ const ActivitiesPage = () => {
                   
                   {/* Loading Text with Animation */}
                   <div className="text-center space-y-2">
-                    <h3 className="text-lg font-semibold text-gray-800 animate-pulse">
+                    <h3 className="text-lg font-semibold text-white animate-pulse drop-shadow-lg">
                       Loading Amazing Activities
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white/90 drop-shadow-lg">
                       Discovering {totalActivities > 0 ? totalActivities : 'thousands of'} experiences for you...
                     </p>
                   </div>
                   
                   {/* Progress Bar */}
                   <div className="w-full max-w-md mx-auto">
-                    <div className="flex items-center justify-between text-sm text-blue-600 mb-2">
+                    <div className="flex items-center justify-between text-sm text-white/90 mb-2 drop-shadow-lg">
                       <span>Loading activities from database...</span>
                       <span className="font-medium">{loadingProgress}%</span>
                     </div>
-                    <div className="w-full bg-blue-100 rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden backdrop-blur-sm">
                       <div 
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                        className="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full transition-all duration-500 ease-out"
                         style={{ width: `${loadingProgress}%` }}
                       ></div>
                     </div>
@@ -1016,9 +1063,9 @@ const ActivitiesPage = () => {
                   
                   {/* Loading Dots Animation */}
                   <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                   </div>
                 </div>
               </div>
@@ -1043,10 +1090,11 @@ const ActivitiesPage = () => {
             )}
           </motion.div>
         </motion.div>
+        </div>
+      </div>
 
-        {/* Search and Filter Section */}
-        {/* Removed Related Countries Section */}
-
+      {/* Search and Filter Section */}
+      <div className="relative">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -1257,8 +1305,81 @@ const ActivitiesPage = () => {
             </div>
           </motion.div>
         </motion.div>
+      </div>
 
-        {/* Removed duplicate Controls Section */}
+      {/* Related Countries Section */}
+      <div className="relative">
+        {categoryData && (
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="mb-12"
+          >
+            <motion.div variants={itemVariants} className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                Explore {categoryData.name} in Popular Destinations
+              </h2>
+              <p className="text-gray-600 text-lg">
+                Discover amazing {categoryData.name.toLowerCase()} experiences around the world
+              </p>
+            </motion.div>
+
+            <motion.div
+              variants={containerVariants}
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6"
+            >
+              {getRelatedCountriesForCategory(categoryData.id).map((country, index) => (
+                <motion.div
+                  key={country.id}
+                  variants={itemVariants}
+                  custom={index}
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  className="group cursor-pointer"
+                  onClick={() => {
+                    // Navigate to activities with country filter
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set('search', country.searchTerm);
+                    params.set('page', '1');
+                    router.push(`/activities?${params.toString()}`);
+                  }}
+                >
+                  <div className="relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 bg-white border border-gray-100">
+                    <div className="aspect-square relative">
+                      <img
+                        src={country.image}
+                        alt={country.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      
+                      {/* Activity Count Badge */}
+                      {country.activityCount > 0 && (
+                        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-bold text-gray-800 shadow-lg">
+                          {country.activityCount} activities
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="p-4">
+                      <h3 className="font-bold text-gray-800 text-center group-hover:text-blue-600 transition-colors">
+                        {country.name}
+                      </h3>
+                      {country.activityCount > 0 && (
+                        <p className="text-sm text-gray-600 text-center mt-1">
+                          {country.activityCount} experiences
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
+          </div>
+        )}
       </div>
 
       {/* Main Content */}
@@ -1563,7 +1684,6 @@ const ActivitiesPage = () => {
             </motion.div>
           )}
 
-          
         </Suspense>
       </div>
     </div>
