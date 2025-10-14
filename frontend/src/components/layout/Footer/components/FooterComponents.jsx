@@ -99,7 +99,6 @@ const CompanyInfo = () => {
           <SocialIcon type="instagram" />
           <SocialIcon type="tiktok" />
           <SocialIcon type="youtube" />
-          <SocialIcon type="linkedin" />
         </div>
       </div>
     </div>

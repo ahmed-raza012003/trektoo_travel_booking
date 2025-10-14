@@ -18,16 +18,9 @@ import {
   Award,
   CheckCircle,
 } from 'lucide-react';
-import { 
-  FaFacebookF, 
-  FaInstagram, 
-  FaTiktok, 
-  FaYoutube, 
-  FaLinkedinIn, 
-  FaSnapchat 
-} from 'react-icons/fa';
+import Image from 'next/image';
 
-// Using react-icons for reliable social media icons
+// Using provided PNG icons from public/images folder
 
 const ContactUsPage = () => {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
@@ -119,58 +112,24 @@ const ContactUsPage = () => {
 
   const socialMedia = [
     {
-      icon: FaFacebookF,
       title: 'Facebook',
       url: 'https://www.facebook.com/trektoo2000',
-      description: 'Follow us for updates and travel tips',
-      bgColor: 'bg-[#1877F2]',
-      hoverBgColor: 'hover:bg-[#166FE5]',
-      textIcon: 'f',
+      icon: '/images/facebook.png',
     },
     {
-      icon: FaInstagram,
       title: 'Instagram',
       url: 'https://www.instagram.com/trek_too?igsh=MTJ5NmY2YmI2OXdtOQ==',
-      description: 'Travel inspiration and behind-the-scenes',
-      bgColor: 'bg-gradient-to-br from-[#E4405F] to-[#C13584]',
-      hoverBgColor: 'hover:from-[#D7357A] hover:to-[#B02A6B]',
-      textIcon: '📷',
+      icon: '/images/instagram.png',
     },
     {
-      icon: FaTiktok,
       title: 'TikTok',
       url: 'https://www.tiktok.com/@trektoo?_t=ZS-8yK2lqloH4r&_r=1',
-      description: 'Quick travel tips and fun content',
-      bgColor: 'bg-[#000000]',
-      hoverBgColor: 'hover:bg-[#333333]',
-      textIcon: '♪',
+      icon: '/images/tiktok.png',
     },
     {
-      icon: FaYoutube,
       title: 'YouTube',
-      url: 'https://www.youtube.com/@trektoo',
-      description: 'Travel vlogs and destination guides',
-      bgColor: 'bg-[#FF0000]',
-      hoverBgColor: 'hover:bg-[#E60000]',
-      textIcon: '▶',
-    },
-    {
-      icon: FaLinkedinIn,
-      title: 'LinkedIn',
-      url: 'https://www.linkedin.com/company/trektoo',
-      description: 'Professional updates and business insights',
-      bgColor: 'bg-[#0A66C2]',
-      hoverBgColor: 'hover:bg-[#004182]',
-      textIcon: 'in',
-    },
-    {
-      icon: FaSnapchat,
-      title: 'Snapchat',
-      url: 'https://www.snapchat.com/add/trektoo',
-      description: 'Real-time travel moments and stories',
-      bgColor: 'bg-[#FFFC00]',
-      hoverBgColor: 'hover:bg-[#E6E600]',
-      textIcon: '👻',
+      url: 'https://www.youtube.com/@TrekToo',
+      icon: '/images/youtube.png',
     },
   ];
 
@@ -444,7 +403,7 @@ const ContactUsPage = () => {
           </motion.div>
           </section>
 
-          {/* 4. SOCIAL MEDIA - Community Engagement (Best Practice: Modern companies) */}
+          {/* 4. SOCIAL MEDIA - Community Engagement (Simplified Design) */}
           <section className="py-20 relative overflow-hidden">
           <motion.div
               variants={containerVariants}
@@ -462,7 +421,7 @@ const ContactUsPage = () => {
                   }}
                 >
                   Follow Us on{' '}
-                  <span className="text-pink-600 relative">
+                  <span className="text-blue-600 relative">
                     Social Media
                     <svg
                       className="absolute -bottom-2 left-0 w-full h-3"
@@ -491,46 +450,42 @@ const ContactUsPage = () => {
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
-              className="flex flex-wrap justify-center gap-4 px-4"
+              className="max-w-4xl mx-auto px-4"
             >
-                {socialMedia.map((social, index) => {
-                  const IconComponent = social.icon;
-                  return (
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {socialMedia.map((social, index) => (
                     <motion.a
                       key={index}
                       href={social.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                    variants={itemVariants}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    className="group relative bg-white rounded-2xl shadow-md hover:shadow-lg overflow-hidden transition-all duration-300 border border-gray-100 hover:border-pink-300 block"
-                  >
-                    <div className="p-6 text-center">
-                      <div
-                        className={`w-12 h-12 ${social.bgColor} ${social.hoverBgColor} rounded-xl flex items-center justify-center mx-auto mb-4 text-white shadow-sm group-hover:shadow-md transition-all duration-300 ${
-                          social.title === 'Snapchat' ? 'text-black' : ''
-                        }`}
-                      >
-                        <div className={`text-xl font-bold ${social.title === 'Snapchat' ? 'text-black' : 'text-white'}`}>
-                          {social.textIcon}
-                        </div>
-                        </div>
+                      variants={itemVariants}
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      className="group flex flex-col items-center text-center p-4 rounded-xl hover:bg-gray-50 transition-all duration-300"
+                    >
+                      <div className="w-16 h-16 mb-4 flex items-center justify-center">
+                        <Image
+                          src={social.icon}
+                          alt={`${social.title} icon`}
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                        />
+                      </div>
                       <h3
-                        className="text-lg font-bold text-gray-800 mb-2 group-hover:text-pink-600 transition-colors duration-200"
+                        className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-200"
                         style={{
                           fontFamily:
                             "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                         }}
                       >
-                          {social.title}
-                        </h3>
-                      <p className="text-sm text-gray-600">
-                          {social.description}
-                        </p>
-                      </div>
+                        {social.title}
+                      </h3>
                     </motion.a>
-                  );
-                })}
+                  ))}
+                </div>
+              </div>
             </motion.div>
           </section>
 
