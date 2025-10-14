@@ -219,6 +219,7 @@ const ActivitiesPage = () => {
   const [hasInitialData, setHasInitialData] = useState(false);
   const [totalAvailableActivities, setTotalAvailableActivities] = useState(0);
   const [isSearchProcessing, setIsSearchProcessing] = useState(false);
+  const [loadingButtonId, setLoadingButtonId] = useState(null); // Track which button is loading
 
   // Note: Images are now loaded directly from database - no need for complex image loading
 
@@ -232,6 +233,27 @@ const ActivitiesPage = () => {
     // Fallback to default image
     return `https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop&crop=center`;
   };
+
+  // Function to handle button click with loading state
+  const handleButtonClick = (activityId) => {
+    setLoadingButtonId(activityId);
+    // The Link will handle navigation, but we keep the loading state
+    // until the page actually changes
+  };
+
+  // Clear loading state when component unmounts or when navigation occurs
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      setLoadingButtonId(null);
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      setLoadingButtonId(null);
+    };
+  }, []);
 
   // Function to get category-specific background image
   const getCategoryBackgroundImage = (categoryData) => {
@@ -1165,7 +1187,7 @@ const ActivitiesPage = () => {
               className="space-y-2"
             >
               <div className="flex items-center justify-between text-sm text-blue-600">
-                <span>Loading from database...</span>
+                {/* <span>Loading from database...</span> */}
                 <span className="font-semibold">{loadingProgress}%</span>
               </div>
               <div className="w-full bg-blue-100 rounded-full h-3 overflow-hidden">
@@ -1862,25 +1884,46 @@ const ActivitiesPage = () => {
                       <div className="mt-auto pt-2">
                       <Link href={`/activity/${activity.activity_id}`}>
                         <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                            className={`w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl relative overflow-hidden group/btn btn-shimmer ${
+                          whileHover={loadingButtonId === activity.activity_id ? {} : { scale: 1.02 }}
+                          whileTap={loadingButtonId === activity.activity_id ? {} : { scale: 0.98 }}
+                          onClick={() => handleButtonClick(activity.activity_id)}
+                          disabled={loadingButtonId === activity.activity_id}
+                          className={`w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl relative overflow-hidden group/btn btn-shimmer ${
+                            loadingButtonId === activity.activity_id 
+                              ? 'opacity-75 cursor-not-allowed' 
+                              : ''
+                          } ${
                               viewMode === 'list' 
                                 ? 'py-4 px-8 text-base' 
                                 : 'py-3.5 px-6 text-sm'
                             }`}
                           >
                             <span className="relative z-10 flex items-center justify-center gap-2">
-                          View Details & Book
-                              <motion.div
-                                className="w-4 h-4"
-                                animate={{ x: [0, 4, 0] }}
-                                transition={{ repeat: Infinity, duration: 1.5 }}
-                              >
-                                →
-                              </motion.div>
+                              {loadingButtonId === activity.activity_id ? (
+                                <>
+                                  <motion.div
+                                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                                    animate={{ rotate: 360 }}
+                                    transition={{ repeat: Infinity, duration: 1 }}
+                                  />
+                                  Loading...
+                                </>
+                              ) : (
+                                <>
+                                  View Details & Book
+                                  <motion.div
+                                    className="w-4 h-4"
+                                    animate={{ x: [0, 4, 0] }}
+                                    transition={{ repeat: Infinity, duration: 1.5 }}
+                                  >
+                                    →
+                                  </motion.div>
+                                </>
+                              )}
                             </span>
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />
+                            {loadingButtonId !== activity.activity_id && (
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />
+                            )}
                         </motion.button>
                       </Link>
                       </div>
