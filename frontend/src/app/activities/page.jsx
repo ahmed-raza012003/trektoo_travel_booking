@@ -1078,7 +1078,7 @@ const ActivitiesPage = () => {
         </div>
 
         {/* Content */}
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 pt-40">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-32">
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -1385,7 +1385,7 @@ const ActivitiesPage = () => {
       </div>
 
       {/* Related Countries Section */}
-      <div className="relative">
+      <div className="relative mt-8">
         {categoryData && (
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <motion.div
@@ -1460,7 +1460,7 @@ const ActivitiesPage = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 relative z-10">
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 relative z-10 ${searchQuery ? 'mt-12' : 'mt-8'}`}>
         <Suspense fallback={<div className="py-20 text-center">Loading...</div>}>
           {isLoading && (
             <div className="py-8">
@@ -1713,23 +1713,40 @@ const ActivitiesPage = () => {
             {!isLoading && sortedActivities.length === 0 && (
               <div className="text-center py-20">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="h-8 w-8 text-gray-400" />
+                  <Search className="h-8 w-8 text-gray-400" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">No activities found</h2>
                 <p className="text-gray-600 mb-6">
-                  {categoryData?.name
+                  {searchQuery && categoryData?.name
+                    ? `No activities found for "${searchQuery}" in ${categoryData.name} category.`
+                    : searchQuery
+                    ? `No activities found for "${searchQuery}".`
+                    : categoryData?.name
                     ? `No activities found in ${categoryData.name} category.`
                     : "No activities match your current filters."}
                 </p>
-                <Link href="/activities-categories">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-10 py-4 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition-all font-bold text-lg shadow-xl hover:shadow-2xl"
-                  >
-                    Browse All Categories
-                  </motion.button>
-                </Link>
+                <div className="space-y-4">
+                  <p className="text-gray-500 text-sm">
+                    Try adjusting your search or browse different categories
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button
+                      onClick={clearAllFilters}
+                      className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-medium"
+                    >
+                      Clear All Filters
+                    </button>
+                    <Link href="/activities-categories">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all font-medium shadow-lg hover:shadow-xl"
+                      >
+                        Browse All Categories
+                      </motion.button>
+                    </Link>
+                  </div>
+                </div>
               </div>
             )}
           </AnimatePresence>
