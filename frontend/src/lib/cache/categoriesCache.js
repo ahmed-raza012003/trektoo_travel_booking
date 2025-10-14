@@ -81,19 +81,13 @@ class CategoriesCache {
     return [...filteredCategories, otherServicesCategory];
   }
 
-  // Get categories for activities page (excludes more categories)
+  // Get categories for activities page (shows all categories)
   getActivitiesPageCategories() {
     const rawCategories = this.getRawCategories();
     if (!rawCategories) return null;
 
-    // Filter out specified categories for activities page only
-    const categoriesToHide = ['cruise', 'hotel', 'car services', 'mobility transportation', 'transportation pass', 'id'];
-    const filteredCategories = rawCategories.filter(category => {
-      const categoryName = category.name.toLowerCase();
-      return !categoriesToHide.some(hiddenCategory => categoryName.includes(hiddenCategory));
-    });
-    
-    return filteredCategories;
+    // Return all categories for activities page - no filtering
+    return rawCategories;
   }
 
   // Check if cache is valid

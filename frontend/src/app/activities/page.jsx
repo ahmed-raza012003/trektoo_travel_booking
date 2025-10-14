@@ -642,6 +642,7 @@ const ActivitiesPage = () => {
       }
       
       setAllCategories(filteredCategories);
+      console.log('🔍 DEBUG - Categories loaded for activities page:', filteredCategories.map(cat => ({ id: cat.id, name: cat.name })));
       setLoadingProgress(40);
       
       // Debug: Log available categories
@@ -783,6 +784,7 @@ const ActivitiesPage = () => {
       const foundCategory = findCategoryInHierarchy(categories, categoryFilter);
       
       console.log('🔍 DEBUG - Looking for category ID:', categoryFilter);
+      console.log('🔍 DEBUG - Available categories:', categories.map(cat => ({ id: cat.id, name: cat.name })));
       console.log('🔍 DEBUG - Found category:', foundCategory);
       
       if (foundCategory) {
@@ -827,6 +829,8 @@ const ActivitiesPage = () => {
         // Debug: Check what category IDs actually exist in activities
         const uniqueCategoryIds = [...new Set(filtered.map(activity => activity.category_id))].sort((a, b) => a - b);
         console.log('🔍 DEBUG - Available category IDs in activities:', uniqueCategoryIds.slice(0, 20), '... (showing first 20)');
+        console.log('🔍 DEBUG - Looking for category ID in activities:', categoryFilter, 'Type:', typeof categoryFilter);
+        console.log('🔍 DEBUG - Valid category IDs to match:', validCategoryIds);
         
         const beforeFilterCount = filtered.length;
         
@@ -959,6 +963,7 @@ const ActivitiesPage = () => {
   };
 
   const handleCategoryFilterChange = (categoryId) => {
+    console.log('🔍 DEBUG - handleCategoryFilterChange called with:', categoryId);
     setShowFullScreenLoader(true);
     setSelectedCategoryFilter(categoryId);
     const params = new URLSearchParams(searchParams.toString());
@@ -1267,7 +1272,7 @@ const ActivitiesPage = () => {
       <div className="absolute bottom-20 right-10 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full blur-xl"></div>
 
       {/* Header Section with Dynamic Background */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-visible">
         {/* Dynamic Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000 ease-in-out"
@@ -1386,7 +1391,7 @@ const ActivitiesPage = () => {
           className="mb-8"
         >
 
-          <motion.div variants={itemVariants} className="max-w-7xl mx-auto relative z-10 overflow-visible">
+          <motion.div variants={itemVariants} className="max-w-7xl mx-auto relative z-10 overflow-visible" style={{ overflow: 'visible' }}>
             {/* Search and Filter Row */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mb-4">
               {/* Simple Search Bar */}
@@ -1436,7 +1441,7 @@ const ActivitiesPage = () => {
                 </button>
 
                 {isCategoryFilterOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl py-2 z-[9999] border border-blue-100 max-h-96 overflow-y-auto overflow-visible">
+                  <div className="absolute left-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl py-2 z-[99999] border border-blue-100 max-h-[500px] overflow-y-auto shadow-2xl" style={{ maxHeight: '500px', minHeight: '200px', position: 'absolute', top: '100%', left: '0' }}>
                     <button
                       onClick={() => handleCategoryFilterChange('')}
                       className={`block w-full text-left px-4 py-2 text-sm transition-colors ${

@@ -131,6 +131,8 @@ const KlookDropdown = () => {
         // Prevent event bubbling
         event?.stopPropagation();
         
+        console.log('🔍 DEBUG - handleMainCategoryClick called with category:', category);
+        
         // Always navigate to activities page with the main category ID
         router.push(`/activities?category_id=${category.id}`);
         setOpen(false);
@@ -206,14 +208,17 @@ const KlookDropdown = () => {
                                     return (
                                         <div key={category.id} className="space-y-3">
                                             {/* Main Category Header */}
-                                            <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
+                                            <button
+                                                onClick={() => handleMainCategoryClick(category)}
+                                                className="w-full flex items-center gap-2 pb-1 border-b border-gray-100 hover:bg-blue-50 rounded-md px-2 py-1 transition-colors"
+                                            >
                                                 <div className="p-1.5 bg-blue-50 rounded-md">
                                                     <IconComponent size={18} className="text-blue-600" />
                                                 </div>
-                                                <h3 className="text-sm font-bold text-gray-800">
+                                                <h3 className="text-sm font-bold text-gray-800 hover:text-blue-600">
                                                     {category.name}
                                                 </h3>
-                                            </div>
+                                            </button>
                                             
                                             {/* Sub Categories List */}
                                             <div className="space-y-1">
@@ -377,14 +382,17 @@ export const MobileKlookDropdown = () => {
                                     <div key={category.id} className="border-b border-gray-100 last:border-b-0 pb-3">
                                         {/* Main Category Header */}
                                         <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleMainCategoryClick(category)}
+                                                className="flex items-center gap-2 hover:bg-blue-50 rounded-md px-2 py-1 transition-colors flex-1"
+                                            >
                                                 <div className="p-1.5 bg-blue-50 rounded-md">
                                                     <IconComponent size={16} className="text-blue-600" />
                                                 </div>
-                                                <h3 className="text-sm font-bold text-gray-800">
+                                                <h3 className="text-sm font-bold text-gray-800 hover:text-blue-600">
                                                     {category.name}
                                                 </h3>
-                                            </div>
+                                            </button>
                                             {category.sub_category && category.sub_category.length > 0 && (
                                                 <button
                                                     onClick={(e) => handleCategoryExpand(category, e)}
