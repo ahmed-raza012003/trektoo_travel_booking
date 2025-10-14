@@ -29,7 +29,7 @@ const NotFound = () => {
   return (
     <motion.section
       ref={ref}
-      className="relative w-full py-8 sm:py-12 md:py-16 mt-10 bg-blue-50/50 px-4 sm:px-6 lg:px-8 mb-4 sm:mb-6"
+      className="relative w-full py-8 sm:py-12 md:py-16 mt-[100px] bg-blue-50/50 px-4 sm:px-6 lg:px-8 mb-4 sm:mb-6"
       variants={sectionVariants}
       initial="hidden"
       animate={inView ? 'visible' : 'hidden'}
@@ -79,7 +79,7 @@ const NotFound = () => {
                 variants={itemVariants}
               >
                 Oops! It looks like you've wandered off the beaten path. The
-                page you're looking for doesn't exist, but don't worry—there are
+                page you're looking for doesn't exist, but don't worry, there are
                 plenty of adventures waiting for you!
               </motion.p>
               <motion.div variants={itemVariants}>
