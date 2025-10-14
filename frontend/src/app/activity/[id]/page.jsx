@@ -111,7 +111,7 @@ const ActivityDetailPage = () => {
 
     const currentPackage = activity?.package_list?.[selectedPackage];
     const currentSkuIds = currentPackage?.sku_list?.map(sku => sku.sku_id) || [];
-    const MARKUP_PERCENTAGE = 0.15;
+    const MARKUP_PERCENTAGE = 0.08;
     const applyMarkup = (price) => price * (1 + MARKUP_PERCENTAGE);
     const images = activity?.images || [];
     

@@ -458,7 +458,7 @@ const BookingPage = () => {
                         original_total_price: booking.original_total_price,
                         discount: discount,
                         voucher_code: voucherApplied ? formData.voucher.trim() : "",
-                        markup_percentage: 0.15,
+                        markup_percentage: 0.08,
                         extra_info: formattedExtraInfo,
                         travel_date: formatDateForKlook(booking.schedule.start_time)
                     },
@@ -540,7 +540,7 @@ const BookingPage = () => {
                     const newPriceMatch = json.message.match(/new price (\d+\.\d+)/);
                     if (newPriceMatch && newPriceMatch[1]) {
                         const newPrice = parseFloat(newPriceMatch[1]);
-                        const newPriceWithMarkup = newPrice * (1 + 0.15);
+                        const newPriceWithMarkup = newPrice * (1 + 0.08);
 
                         const updatedBooking = {
                             ...booking,
