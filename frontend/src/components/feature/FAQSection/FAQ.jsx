@@ -15,15 +15,15 @@ const ExpandableItem = ({
   const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
 
   return (
-    <div className="border border-gray-200 rounded-3xl p-6 bg-white transition-all duration-300 hover:border-blue-500 shadow-2xl hover:shadow-2xl hover:shadow-blue-500/10">
+    <div className="border border-blue-200 rounded-3xl p-6 bg-blue-500 transition-all duration-300 hover:border-blue-600">
       <div
         className="flex justify-between items-center cursor-pointer group"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <h4 className="text-lg font-bold text-gray-800 tracking-tight m-0 pr-4 group-hover:text-blue-500 transition-colors duration-200">
+        <h4 className="text-lg font-bold text-white tracking-tight m-0 pr-4 group-hover:text-blue-100 transition-colors duration-200">
           {question}
         </h4>
-        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-lg hover:shadow-xl transition-all duration-300">
+        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-black flex-shrink-0 hover:bg-gray-100 transition-all duration-300">
           <svg
             className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
             fill="none"
@@ -51,12 +51,12 @@ const ExpandableItem = ({
           damping: 35,
           mass: 0.7,
         }}
-        className="mt-4 pt-4 border-t border-gray-100"
+        className="mt-4 pt-4 border-t border-blue-300"
         style={{
           transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        <p className="text-gray-600 leading-relaxed text-base">{answer}</p>
+        <p className="text-white leading-relaxed text-base">{answer}</p>
       </Collapse>
     </div>
   );

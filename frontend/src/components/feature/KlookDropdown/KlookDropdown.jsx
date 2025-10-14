@@ -58,7 +58,6 @@ const KlookDropdown = () => {
     const [open, setOpen] = useState(false);
     const [activeCategory, setActiveCategory] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
     const dropdownRef = useRef(null);
     const buttonRef = useRef(null);
     const router = useRouter();
@@ -68,7 +67,6 @@ const KlookDropdown = () => {
         const fetchCategories = async () => {
             try {
                 setLoading(true);
-                setError(false);
                 
                 // Check cache first
                 const cachedCategories = categoriesCache.getGlobalDropdownCategories();
@@ -81,11 +79,6 @@ const KlookDropdown = () => {
 
                 console.log('🌐 Fetching categories from API for global dropdown');
                 const res = await fetch(`${API_BASE}/simple-categories`);
-                
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                
                 const data = await res.json();
 
                 if (data.success && data.data.categories) {
@@ -95,17 +88,9 @@ const KlookDropdown = () => {
                     // Get filtered categories for global dropdown
                     const finalCategories = categoriesCache.getGlobalDropdownCategories();
                     setCategories(finalCategories);
-                    
-                    // Check if we have any categories after filtering
-                    if (!finalCategories || finalCategories.length === 0) {
-                        setError(true);
-                    }
-                } else {
-                    setError(true);
                 }
             } catch (error) {
                 console.error("Error fetching categories from database:", error);
-                setError(true);
             } finally {
                 setLoading(false);
             }
@@ -211,28 +196,6 @@ const KlookDropdown = () => {
                         <div className="flex items-center justify-center py-6">
                             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
                         </div>
-                    ) : error || categories.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-8 px-6 text-center">
-                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-800 mb-2">No activities yet</h3>
-                            <p className="text-gray-600 text-sm">Try again in few minutes</p>
-                            <button 
-                                onClick={() => {
-                                    setError(false);
-                                    setLoading(true);
-                                    // Trigger refetch by clearing cache and calling fetch again
-                                    categoriesCache.clearCache();
-                                    window.location.reload();
-                                }}
-                                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
-                            >
-                                Refresh
-                            </button>
-                        </div>
                     ) : (
                         <div className="p-4">
                             {/* Grid Layout for Categories */}
@@ -286,21 +249,13 @@ export const MobileKlookDropdown = () => {
     const [open, setOpen] = useState(false);
     const [expandedCategories, setExpandedCategories] = useState(new Set());
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 setLoading(true);
-                setError(false);
-                
                 const res = await fetch(`${API_BASE}/simple-categories`);
-                
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                
                 const data = await res.json();
 
                 if (data.success && data.data.categories) {
@@ -320,19 +275,10 @@ export const MobileKlookDropdown = () => {
                         ]
                     };
                     
-                    const finalCategories = [...filteredCategories, otherServicesCategory];
-                    setCategories(finalCategories);
-                    
-                    // Check if we have any categories after filtering
-                    if (!finalCategories || finalCategories.length === 0) {
-                        setError(true);
-                    }
-                } else {
-                    setError(true);
+                    setCategories([...filteredCategories, otherServicesCategory]);
                 }
             } catch (error) {
                 console.error("Error fetching categories from database:", error);
-                setError(true);
             } finally {
                 setLoading(false);
             }
@@ -420,27 +366,6 @@ export const MobileKlookDropdown = () => {
                     {loading ? (
                         <div className="flex items-center justify-center py-3">
                             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                        </div>
-                    ) : error || categories.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-6 px-4 text-center">
-                            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <h3 className="text-base font-semibold text-gray-800 mb-1">No activities yet</h3>
-                            <p className="text-gray-600 text-xs">Try again in few minutes</p>
-                            <button 
-                                onClick={() => {
-                                    setError(false);
-                                    setLoading(true);
-                                    // Trigger refetch
-                                    window.location.reload();
-                                }}
-                                className="mt-3 px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs font-medium"
-                            >
-                                Refresh
-                            </button>
                         </div>
                     ) : (
                         <div className="space-y-4">

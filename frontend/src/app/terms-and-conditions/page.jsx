@@ -3,6 +3,22 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import {
+  FileText,
+  Users,
+  Shield,
+  Globe,
+  CreditCard,
+  X,
+  Scale,
+  Clock,
+  CheckCircle,
+  Award,
+  Lock,
+  AlertTriangle,
+  Mail,
+  Phone,
+} from 'lucide-react';
 
 const TermsConditionsPage = () => {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
@@ -35,88 +51,98 @@ const TermsConditionsPage = () => {
 
   const termsSection = [
     {
-      icon: '📋',
-      title: '1. Acceptance of Terms',
+      icon: FileText,
+      title: 'Acceptance of Terms',
       content:
         "By accessing and using Trektoo's services, you accept and agree to be bound by the terms and provision of this agreement. These Terms and Conditions constitute the entire agreement between you and Trek Too LTD.",
-      color: 'from-blue-500 to-blue-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
-      icon: '👥',
-      title: '2. Use of Services',
+      icon: Users,
+      title: 'Use of Services',
       content:
         'Our platform provides travel booking services including flights, hotels, and travel insurance. You agree to use our services only for lawful purposes and in accordance with these Terms. You are responsible for ensuring the accuracy of all information provided during booking.',
-      color: 'from-green-500 to-green-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
-      icon: '🔐',
-      title: '3. User Accounts',
+      icon: Shield,
+      title: 'User Accounts',
       content:
         'To access certain features, you may need to create an account. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. Notify us immediately of any unauthorized use.',
-      color: 'from-purple-500 to-purple-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
-      icon: '🌐',
-      title: '4. Booking and Payment',
+      icon: Globe,
+      title: 'Booking and Payment',
       content:
         'All bookings are subject to availability and confirmation. Prices may change without notice until booking is confirmed. Payment must be made in full at the time of booking. We accept various payment methods as displayed on our platform.',
-      color: 'from-orange-500 to-orange-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
-      icon: '💰',
-      title: '5. Cancellation and Refunds',
+      icon: X,
+      title: 'Cancellation and Refunds',
       content:
-        'Cancellation policies vary by service provider and booking type. Refund eligibility depends on the specific terms of your booking. Processing fees may apply to cancellations. Please review individual booking terms before confirming your reservation.',
-      color: 'from-yellow-500 to-yellow-600',
+        'Cancellations made within 24 hours of booking are subject to a 15% cancellation fee. Refund eligibility depends on the specific terms of your booking and service provider policies. Processing fees may apply to cancellations. Please review individual booking terms before confirming your reservation.',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
-      icon: '⚖️',
-      title: '6. Limitation of Liability',
+      icon: Scale,
+      title: 'Limitation of Liability',
       content:
         'Trek Too LTD acts as an intermediary between you and service providers. We are not liable for any direct, indirect, incidental, or consequential damages arising from your use of our services or any travel-related issues beyond our control.',
-      color: 'from-red-500 to-red-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
-      icon: '🕐',
-      title: '7. Force Majeure',
+      icon: Clock,
+      title: 'Force Majeure',
       content:
         'We are not responsible for any failure to perform our obligations due to circumstances beyond our reasonable control, including but not limited to natural disasters, government actions, strikes, or other unforeseeable events.',
-      color: 'from-indigo-500 to-indigo-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
-      icon: '✓',
-      title: '8. Privacy and Data Protection',
+      icon: CheckCircle,
+      title: 'Privacy and Data Protection',
       content:
         'We collect and process personal data in accordance with our Privacy Policy and applicable data protection laws. Your personal information is used solely for providing our services and improving your travel experience.',
-      color: 'from-green-500 to-green-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
   ];
 
   const additionalTerms = [
     {
+      icon: Award,
       title: 'Intellectual Property',
       content:
         'All content on our platform, including logos, text, images, and software, is owned by Trek Too LTD and protected by intellectual property laws. Unauthorized use is prohibited.',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
+      icon: Lock,
       title: 'Third-Party Services',
       content:
         'Our platform may contain links to third-party websites or services. We are not responsible for the content, privacy policies, or practices of these third parties.',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
+      icon: AlertTriangle,
       title: 'Modifications to Terms',
       content:
         'We reserve the right to modify these Terms and Conditions at any time. Changes will be effective immediately upon posting. Continued use of our services constitutes acceptance of modified terms.',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
+      icon: Scale,
       title: 'Governing Law',
       content:
         'These Terms and Conditions are governed by the laws of England and Wales. Any disputes shall be subject to the exclusive jurisdiction of the courts of England and Wales.',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
+      icon: Mail,
       title: 'Contact Information',
       content:
         'If you have any questions about these Terms and Conditions, please contact us at info@trektoo.com or call our customer service at +44 7308 656687.',
+      gradient: 'from-blue-500 to-blue-500',
     },
   ];
 
@@ -162,9 +188,9 @@ const TermsConditionsPage = () => {
         className="relative z-10 pt-32 pb-16 px-4 sm:px-6 lg:px-8"
       >
         <div className="max-w-7xl mx-auto">
-          {/* Hero Section - Matching About Page Style */}
+          {/* 1. HERO SECTION - Introduction (Matching Contact Page Style) */}
           <section className="py-20 relative overflow-hidden">
-          <motion.div
+            <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
@@ -206,31 +232,74 @@ const TermsConditionsPage = () => {
             </motion.div>
           </section>
 
-          {/* Agreement Overview Section */}
+          {/* 2. AGREEMENT OVERVIEW - Company Information (Matching Contact Page Style) */}
           <section className="py-20 relative overflow-hidden">
             <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
-              className="max-w-4xl mx-auto"
+              className="text-center mb-16"
+            >
+              <motion.div variants={itemVariants}>
+                <h2
+                  className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6"
+                  style={{
+                    fontFamily:
+                      "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Agreement{' '}
+                  <span className="text-emerald-600 relative">
+                    Overview
+                    <svg
+                      className="absolute -bottom-2 left-0 w-full h-3"
+                      viewBox="0 0 200 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M2 10C50 2 100 2 198 10"
+                        stroke="#E0C097"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                </h2>
+              </motion.div>
+              <motion.div variants={itemVariants}>
+                <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
+                  Understanding the legal framework of our service agreement
+                </p>
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate={inView ? 'visible' : 'hidden'}
+              className="max-w-4xl mx-auto px-4"
             >
               <motion.div
                 variants={itemVariants}
-                className="bg-white/50 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-gray-100 relative group"
+                whileHover={{ scale: 1.02, y: -2 }}
+                className="group relative bg-white rounded-2xl shadow-md hover:shadow-lg overflow-hidden transition-all duration-300 border border-gray-100 hover:border-blue-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-3xl group-hover:opacity-10 transition-all duration-300"></div>
-                <div className="relative">
-                  <div className="flex items-center mb-6">
-                    <div className="text-4xl mr-4">📋</div>
-                    <h2
-                      className="text-3xl font-bold text-gray-900"
+                <div className="p-8">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-500 rounded-xl flex items-center justify-center text-white shadow-sm group-hover:shadow-md transition-all duration-300 flex-shrink-0">
+                      {React.createElement(FileText, { className: "w-6 h-6" })}
+                    </div>
+                    <h3
+                      className="text-2xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-200"
                       style={{
                         fontFamily:
                           "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                       }}
                     >
-                      Agreement Overview
-                    </h2>
+                      Legal Agreement
+                    </h3>
                   </div>
                   <div className="space-y-4">
                     <p className="text-lg text-gray-700 leading-relaxed">
@@ -247,100 +316,266 @@ const TermsConditionsPage = () => {
             </motion.div>
           </section>
 
-          {/* Main Terms Sections */}
+          {/* 3. TERMS DETAILS - Core Information (Matching Contact Page Style) */}
           <section className="py-20 relative overflow-hidden">
             <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6 px-4"
+              className="text-center mb-16"
             >
-            {termsSection.map((section, index) => (
-              <motion.div
-                key={index}
-                variants={itemVariants}
-                className="bg-white/50 backdrop-blur-sm rounded-2xl p-6 shadow-md border border-gray-100 relative group"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-2xl group-hover:opacity-10 transition-all duration-300"></div>
-                <div className="relative">
-                  <div className="flex items-center mb-4">
-                    <div className="text-3xl mr-4">{section.icon}</div>
-                    <h3
-                      className="text-lg font-bold text-gray-900"
-                      style={{
-                        fontFamily:
-                          "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
-                      }}
+              <motion.div variants={itemVariants}>
+                <h2
+                  className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6"
+                  style={{
+                    fontFamily:
+                      "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Terms{' '}
+                  <span className="text-indigo-600 relative">
+                    Details
+                    <svg
+                      className="absolute -bottom-2 left-0 w-full h-3"
+                      viewBox="0 0 200 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      {section.title}
-                    </h3>
-                  </div>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {section.content}
-                  </p>
-                </div>
+                      <path
+                        d="M2 10C50 2 100 2 198 10"
+                        stroke="#E0C097"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                </h2>
               </motion.div>
-            ))}
+              <motion.div variants={itemVariants}>
+                <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
+                  Comprehensive information about our terms and conditions
+                </p>
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate={inView ? 'visible' : 'hidden'}
+              className="grid md:grid-cols-2 gap-4 px-4"
+            >
+              {termsSection.map((section, index) => {
+                const IconComponent = section.icon;
+                return (
+                  <motion.div
+                    key={index}
+                    variants={itemVariants}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    className="group relative bg-white rounded-2xl shadow-md hover:shadow-lg overflow-hidden transition-all duration-300 border border-gray-100 hover:border-blue-300"
+                  >
+                    <div className="p-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div
+                          className={`w-12 h-12 bg-gradient-to-r ${section.gradient} rounded-xl flex items-center justify-center text-white shadow-sm group-hover:shadow-md transition-all duration-300 flex-shrink-0`}
+                        >
+                          {React.createElement(IconComponent, { className: "w-6 h-6" })}
+                        </div>
+                        <h3
+                          className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-200"
+                          style={{
+                            fontFamily:
+                              "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                          }}
+                        >
+                          {section.title}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        {section.content}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </motion.div>
           </section>
 
-          {/* Additional Terms Section */}
+          {/* 4. ADDITIONAL TERMS - Supporting Information (Matching Contact Page Style) */}
           <section className="py-20 relative overflow-hidden">
             <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
-              className="max-w-6xl mx-auto"
+              className="text-center mb-16"
+            >
+              <motion.div variants={itemVariants}>
+                <h2
+                  className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6"
+                  style={{
+                    fontFamily:
+                      "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Additional{' '}
+                  <span className="text-purple-600 relative">
+                    Terms
+                    <svg
+                      className="absolute -bottom-2 left-0 w-full h-3"
+                      viewBox="0 0 200 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M2 10C50 2 100 2 198 10"
+                        stroke="#E0C097"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                </h2>
+              </motion.div>
+              <motion.div variants={itemVariants}>
+                <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
+                  Important legal information and contact details
+                </p>
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate={inView ? 'visible' : 'hidden'}
+              className="grid md:grid-cols-2 gap-4 px-4"
+            >
+              {additionalTerms.map((term, index) => {
+                const IconComponent = term.icon;
+                return (
+                  <motion.div
+                    key={index}
+                    variants={itemVariants}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    className="group relative bg-white rounded-2xl shadow-md hover:shadow-lg overflow-hidden transition-all duration-300 border border-gray-100 hover:border-blue-300"
+                  >
+                    <div className="p-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div
+                          className={`w-12 h-12 bg-gradient-to-r ${term.gradient} rounded-xl flex items-center justify-center text-white shadow-sm group-hover:shadow-md transition-all duration-300 flex-shrink-0`}
+                        >
+                          {React.createElement(IconComponent, { className: "w-6 h-6" })}
+                        </div>
+                        <h3
+                          className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-200"
+                          style={{
+                            fontFamily:
+                              "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                          }}
+                        >
+                          {term.title}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        {term.content}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          </section>
+
+          {/* 5. CONTACT SUPPORT - Legal Questions (Matching Contact Page Style) */}
+          <section className="py-20 relative overflow-hidden">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate={inView ? 'visible' : 'hidden'}
+              className="text-center mb-16"
+            >
+              <motion.div variants={itemVariants}>
+                <h2
+                  className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6"
+                  style={{
+                    fontFamily:
+                      "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Legal{' '}
+                  <span className="text-gray-700 relative">
+                    Support
+                    <svg
+                      className="absolute -bottom-2 left-0 w-full h-3"
+                      viewBox="0 0 200 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M2 10C50 2 100 2 198 10"
+                        stroke="#E0C097"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                </h2>
+              </motion.div>
+              <motion.div variants={itemVariants}>
+                <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
+                  Get in touch with our legal team for any questions about these terms
+                </p>
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate={inView ? 'visible' : 'hidden'}
+              className="max-w-2xl mx-auto px-4"
             >
               <motion.div
                 variants={itemVariants}
-                className="text-center mb-12"
+                whileHover={{ scale: 1.02, y: -2 }}
+                className="group relative bg-white rounded-2xl shadow-md hover:shadow-lg overflow-hidden transition-all duration-300 border border-gray-100 hover:border-blue-300"
               >
-                <div className="flex items-center justify-center mb-6">
-                  <div className="text-4xl mr-4">🛡️</div>
-                  <h2
-                    className="text-4xl font-bold text-gray-900"
+                <div className="p-8 text-center">
+                  <div className="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-6 text-white shadow-sm">
+                    {React.createElement(Mail, { className: "w-8 h-8" })}
+                  </div>
+                  <h3
+                    className="text-2xl font-bold text-gray-800 mb-4 group-hover:text-blue-600 transition-colors duration-200"
                     style={{
                       fontFamily:
                         "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                     }}
                   >
-                    Additional Terms
-                  </h2>
+                    Legal Team Contact
+                  </h3>
+                  <p className="text-lg text-gray-600 leading-relaxed mb-6">
+                    Contact our legal team for any questions about these Terms and Conditions
+                  </p>
+                  <div className="space-y-4">
+                    <a
+                      href="mailto:info@trektoo.com"
+                      className="block text-xl font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                    >
+                      info@trektoo.com
+                    </a>
+                    <a
+                      href="tel:+447308656687"
+                      className="block text-lg font-semibold text-gray-700 hover:text-blue-600 transition-colors"
+                    >
+                      +44 7308 656687
+                    </a>
+                    <p className="text-sm text-gray-600">
+                      We respond to all legal inquiries within 24 hours
+                    </p>
+                  </div>
                 </div>
               </motion.div>
-
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate={inView ? 'visible' : 'hidden'}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4"
-              >
-                {additionalTerms.map((term, index) => (
-                  <motion.div
-                    key={index}
-                    variants={itemVariants}
-                    className="bg-white/50 backdrop-blur-sm rounded-2xl p-6 shadow-md border border-gray-100 relative group"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-2xl group-hover:opacity-10 transition-all duration-300"></div>
-                    <div className="relative">
-                      <h4
-                        className="text-lg font-bold text-gray-900 mb-3"
-                        style={{
-                          fontFamily:
-                            "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
-                        }}
-                      >
-                        {term.title}
-                      </h4>
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {term.content}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-          </motion.div>
+            </motion.div>
           </section>
 
 

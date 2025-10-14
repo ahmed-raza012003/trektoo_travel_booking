@@ -4,7 +4,23 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import {
+  Shield,
+  Eye,
+  Users,
+  Lock,
+  Globe,
+  CheckCircle,
+  Clock,
+  Baby,
+  Cookie,
+  Link,
+  Mail,
+  Bell,
+  AlertTriangle,
+  FileText,
+  Award,
+} from 'lucide-react';
 
 const PrivacyPolicyPage = () => {
   const router = useRouter();
@@ -37,88 +53,98 @@ const PrivacyPolicyPage = () => {
 
   const privacySections = [
     {
-      icon: '📊',
-      title: '1. Information We Collect',
+      icon: Users,
+      title: 'Information We Collect',
       content:
         'We collect information you provide directly to us, such as when you create an account, make a booking, or contact us. This includes personal details like name, email, phone number, payment information, and travel preferences. We also automatically collect certain information about your device and usage of our services.',
-      color: 'from-blue-500 to-blue-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
-      icon: '👁️',
-      title: '2. How We Use Your Information',
+      icon: Eye,
+      title: 'How We Use Your Information',
       content:
         'We use your information to provide, maintain, and improve our services, process transactions, send you confirmations and updates, provide customer support, and communicate about promotions or new features. We may also use aggregated data for analytics and business insights.',
-      color: 'from-green-500 to-green-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
-      icon: '👥',
-      title: '3. Information Sharing',
+      icon: Users,
+      title: 'Information Sharing',
       content:
         'We share your information with service providers (hotels, airlines, insurance companies) necessary to fulfill your bookings, payment processors, and third-party vendors who assist our operations. We do not sell your personal information to third parties for marketing purposes.',
-      color: 'from-purple-500 to-purple-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
-      icon: '🔒',
-      title: '4. Data Security',
+      icon: Lock,
+      title: 'Data Security',
       content:
         'We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. This includes encryption, secure servers, and regular security assessments. However, no method of transmission over the internet is 100% secure.',
-      color: 'from-orange-500 to-orange-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
-      icon: '🌐',
-      title: '5. International Data Transfers',
+      icon: Globe,
+      title: 'International Data Transfers',
       content:
         'As we operate globally, your information may be transferred to and processed in countries other than your residence. We ensure appropriate safeguards are in place to protect your information in accordance with this Privacy Policy and applicable data protection laws.',
-      color: 'from-indigo-500 to-indigo-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
-      icon: '✓',
-      title: '6. Your Rights and Choices',
+      icon: CheckCircle,
+      title: 'Your Rights and Choices',
       content:
         'You have the right to access, update, or delete your personal information. You can also opt out of marketing communications and request data portability. For EU residents, you have additional rights under GDPR including the right to object to processing and lodge complaints with supervisory authorities.',
-      color: 'from-green-500 to-green-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
-      icon: '🕐',
-      title: '7. Data Retention',
+      icon: Clock,
+      title: 'Data Retention',
       content:
         'We retain your personal information for as long as necessary to provide our services, comply with legal obligations, resolve disputes, and enforce our agreements. Booking information is typically retained for 7 years for legal and tax purposes, while marketing preferences are kept until you opt out.',
-      color: 'from-yellow-500 to-yellow-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
-      icon: '👶',
-      title: "8. Children's Privacy",
+      icon: Baby,
+      title: "Children's Privacy",
       content:
         'Our services are not intended for children under 16 years of age. We do not knowingly collect personal information from children under 16. If we discover we have collected information from a child under 16, we will delete such information promptly.',
-      color: 'from-red-500 to-red-600',
+      gradient: 'from-blue-500 to-blue-500',
     },
   ];
 
   const additionalSections = [
     {
+      icon: Cookie,
       title: 'Cookies and Tracking Technologies',
       content:
         'We use cookies, web beacons, and similar technologies to enhance your experience, analyze usage patterns, and deliver personalized content. You can control cookie preferences through your browser settings, though some features may not function properly if cookies are disabled.',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
+      icon: Link,
       title: 'Third-Party Links and Services',
       content:
         'Our platform may contain links to third-party websites or integrate with third-party services. We are not responsible for the privacy practices of these third parties. We encourage you to review their privacy policies before providing any personal information.',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
+      icon: Mail,
       title: 'Marketing Communications',
       content:
         'With your consent, we may send you promotional emails about our services, special offers, and travel tips. You can unsubscribe at any time by clicking the unsubscribe link in our emails or contacting us directly.',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
+      icon: AlertTriangle,
       title: 'Data Breach Notification',
       content:
         'In the event of a data breach that may pose a risk to your rights and freedoms, we will notify you and relevant authorities within 72 hours as required by applicable law. We will provide information about the nature of the breach and steps we are taking to address it.',
+      gradient: 'from-blue-500 to-blue-500',
     },
     {
+      icon: FileText,
       title: 'Updates to This Policy',
       content:
         'We may update this Privacy Policy from time to time to reflect changes in our practices or applicable laws. We will notify you of any material changes by posting the updated policy on our website and, where appropriate, by email.',
+      gradient: 'from-blue-500 to-blue-500',
     },
   ];
 
@@ -164,7 +190,7 @@ const PrivacyPolicyPage = () => {
         className="relative z-10 pt-32 pb-16 px-4 sm:px-6 lg:px-8"
       >
         <div className="max-w-7xl mx-auto">
-          {/* Hero Section - Matching About Page Style */}
+          {/* 1. HERO SECTION - Introduction (Matching Contact Page Style) */}
           <section className="py-20 relative overflow-hidden">
             <motion.div
               variants={containerVariants}
@@ -208,31 +234,74 @@ const PrivacyPolicyPage = () => {
             </motion.div>
           </section>
 
-          {/* Privacy Overview Section */}
+          {/* 2. PRIVACY OVERVIEW - Company Commitment (Matching Contact Page Style) */}
           <section className="py-20 relative overflow-hidden">
             <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
-              className="max-w-4xl mx-auto"
+              className="text-center mb-16"
+            >
+              <motion.div variants={itemVariants}>
+                <h2
+                  className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6"
+                  style={{
+                    fontFamily:
+                      "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Our{' '}
+                  <span className="text-emerald-600 relative">
+                    Commitment
+                    <svg
+                      className="absolute -bottom-2 left-0 w-full h-3"
+                      viewBox="0 0 200 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M2 10C50 2 100 2 198 10"
+                        stroke="#E0C097"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                </h2>
+              </motion.div>
+              <motion.div variants={itemVariants}>
+                <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
+                  Protecting your privacy is at the heart of everything we do
+                </p>
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate={inView ? 'visible' : 'hidden'}
+              className="max-w-4xl mx-auto px-4"
             >
               <motion.div
                 variants={itemVariants}
-                className="bg-white/50 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-gray-100 relative group"
+                whileHover={{ scale: 1.02, y: -2 }}
+                className="group relative bg-white rounded-2xl shadow-md hover:shadow-lg overflow-hidden transition-all duration-300 border border-gray-100 hover:border-blue-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-3xl group-hover:opacity-10 transition-all duration-300"></div>
-                <div className="relative">
-                  <div className="flex items-center mb-6">
-                    <div className="text-4xl mr-4">🛡️</div>
-                    <h2
-                      className="text-3xl font-bold text-gray-900"
+                <div className="p-8">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-500 rounded-xl flex items-center justify-center text-white shadow-sm group-hover:shadow-md transition-all duration-300 flex-shrink-0">
+                      {React.createElement(Shield, { className: "w-6 h-6" })}
+                    </div>
+                    <h3
+                      className="text-2xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-200"
                       style={{
                         fontFamily:
                           "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                       }}
                     >
-                      Our Commitment to Your Privacy
-                    </h2>
+                      Privacy Protection Promise
+                    </h3>
                   </div>
                   <div className="space-y-4">
                     <p className="text-lg text-gray-700 leading-relaxed">
@@ -247,144 +316,262 @@ const PrivacyPolicyPage = () => {
             </motion.div>
           </section>
 
-          {/* Main Privacy Sections */}
+          {/* 3. PRIVACY DETAILS - Core Information (Matching Contact Page Style) */}
           <section className="py-20 relative overflow-hidden">
             <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6 px-4"
+              className="text-center mb-16"
             >
-              {privacySections.map((section, index) => (
-                <motion.div
-                  key={index}
-                  variants={itemVariants}
-                  className="bg-white/50 backdrop-blur-sm rounded-2xl p-6 shadow-md border border-gray-100 relative group"
+              <motion.div variants={itemVariants}>
+                <h2
+                  className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6"
+                  style={{
+                    fontFamily:
+                      "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                    letterSpacing: '-0.02em',
+                  }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-2xl group-hover:opacity-10 transition-all duration-300"></div>
-                  <div className="relative">
-                    <div className="flex items-center mb-4">
-                      <div className="text-3xl mr-4">{section.icon}</div>
-                      <h3
-                        className="text-lg font-bold text-gray-900"
-                        style={{
-                          fontFamily:
-                            "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
-                        }}
-                      >
-                        {section.title}
-                      </h3>
+                  Privacy{' '}
+                  <span className="text-indigo-600 relative">
+                    Details
+                    <svg
+                      className="absolute -bottom-2 left-0 w-full h-3"
+                      viewBox="0 0 200 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M2 10C50 2 100 2 198 10"
+                        stroke="#E0C097"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                </h2>
+              </motion.div>
+              <motion.div variants={itemVariants}>
+                <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
+                  Comprehensive information about how we handle your data
+                </p>
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate={inView ? 'visible' : 'hidden'}
+              className="grid md:grid-cols-2 gap-4 px-4"
+            >
+              {privacySections.map((section, index) => {
+                const IconComponent = section.icon;
+                return (
+                  <motion.div
+                    key={index}
+                    variants={itemVariants}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    className="group relative bg-white rounded-2xl shadow-md hover:shadow-lg overflow-hidden transition-all duration-300 border border-gray-100 hover:border-blue-300"
+                  >
+                    <div className="p-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div
+                          className={`w-12 h-12 bg-gradient-to-r ${section.gradient} rounded-xl flex items-center justify-center text-white shadow-sm group-hover:shadow-md transition-all duration-300 flex-shrink-0`}
+                        >
+                          {React.createElement(IconComponent, { className: "w-6 h-6" })}
+                        </div>
+                        <h3
+                          className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-200"
+                          style={{
+                            fontFamily:
+                              "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                          }}
+                        >
+                          {section.title}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        {section.content}
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      {section.content}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </motion.div>
           </section>
 
-          {/* Additional Privacy Information */}
+          {/* 4. ADDITIONAL INFORMATION - Supporting Details (Matching Contact Page Style) */}
           <section className="py-20 relative overflow-hidden">
             <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={inView ? 'visible' : 'hidden'}
-              className="max-w-6xl mx-auto"
+              className="text-center mb-16"
+            >
+              <motion.div variants={itemVariants}>
+                <h2
+                  className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6"
+                  style={{
+                    fontFamily:
+                      "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Additional{' '}
+                  <span className="text-purple-600 relative">
+                    Information
+                    <svg
+                      className="absolute -bottom-2 left-0 w-full h-3"
+                      viewBox="0 0 200 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M2 10C50 2 100 2 198 10"
+                        stroke="#E0C097"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                </h2>
+              </motion.div>
+              <motion.div variants={itemVariants}>
+                <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
+                  Important details about cookies, third parties, and policy updates
+                </p>
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate={inView ? 'visible' : 'hidden'}
+              className="grid md:grid-cols-2 gap-4 px-4"
+            >
+              {additionalSections.map((section, index) => {
+                const IconComponent = section.icon;
+                return (
+                  <motion.div
+                    key={index}
+                    variants={itemVariants}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    className="group relative bg-white rounded-2xl shadow-md hover:shadow-lg overflow-hidden transition-all duration-300 border border-gray-100 hover:border-blue-300"
+                  >
+                    <div className="p-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div
+                          className={`w-12 h-12 bg-gradient-to-r ${section.gradient} rounded-xl flex items-center justify-center text-white shadow-sm group-hover:shadow-md transition-all duration-300 flex-shrink-0`}
+                        >
+                          {React.createElement(IconComponent, { className: "w-6 h-6" })}
+                        </div>
+                        <h3
+                          className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-200"
+                          style={{
+                            fontFamily:
+                              "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                          }}
+                        >
+                          {section.title}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        {section.content}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          </section>
+
+          {/* 5. CONTACT PRIVACY TEAM - Support (Matching Contact Page Style) */}
+          <section className="py-20 relative overflow-hidden">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate={inView ? 'visible' : 'hidden'}
+              className="text-center mb-16"
+            >
+              <motion.div variants={itemVariants}>
+                <h2
+                  className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6"
+                  style={{
+                    fontFamily:
+                      "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Privacy{' '}
+                  <span className="text-gray-700 relative">
+                    Support
+                    <svg
+                      className="absolute -bottom-2 left-0 w-full h-3"
+                      viewBox="0 0 200 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M2 10C50 2 100 2 198 10"
+                        stroke="#E0C097"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                </h2>
+              </motion.div>
+              <motion.div variants={itemVariants}>
+                <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
+                  Get in touch with our privacy team for any questions or concerns
+                </p>
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate={inView ? 'visible' : 'hidden'}
+              className="max-w-2xl mx-auto px-4"
             >
               <motion.div
                 variants={itemVariants}
-                className="text-center mb-12"
+                whileHover={{ scale: 1.02, y: -2 }}
+                className="group relative bg-white rounded-2xl shadow-md hover:shadow-lg overflow-hidden transition-all duration-300 border border-gray-100 hover:border-blue-300"
               >
-                <div className="flex items-center justify-center mb-6">
-                  <div className="text-4xl mr-4">📋</div>
-                  <h2
-                    className="text-4xl font-bold text-gray-900"
+                <div className="p-8 text-center">
+                  <div className="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-6 text-white shadow-sm">
+                    {React.createElement(Mail, { className: "w-8 h-8" })}
+                  </div>
+                  <h3
+                    className="text-2xl font-bold text-gray-800 mb-4 group-hover:text-blue-600 transition-colors duration-200"
                     style={{
                       fontFamily:
                         "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                     }}
                   >
-                    Additional Privacy Information
-                  </h2>
-                </div>
-              </motion.div>
-
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate={inView ? 'visible' : 'hidden'}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4"
-              >
-                {additionalSections.map((section, index) => (
-                  <motion.div
-                    key={index}
-                    variants={itemVariants}
-                    className="bg-white/50 backdrop-blur-sm rounded-2xl p-6 shadow-md border border-gray-100 relative group"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-2xl group-hover:opacity-10 transition-all duration-300"></div>
-                    <div className="relative">
-                      <h4
-                        className="text-lg font-bold text-gray-900 mb-3"
-                        style={{
-                          fontFamily:
-                            "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
-                        }}
-                      >
-                        {section.title}
-                      </h4>
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {section.content}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </motion.div>
-          </section>
-
-          {/* Contact Information */}
-          <section className="py-20 relative overflow-hidden">
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate={inView ? 'visible' : 'hidden'}
-              className="max-w-4xl mx-auto text-center"
-            >
-              <motion.div
-                variants={itemVariants}
-                className="bg-white/50 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-gray-100 relative group"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 to-blue-500/5 rounded-3xl group-hover:opacity-10 transition-all duration-300"></div>
-                <div className="relative">
-                  <div className="flex items-center justify-center mb-6">
-                    <div className="text-4xl mr-4">📧</div>
-                    <h2
-                      className="text-3xl font-bold text-gray-900"
-                      style={{
-                        fontFamily:
-                          "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
-                      }}
-                    >
-                      Questions About Your Privacy?
-                    </h2>
-                  </div>
-                  <p className="text-lg text-gray-700 leading-relaxed mb-8">
-                    Contact our Data Protection Officer for privacy-related inquiries
+                    Data Protection Team
+                  </h3>
+                  <p className="text-lg text-gray-600 leading-relaxed mb-6">
+                    Contact our dedicated privacy team for any questions about your personal data
                   </p>
-                  <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                    <Button
-                      onClick={() => window.open('mailto:info@trektoo.com', '_self')}
-                      className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 rounded-xl px-6 py-3 font-semibold shadow-md hover:shadow-lg"
+                  <div className="space-y-4">
+                    <a
+                      href="mailto:info@trektoo.com"
+                      className="block text-xl font-bold text-blue-600 hover:text-blue-700 transition-colors"
                     >
-                      📧 Email Privacy Team
-                    </Button>
-                    <Button
+                      info@trektoo.com
+                    </a>
+                    <p className="text-sm text-gray-600">
+                      We respond to all privacy inquiries within 24 hours
+                    </p>
+                    <button
                       onClick={() => router.push('/contact')}
-                      className="bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800 rounded-xl px-6 py-3 font-semibold shadow-md hover:shadow-lg"
+                      className="mt-4 px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors font-semibold shadow-md hover:shadow-lg"
                     >
                       Contact Us
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </motion.div>
