@@ -1422,30 +1422,24 @@ const ActivitiesPage = () => {
                     router.push(`/activities?${params.toString()}`);
                   }}
                 >
-                  <div className="relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 bg-white border border-gray-100">
-                    <div className="aspect-square relative">
-                      <img
-                        src={country.image}
-                        alt={country.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      
-                      {/* Activity Count Badge */}
-                      {country.activityCount > 0 && (
-                        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-bold text-gray-800 shadow-lg">
-                          {country.activityCount} activities
-                        </div>
-                      )}
-                    </div>
+                  <div className="relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 h-48">
+                    <img
+                      src={country.image}
+                      alt={country.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      loading="lazy"
+                    />
                     
-                    <div className="p-4">
-                      <h3 className="font-bold text-gray-800 text-center group-hover:text-blue-600 transition-colors">
+                    {/* Gradient overlay for text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                    
+                    {/* Content overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                      <h3 className="font-bold text-lg drop-shadow-lg group-hover:text-blue-300 transition-colors">
                         {country.name}
                       </h3>
                       {country.activityCount > 0 && (
-                        <p className="text-sm text-gray-600 text-center mt-1">
+                        <p className="text-white/90 text-sm drop-shadow-md mt-1">
                           {country.activityCount} experiences
                         </p>
                       )}
