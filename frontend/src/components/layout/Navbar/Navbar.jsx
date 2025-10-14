@@ -136,6 +136,7 @@ const Navbar = () => {
 
             {/* Profile */}
             <div className="relative">
+              {/* Profile Button */}
               <button
                 onClick={() => !isLoggingOut && setIsProfileOpen(!isProfileOpen)}
                 disabled={isLoggingOut}
@@ -161,13 +162,14 @@ const Navbar = () => {
                           {user?.email}
                         </p>
                       </div>
-                      <Link
+                      {/* Profile link hidden - API not ready */}
+                      {/* <Link
                         href="/profile"
                         onClick={() => setIsProfileOpen(false)}
                         className="block px-3 py-2 text-sm text-gray-900 hover:bg-blue-100 hover:text-gray-900"
                       >
                         Profile
-                      </Link>
+                      </Link> */}
                       <button
                         onClick={handleLogout}
                         disabled={isLoggingOut}
@@ -242,13 +244,14 @@ const Navbar = () => {
               <div className="pt-2 border-t border-gray-200">
                 {isAuthenticated ? (
                   <>
-                    <Link
+                    {/* Profile link hidden - API not ready */}
+                    {/* <Link
                       href="/profile"
                       className="block text-gray-800 hover:text-blue-600 font-medium text-sm uppercase tracking-wide py-1.5"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Profile
-                    </Link>
+                    </Link> */}
                     <button
                       onClick={handleLogout}
                       disabled={isLoggingOut}
