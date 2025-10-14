@@ -3,6 +3,167 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams, useRouter } from 'next/navigation';
+
+// Full Screen Loader Component
+const FullScreenLoader = ({ isVisible, progress = 0 }) => {
+  if (!isVisible) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-gradient-to-br from-blue-50 via-white to-orange-50 z-[9999] flex items-center justify-center"
+    >
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Sun */}
+        <motion.div
+          animate={{ 
+            rotate: 360,
+            scale: [1, 1.1, 1]
+          }}
+          transition={{ 
+            rotate: { duration: 20, repeat: Infinity, ease: "linear" },
+            scale: { duration: 3, repeat: Infinity, ease: "easeInOut" }
+          }}
+          className="absolute top-8 right-8 w-16 h-16 bg-gradient-to-br from-yellow-300 to-orange-400 rounded-full shadow-lg"
+        >
+          <div className="absolute inset-2 bg-gradient-to-br from-yellow-200 to-orange-300 rounded-full"></div>
+          {/* Sun rays */}
+          <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-1 h-4 bg-yellow-300 rounded-full"></div>
+          <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1 h-4 bg-yellow-300 rounded-full"></div>
+          <div className="absolute -left-2 top-1/2 transform -translate-y-1/2 w-4 h-1 bg-yellow-300 rounded-full"></div>
+          <div className="absolute -right-2 top-1/2 transform -translate-y-1/2 w-4 h-1 bg-yellow-300 rounded-full"></div>
+          <div className="absolute -top-1 -left-1 w-1 h-3 bg-yellow-300 rounded-full transform rotate-45"></div>
+          <div className="absolute -top-1 -right-1 w-1 h-3 bg-yellow-300 rounded-full transform -rotate-45"></div>
+          <div className="absolute -bottom-1 -left-1 w-1 h-3 bg-yellow-300 rounded-full transform -rotate-45"></div>
+          <div className="absolute -bottom-1 -right-1 w-1 h-3 bg-yellow-300 rounded-full transform rotate-45"></div>
+        </motion.div>
+
+        {/* Clouds */}
+        <motion.div
+          animate={{ x: [0, 50, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-16 left-8 w-12 h-6 bg-white/80 rounded-full"
+        >
+          <div className="absolute -top-2 left-2 w-8 h-8 bg-white/80 rounded-full"></div>
+          <div className="absolute -top-1 right-2 w-6 h-6 bg-white/80 rounded-full"></div>
+        </motion.div>
+
+        <motion.div
+          animate={{ x: [0, -30, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-12 right-16 w-10 h-5 bg-white/70 rounded-full"
+        >
+          <div className="absolute -top-1 left-1 w-6 h-6 bg-white/70 rounded-full"></div>
+          <div className="absolute -top-1 right-1 w-5 h-5 bg-white/70 rounded-full"></div>
+        </motion.div>
+
+        {/* Road */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-gray-600 to-gray-400">
+          {/* Road lines */}
+          <div className="absolute top-1/2 left-0 right-0 h-1 bg-yellow-400 transform -translate-y-1/2">
+            <div className="absolute left-0 top-0 w-8 h-full bg-yellow-400"></div>
+            <div className="absolute left-16 top-0 w-8 h-full bg-yellow-400"></div>
+            <div className="absolute left-32 top-0 w-8 h-full bg-yellow-400"></div>
+            <div className="absolute left-48 top-0 w-8 h-full bg-yellow-400"></div>
+            <div className="absolute left-64 top-0 w-8 h-full bg-yellow-400"></div>
+            <div className="absolute left-80 top-0 w-8 h-full bg-yellow-400"></div>
+            <div className="absolute left-96 top-0 w-8 h-full bg-yellow-400"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Car Animation */}
+      <motion.div
+        animate={{ x: [-100, 1200] }}
+        transition={{ 
+          duration: 4, 
+          repeat: Infinity, 
+          ease: "easeInOut",
+          delay: 0.5
+        }}
+        className="absolute bottom-20 w-16 h-8"
+      >
+        {/* Car Body */}
+        <div className="relative w-full h-full">
+          {/* Car body */}
+          <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-r from-red-500 to-red-600 rounded-t-lg shadow-lg">
+            <div className="absolute top-1 left-1 right-1 h-2 bg-red-400 rounded-t-sm"></div>
+          </div>
+          
+          {/* Windows */}
+          <div className="absolute top-1 left-1 w-3 h-3 bg-blue-200 rounded-sm"></div>
+          <div className="absolute top-1 right-1 w-3 h-3 bg-blue-200 rounded-sm"></div>
+          
+          {/* Wheels */}
+          <div className="absolute -bottom-1 left-1 w-3 h-3 bg-gray-800 rounded-full border-2 border-gray-600"></div>
+          <div className="absolute -bottom-1 right-1 w-3 h-3 bg-gray-800 rounded-full border-2 border-gray-600"></div>
+          
+          {/* Headlights */}
+          <div className="absolute top-2 left-0 w-1 h-1 bg-yellow-300 rounded-full"></div>
+          <div className="absolute top-2 right-0 w-1 h-1 bg-yellow-300 rounded-full"></div>
+        </div>
+      </motion.div>
+
+      {/* Loading Content */}
+      <div className="relative z-10 text-center">
+        <motion.div
+          animate={{ y: [0, -10, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="mb-8"
+        >
+          <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-xl">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-8 h-8 border-4 border-white border-t-transparent rounded-full"
+            ></motion.div>
+          </div>
+        </motion.div>
+
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="text-3xl font-bold text-gray-800 mb-4"
+        >
+          Finding Best Activities for You
+        </motion.h2>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="text-lg text-gray-600 mb-8"
+        >
+          Discovering amazing experiences...
+        </motion.p>
+
+        {/* Progress Bar */}
+        <div className="w-80 mx-auto">
+          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.5 }}
+              className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"
+            ></motion.div>
+          </div>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="text-sm text-gray-500 mt-2"
+          >
+            {progress}% Complete
+          </motion.p>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 import {
   Sparkles,
   MapPin,
@@ -52,6 +213,7 @@ const ActivitiesPage = () => {
   const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const [showFullScreenLoader, setShowFullScreenLoader] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState(null);
   const [hasInitialData, setHasInitialData] = useState(false);
@@ -531,6 +693,7 @@ const ActivitiesPage = () => {
 
     const initializeData = async () => {
       try {
+        setShowFullScreenLoader(true);
         const { activities, categories } = await fetchActivitiesFromDatabase(controller);
         
         // Apply initial filtering immediately
@@ -543,6 +706,11 @@ const ActivitiesPage = () => {
         }
         setHasInitialData(true);
         setIsLoading(false);
+      } finally {
+        // Hide full screen loader after 20 seconds
+        setTimeout(() => {
+          setShowFullScreenLoader(false);
+        }, 20000);
       }
     };
 
@@ -769,6 +937,7 @@ const ActivitiesPage = () => {
   };
 
   const handleCategoryFilterChange = (categoryId) => {
+    setShowFullScreenLoader(true);
     setSelectedCategoryFilter(categoryId);
     const params = new URLSearchParams(searchParams.toString());
     if (categoryId) {
@@ -779,6 +948,11 @@ const ActivitiesPage = () => {
     params.set('page', '1'); // Reset to first page
     router.push(`/activities?${params.toString()}`);
     setIsCategoryFilterOpen(false);
+    
+    // Hide loader after 20 seconds
+    setTimeout(() => {
+      setShowFullScreenLoader(false);
+    }, 20000);
   };
 
 
@@ -820,7 +994,14 @@ const ActivitiesPage = () => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    // Search is already handled by handleSearchChange
+    if (searchQuery.trim()) {
+      setShowFullScreenLoader(true);
+      // Search is already handled by handleSearchChange
+      // Hide loader after 20 seconds
+      setTimeout(() => {
+        setShowFullScreenLoader(false);
+      }, 20000);
+    }
   };
 
   const handleClearSearch = () => {
@@ -1028,6 +1209,11 @@ const ActivitiesPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 relative overflow-hidden">
+      {/* Full Screen Loader */}
+      <FullScreenLoader 
+        isVisible={showFullScreenLoader} 
+        progress={loadingProgress} 
+      />
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <svg
